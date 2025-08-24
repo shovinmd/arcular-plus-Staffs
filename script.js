@@ -11,20 +11,20 @@ let allUsers = {
     pharmacies: []
 };
 
-// Firebase configuration
+// Firebase configuration for Arcular+ project
 const firebaseConfig = {
-    apiKey: "AIzaSyBqXqXqXqXqXqXqXqXqXqXqXqXqXqXqXq",
+    apiKey: "AIzaSyBzK4SQ44cv6k8EiNF9B2agNASArWQrstk",
     authDomain: "arcularplus-7e66c.firebaseapp.com",
     projectId: "arcularplus-7e66c",
-    storageBucket: "arcularplus-7e66c.appspot.com",
-    messagingSenderId: "123456789012",
-    appId: "1:123456789012:web:abcdefghijklmnop"
+    storageBucket: "arcularplus-7e66c.firebasestorage.app",
+    messagingSenderId: "239874151024",
+    appId: "1:239874151024:android:7e0d9de0400c6bb9fb5ab5"
 };
 
-// Initialize Firebase
-if (typeof firebase !== 'undefined') {
+// Initialize Firebase if not already initialized
+if (typeof firebase !== 'undefined' && !firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
-} else {
+} else if (typeof firebase === 'undefined') {
     console.warn('Firebase SDK not loaded');
 }
 
