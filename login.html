@@ -623,18 +623,6 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Pre-fill with a test email (you can change this to your actual staff email)
             document.getElementById('email').value = 'staff1@gmail.com';
-            
-            // Add a note about using real Firebase credentials
-            const noteDiv = document.createElement('div');
-            noteDiv.innerHTML = `
-                <div style="text-align: center; margin-top: 20px; padding: 10px; background: #e3f2fd; border-radius: 8px; border: 1px solid #2196f3;">
-                    <p style="margin: 0; color: #1976d2; font-size: 0.8rem;">
-                        <i class="fas fa-info-circle"></i> 
-                        Use your Firebase credentials to login. The email is pre-filled for testing.
-                    </p>
-                </div>
-            `;
-            document.querySelector('.login-form').appendChild(noteDiv);
         });
     </script>
 </body>
