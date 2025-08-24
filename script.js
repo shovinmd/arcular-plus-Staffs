@@ -245,15 +245,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     await loadDashboardData();
                 } else {
                     console.error('❌ Staff profile not found');
-                    window.location.href = 'login.html';
+                    // Only redirect if profile is truly missing (404)
+                    if (response.status === 404) {
+                        console.log('❌ Profile not found, redirecting to login');
+                        window.location.href = 'login.html';
+                    }
                 }
             } catch (error) {
                 console.error('❌ Error loading staff profile:', error);
-                window.location.href = 'login.html';
+                // Don't redirect on network errors, just log the error
+                console.log('⚠️ Network error, staying on dashboard');
             }
         } else {
             console.log('❌ No user authenticated');
             localStorage.removeItem('staff_idToken');
+            console.log('🔒 Redirecting to login page');
             window.location.href = 'login.html';
         }
     });
@@ -1394,9 +1400,11 @@ function checkSession() {
 function checkArcStaffSession() {
   const idToken = localStorage.getItem('staff_idToken');
   if (!idToken) {
+    console.log('❌ No token found, checking Firebase auth state');
     // Check if user is already authenticated with Firebase
     firebase.auth().onAuthStateChanged(function(user) {
       if (!user) {
+        console.log('❌ No user authenticated, redirecting to login');
         window.location.href = 'login.html';
         return;
       }
@@ -1404,11 +1412,15 @@ function checkArcStaffSession() {
     return;
   }
   
+  console.log('✅ Token found, verifying with Firebase');
   // Verify token with Firebase
   firebase.auth().onAuthStateChanged(function(user) {
     if (!user) {
+      console.log('❌ Firebase user not found, clearing token and redirecting');
       localStorage.removeItem('staff_idToken');
       window.location.href = 'login.html';
+    } else {
+      console.log('✅ Firebase user verified, session valid');
     }
   });
 }
