@@ -238,18 +238,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Update UI with staff name
                     const staffNameElement = document.getElementById('staffName');
                     if (staffNameElement) {
-                        staffNameElement.textContent = staffProfile.fullName || user.email;
+                        staffNameElement.textContent = staffProfile.data.fullName || user.email;
                     }
                     
                     // Load dashboard data
                     await loadDashboardData();
                 } else {
                     console.error('❌ Staff profile not found');
-                    // Only redirect if profile is truly missing (404)
-                    if (response.status === 404) {
-                        console.log('❌ Profile not found, redirecting to login');
-                        window.location.href = 'login.html';
+                    // Don't redirect, just show a message and stay on dashboard
+                    console.log('⚠️ Profile not found, but staying on dashboard');
+                    
+                    // Update UI with basic user info
+                    const staffNameElement = document.getElementById('staffName');
+                    if (staffNameElement) {
+                        staffNameElement.textContent = user.email;
                     }
+                    
+                    // Load dashboard data anyway
+                    await loadDashboardData();
                 }
             } catch (error) {
                 console.error('❌ Error loading staff profile:', error);
