@@ -448,13 +448,19 @@
             loginBtn.disabled = true;
             
             try {
+                console.log('🔐 Attempting Firebase authentication...');
+                
                 // Firebase authentication
                 const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
                 const user = userCredential.user;
+                console.log('✅ Firebase auth successful:', user.email);
+                
                 const idToken = await user.getIdToken();
+                console.log('✅ ID token obtained');
                 
                 // Verify staff access with backend
                 try {
+                    console.log('🌐 Verifying staff access with backend...');
                     const response = await fetch('https://arcular-plus-backend.onrender.com/staff/api/staff/verify', {
                         method: 'POST',
                         headers: {
@@ -467,6 +473,8 @@
                             displayName: user.displayName || user.email.split('@')[0]
                         })
                     });
+                    
+                    console.log('📡 Backend response status:', response.status);
                     
                     if (response.ok) {
                         const result = await response.json();
@@ -495,6 +503,7 @@
                         
                     } else {
                         const errorData = await response.json();
+                        console.error('❌ Backend error:', errorData);
                         throw new Error(errorData.message || 'Staff access verification failed');
                     }
                 } catch (fetchError) {
@@ -506,7 +515,7 @@
                 }
                 
             } catch (error) {
-                console.error('Login error:', error);
+                console.error('❌ Login error:', error);
                 showErrorMessage(error.message || 'Login failed. Please check your credentials.');
                 
                 // Reset form
@@ -554,25 +563,36 @@
 
         // Check if already logged in with Firebase
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔍 Checking authentication status...');
+            
+            // Check if we have a valid token first
+            const hasToken = localStorage.getItem('staff_idToken');
+            if (hasToken) {
+                console.log('✅ Token found in storage, redirecting to dashboard');
+                // Add a small delay to prevent rapid redirects
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 500);
+                return;
+            }
+            
             // Check Firebase auth state
             firebase.auth().onAuthStateChanged(function(user) {
                 if (user) {
+                    console.log('✅ Firebase user authenticated:', user.email);
                     // Check if we have a valid token
                     const idToken = localStorage.getItem('staff_idToken');
                     if (idToken) {
                         // User is authenticated and has token, redirect to dashboard
                         console.log('✅ User already authenticated, redirecting to dashboard');
-                        window.location.href = 'index.html';
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 500);
                     }
+                } else {
+                    console.log('❌ No Firebase user authenticated');
                 }
             });
-            
-            // Also check local storage as fallback
-            const hasToken = localStorage.getItem('staff_idToken');
-            if (hasToken) {
-                console.log('✅ Token found in storage, redirecting to dashboard');
-                window.location.href = 'index.html';
-            }
         });
 
         // Forgot password functionality with Firebase
@@ -601,9 +621,20 @@
 
         // Auto-fill demo credentials (for testing)
         document.addEventListener('DOMContentLoaded', function() {
-            // Uncomment the lines below to auto-fill demo credentials for testing
-            // document.getElementById('email').value = 'staff@arcularplus.com';
-            // document.getElementById('password').value = 'staff123';
+            // Pre-fill with a test email (you can change this to your actual staff email)
+            document.getElementById('email').value = 'staff1@gmail.com';
+            
+            // Add a note about using real Firebase credentials
+            const noteDiv = document.createElement('div');
+            noteDiv.innerHTML = `
+                <div style="text-align: center; margin-top: 20px; padding: 10px; background: #e3f2fd; border-radius: 8px; border: 1px solid #2196f3;">
+                    <p style="margin: 0; color: #1976d2; font-size: 0.8rem;">
+                        <i class="fas fa-info-circle"></i> 
+                        Use your Firebase credentials to login. The email is pre-filled for testing.
+                    </p>
+                </div>
+            `;
+            document.querySelector('.login-form').appendChild(noteDiv);
         });
     </script>
 </body>
