@@ -284,8 +284,8 @@ async function loadDashboardData() {
         const idToken = localStorage.getItem('staff_idToken');
         if (!idToken) return;
         
-        // Load pending approvals
-        await loadPendingApprovals();
+        // Load pending approvals from backend
+        await loadPendingApprovalsFromBackend();
         
         // Load all users
         await loadAllUsers();
