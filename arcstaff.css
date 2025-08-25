@@ -558,4 +558,136 @@ body {
 .empty-state p {
     font-size: 16px;
     line-height: 1.6;
+}
+
+/* Error Notifications */
+.error-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #dc2626;
+    color: white;
+    padding: 16px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+    z-index: 1000;
+    max-width: 400px;
+    animation: slideInRight 0.3s ease;
+}
+
+.error-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.error-content i {
+    font-size: 18px;
+    color: #fecaca;
+}
+
+.error-content span {
+    flex: 1;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.error-content button {
+    background: none;
+    border: none;
+    color: #fecaca;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.error-content button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Success Notifications */
+.success-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #059669;
+    color: white;
+    padding: 16px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+    z-index: 1000;
+    max-width: 400px;
+    animation: slideInRight 0.3s ease;
+}
+
+.success-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.success-content i {
+    font-size: 18px;
+    color: #a7f3d0;
+}
+
+.success-content span {
+    flex: 1;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.success-content button {
+    background: none;
+    border: none;
+    color: #a7f3d0;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.success-content button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Dashboard Controls */
+.dashboard-controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.refresh-btn {
+    background: #1e40af;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s ease;
+}
+
+.refresh-btn:hover {
+    background: #1e3a8a;
+}
+
+.refresh-btn i {
+    font-size: 12px;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 } 

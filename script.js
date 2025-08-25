@@ -219,6 +219,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Check authentication state
     firebase.auth().onAuthStateChanged(async function(user) {
+        // Add timeout to prevent infinite loading
+        const loadingTimeout = setTimeout(() => {
+            console.log('⚠️ Loading timeout reached, showing dashboard anyway');
+            hideLoadingState();
+        }, 15000); // 15 seconds timeout
         if (user) {
             console.log('✅ User authenticated:', user.email);
             const idToken = await user.getIdToken();
@@ -243,6 +248,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Load dashboard data
                     await loadDashboardData();
+                    
+                    // Hide loading state and show dashboard
+                    clearTimeout(loadingTimeout);
+                    hideLoadingState();
                 } else {
                     console.error('❌ Staff profile not found');
                     // Don't redirect, just show a message and stay on dashboard
@@ -256,17 +265,27 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Load dashboard data anyway
                     await loadDashboardData();
+                    
+                    // Hide loading state and show dashboard
+                    clearTimeout(loadingTimeout);
+                    hideLoadingState();
                 }
             } catch (error) {
                 console.error('❌ Error loading staff profile:', error);
                 // Don't redirect on network errors, just log the error
                 console.log('⚠️ Network error, staying on dashboard');
+                
+                // Show error message but still load dashboard
+                clearTimeout(loadingTimeout);
+                showErrorMessage('Network error loading profile. Loading dashboard with limited data...');
+                await loadDashboardData();
+                hideLoadingState();
             }
         } else {
             console.log('❌ No user authenticated');
             localStorage.removeItem('staff_idToken');
             console.log('🔒 Redirecting to login page');
-            window.location.href = 'login.html';
+            window.location.href = 'index.html';
         }
     });
 });
@@ -286,23 +305,127 @@ function initializeApp() {
     loadPendingApprovals();
 }
 
+// Loading state management
+function showLoadingState() {
+    const loadingState = document.getElementById('loadingState');
+    const dashboard = document.getElementById('dashboard');
+    if (loadingState) loadingState.style.display = 'flex';
+    if (dashboard) dashboard.style.display = 'none';
+}
+
+function hideLoadingState() {
+    const loadingState = document.getElementById('loadingState');
+    const dashboard = document.getElementById('dashboard');
+    if (loadingState) loadingState.style.display = 'none';
+    if (dashboard) dashboard.style.display = 'block';
+}
+
+// Show error message to user
+function showErrorMessage(message) {
+    console.error('❌ Error:', message);
+    
+    // Create error notification
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-notification';
+    errorDiv.innerHTML = `
+        <div class="error-content">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>${message}</span>
+            <button onclick="this.parentElement.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    
+    // Add to page
+    document.body.appendChild(errorDiv);
+    
+    // Auto-remove after 10 seconds
+    setTimeout(() => {
+        if (errorDiv.parentElement) {
+            errorDiv.remove();
+        }
+    }, 10000);
+}
+
+// Refresh dashboard manually
+async function refreshDashboard() {
+    console.log('🔄 Manual dashboard refresh requested');
+    showLoadingState();
+    
+    try {
+        await loadDashboardData();
+        hideLoadingState();
+        showSuccessMessage('Dashboard refreshed successfully');
+    } catch (error) {
+        console.error('❌ Error refreshing dashboard:', error);
+        hideLoadingState();
+        showErrorMessage('Failed to refresh dashboard');
+    }
+}
+
+// Show success message to user
+function showSuccessMessage(message) {
+    console.log('✅ Success:', message);
+    
+    // Create success notification
+    const successDiv = document.createElement('div');
+    successDiv.className = 'success-notification';
+    successDiv.innerHTML = `
+        <div class="success-content">
+            <i class="fas fa-check-circle"></i>
+            <span>${message}</span>
+            <button onclick="this.parentElement.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    
+    // Add to page
+    document.body.appendChild(successDiv);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (successDiv.parentElement) {
+            successDiv.remove();
+        }
+    }, 5000);
+}
+
 // Load dashboard data from backend
 async function loadDashboardData() {
     try {
+        console.log('🔄 Loading dashboard data...');
         const idToken = localStorage.getItem('staff_idToken');
-        if (!idToken) return;
+        if (!idToken) {
+            console.log('❌ No ID token found');
+            return;
+        }
         
-        // Load pending approvals from backend
-        await loadPendingApprovalsFromBackend();
+        // Load data with individual error handling
+        try {
+            await loadPendingApprovalsFromBackend();
+        } catch (error) {
+            console.error('❌ Error loading pending approvals:', error);
+            showErrorMessage('Failed to load pending approvals');
+        }
         
-        // Load all users
-        await loadAllUsers();
+        try {
+            await loadAllUsers();
+        } catch (error) {
+            console.error('❌ Error loading users:', error);
+            showErrorMessage('Failed to load user data');
+        }
         
         // Update dashboard stats
         updateDashboard();
         
+        console.log('✅ Dashboard data loaded successfully');
+        
     } catch (error) {
         console.error('❌ Error loading dashboard data:', error);
+        // Show error message to user
+        showErrorMessage('Failed to load dashboard data. Please refresh the page.');
     }
 }
 
