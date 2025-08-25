@@ -498,7 +498,7 @@
                         // Redirect to dashboard after delay
                         setTimeout(() => {
                             console.log('🔄 Redirecting to dashboard...');
-                            window.location.href = 'index.html';
+                            window.location.href = 'arcstaff-dashboard.html';
                         }, 2000);
                         
                     } else {
@@ -571,7 +571,7 @@
                 console.log('✅ Token found in storage, redirecting to dashboard');
                 // Add a small delay to prevent rapid redirects
                 setTimeout(() => {
-                    window.location.href = 'index.html';
+                    window.location.href = 'arcstaff-dashboard.html';
                 }, 500);
                 return;
             }
@@ -586,7 +586,7 @@
                         // User is authenticated and has token, redirect to dashboard
                         console.log('✅ User already authenticated, redirecting to dashboard');
                         setTimeout(() => {
-                            window.location.href = 'index.html';
+                            window.location.href = 'arcstaff-dashboard.html';
                         }, 500);
                     }
                 } else {
