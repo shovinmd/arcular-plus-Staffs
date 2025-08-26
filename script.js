@@ -1274,7 +1274,7 @@ function logout() {
         
         // Redirect to login page
         setTimeout(() => {
-            window.location.href = 'login.html';
+            window.location.href = 'index.html';
         }, 1000);
     }
 }
@@ -1568,12 +1568,20 @@ async function initializeArcStaffDashboard() {
       throw new Error('No authenticated user found');
     }
     
-    // Update user info in header
-    document.getElementById('userName').textContent = user.displayName || user.email.split('@')[0];
+    // Update user info in header and welcome section
+    const userName = user.displayName || user.email.split('@')[0];
+    document.getElementById('userName').textContent = userName;
     document.getElementById('userEmail').textContent = user.email;
+    document.getElementById('welcomeUserName').textContent = userName;
+    
+    // Update current date/time
+    updateCurrentDateTime();
     
     // Fetch pending stakeholders data
     await fetchPendingStakeholders();
+    
+    // Load recent activity
+    await loadRecentActivity();
     
     // Setup event listeners
     setupDashboardEventListeners();
@@ -1637,11 +1645,19 @@ function updateDashboardStats(stakeholders) {
     }
   });
   
+  // Update individual counts
   document.getElementById('hospitalCount').textContent = stats.hospital;
   document.getElementById('doctorCount').textContent = stats.doctor;
   document.getElementById('nurseCount').textContent = stats.nurse;
   document.getElementById('labCount').textContent = stats.lab;
   document.getElementById('pharmacyCount').textContent = stats.pharmacy;
+  
+  // Update total count
+  const total = Object.values(stats).reduce((sum, count) => sum + count, 0);
+  document.getElementById('totalCount').textContent = total;
+  
+  // Update trend indicators
+  updateTrendIndicators(stats);
 }
 
 // Render pending approvals list
@@ -1691,7 +1707,7 @@ function setupDashboardEventListeners() {
       if (confirm('Are you sure you want to logout?')) {
         await firebase.auth().signOut();
         localStorage.removeItem('staff_idToken');
-        window.location.href = 'login.html';
+        window.location.href = 'index.html';
       }
     });
   }
@@ -1704,6 +1720,45 @@ function setupDashboardEventListeners() {
       showSuccessMessage('View all functionality coming soon!');
     });
   }
+  
+  // Refresh activity button
+  const refreshActivityBtn = document.getElementById('refreshActivityBtn');
+  if (refreshActivityBtn) {
+    refreshActivityBtn.addEventListener('click', async () => {
+      await loadRecentActivity();
+      showSuccessMessage('Activity refreshed successfully');
+    });
+  }
+  
+  // Setup search functionality
+  setupSearchFunctionality();
+  
+  // Setup modal close functionality
+  setupModalCloseFunctionality();
+}
+
+// Setup modal close functionality
+function setupModalCloseFunctionality() {
+  // Close modals when clicking outside
+  window.addEventListener('click', (event) => {
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+      if (event.target === modal) {
+        modal.style.display = 'none';
+      }
+    });
+  });
+  
+  // Close modals when clicking close button
+  const closeButtons = document.querySelectorAll('.close');
+  closeButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const modal = button.closest('.modal');
+      if (modal) {
+        modal.style.display = 'none';
+      }
+    });
+  });
 }
 
 // View stakeholder details
@@ -2020,4 +2075,301 @@ async function handleRejectStakeholder(id) {
     console.error('❌ Rejection error:', err);
     showErrorMessage('Failed to reject stakeholder: ' + err.message);
   }
-} 
+}
+
+// Update current date/time
+function updateCurrentDateTime() {
+  const now = new Date();
+  const dateTimeString = now.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  }) + ' ' + now.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+  
+  const dateTimeElement = document.getElementById('currentDateTime');
+  if (dateTimeElement) {
+    dateTimeElement.textContent = dateTimeString;
+  }
+  
+  // Update every minute
+  setTimeout(updateCurrentDateTime, 60000);
+}
+
+// Update trend indicators
+function updateTrendIndicators(stats) {
+  // This function can be enhanced to show actual trends
+  // For now, we'll show "New today" for all categories
+  const trendElements = document.querySelectorAll('.stat-trend');
+  trendElements.forEach(element => {
+    const icon = element.querySelector('i');
+    const text = element.querySelector('span');
+    
+    if (icon && text) {
+      icon.className = 'fas fa-arrow-up';
+      text.textContent = 'New today';
+    }
+  });
+}
+
+// Load recent activity
+async function loadRecentActivity() {
+  try {
+    const idToken = localStorage.getItem('staff_idToken');
+    if (!idToken) return;
+    
+    // For now, we'll show mock activity data
+    // In the future, this can fetch from the backend
+    const activities = [
+      {
+        type: 'approval',
+        title: 'Hospital Approved',
+        description: 'City General Hospital registration approved',
+        time: '2 hours ago'
+      },
+      {
+        type: 'registration',
+        title: 'New Doctor Registration',
+        description: 'Dr. Sarah Johnson submitted registration',
+        time: '3 hours ago'
+      },
+      {
+        type: 'rejection',
+        title: 'Lab Registration Rejected',
+        description: 'Incomplete documentation for Advanced Diagnostics Lab',
+        time: '5 hours ago'
+      }
+    ];
+    
+    renderRecentActivity(activities);
+    
+  } catch (error) {
+    console.error('❌ Error loading recent activity:', error);
+  }
+}
+
+// Render recent activity
+function renderRecentActivity(activities) {
+  const container = document.getElementById('recentActivityList');
+  if (!container) return;
+  
+  if (activities.length === 0) {
+    container.innerHTML = '<div class="no-data">No recent activity</div>';
+    return;
+  }
+  
+  const activitiesHTML = activities.map(activity => `
+    <div class="activity-item">
+      <div class="activity-icon ${activity.type}">
+        <i class="fas fa-${activity.type === 'approval' ? 'check' : activity.type === 'registration' ? 'user-plus' : 'times'}"></i>
+      </div>
+      <div class="activity-content">
+        <h4>${activity.title}</h4>
+        <p>${activity.description}</p>
+      </div>
+      <div class="activity-time">${activity.time}</div>
+    </div>
+  `).join('');
+  
+  container.innerHTML = activitiesHTML;
+}
+
+// Quick action functions
+function exportData() {
+  showSuccessMessage('Export functionality coming soon!');
+}
+
+function generateReport() {
+  showSuccessMessage('Report generation coming soon!');
+}
+
+function viewAnalytics() {
+  showSuccessMessage('Analytics dashboard coming soon!');
+}
+
+function manageSettings() {
+  showSuccessMessage('Settings panel coming soon!');
+}
+
+// Enhanced stakeholder details modal
+function showStakeholderModal(stakeholderData) {
+  const modal = document.getElementById('approvalModal');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalContent = document.getElementById('modalContent');
+  
+  if (!modal || !modalTitle || !modalContent) return;
+  
+  modalTitle.textContent = `Review ${stakeholderData.userType} Application`;
+  
+  const contentHTML = `
+    <div class="stakeholder-details">
+      <h4>Basic Information</h4>
+      <div class="info-grid">
+        ${Object.entries(stakeholderData.providerInfo.basicInfo || {}).map(([key, value]) => 
+          `<div class="info-item"><strong>${key}:</strong> ${value || 'N/A'}</div>`
+        ).join('')}
+      </div>
+      
+      <h4>Documents</h4>
+      <div class="documents-list">
+        ${Object.entries(stakeholderData.documents || {}).map(([key, url]) => 
+          `<div class="document-item"><a href="${url}" target="_blank">${key}</a></div>`
+        ).join('')}
+      </div>
+      
+      <h4>Status</h4>
+      <div class="status-info">
+        <p><strong>Approval Status:</strong> ${stakeholderData.providerInfo.status?.approvalStatus || 'Pending'}</p>
+        <p><strong>Registration Date:</strong> ${new Date(stakeholderData.providerInfo.status?.registrationDate || Date.now()).toLocaleDateString()}</p>
+      </div>
+    </div>
+  `;
+  
+  modalContent.innerHTML = contentHTML;
+  
+  // Setup modal event listeners
+  setupModalEventListeners(stakeholderData);
+  
+  modal.style.display = 'block';
+}
+
+// Setup modal event listeners with enhanced functionality
+function setupModalEventListeners(stakeholderData) {
+  const approveBtn = document.getElementById('approveBtn');
+  const rejectBtn = document.getElementById('rejectBtn');
+  const requestDocsBtn = document.getElementById('requestDocsBtn');
+  const cancelBtn = document.getElementById('cancelBtn');
+  const closeBtn = document.querySelector('.close');
+  
+  if (approveBtn) {
+    approveBtn.onclick = () => handleApproveStakeholder(stakeholderData.userId);
+  }
+  
+  if (rejectBtn) {
+    rejectBtn.onclick = () => showRejectionModal(stakeholderData.userId);
+  }
+  
+  if (requestDocsBtn) {
+    requestDocsBtn.onclick = () => showDocumentRequestModal(stakeholderData.userId);
+  }
+  
+  if (cancelBtn) {
+    cancelBtn.onclick = () => closeModal('approvalModal');
+  }
+  
+  if (closeBtn) {
+    closeBtn.onclick = () => closeModal('approvalModal');
+  }
+}
+
+// Show document request modal
+function showDocumentRequestModal(stakeholderId) {
+  closeModal('approvalModal');
+  const modal = document.getElementById('documentRequestModal');
+  if (modal) {
+    modal.style.display = 'block';
+    
+    // Setup document request modal event listeners
+    const confirmRequestBtn = document.getElementById('confirmRequestBtn');
+    const cancelRequestBtn = document.getElementById('cancelRequestBtn');
+    const closeBtn = modal.querySelector('.close');
+    
+    if (confirmRequestBtn) {
+      confirmRequestBtn.onclick = () => handleDocumentRequest(stakeholderId);
+    }
+    
+    if (cancelRequestBtn) {
+      cancelRequestBtn.onclick = () => closeModal('documentRequestModal');
+    }
+    
+    if (closeBtn) {
+      closeBtn.onclick = () => closeModal('documentRequestModal');
+    }
+  }
+}
+
+// Handle document request
+async function handleDocumentRequest(stakeholderId) {
+  try {
+    const documentRequest = document.getElementById('documentRequest').value.trim();
+    const deadline = document.getElementById('deadline').value;
+    const requestNotes = document.getElementById('requestNotes').value.trim();
+    
+    if (!documentRequest) {
+      showErrorMessage('Please specify which documents are required');
+      return;
+    }
+    
+    if (!deadline) {
+      showErrorMessage('Please set a deadline for document submission');
+      return;
+    }
+    
+    showSuccessMessage('Document request sent successfully!');
+    closeModal('documentRequestModal');
+    
+    // Clear form
+    document.getElementById('documentRequest').value = '';
+    document.getElementById('deadline').value = '';
+    document.getElementById('requestNotes').value = '';
+    
+    // TODO: Send request to backend
+    
+  } catch (error) {
+    console.error('❌ Document request error:', error);
+    showErrorMessage('Failed to send document request: ' + error.message);
+  }
+}
+
+// Enhanced search functionality
+function setupSearchFunctionality() {
+  const searchInput = document.getElementById('searchApprovals');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      const searchTerm = e.target.value.toLowerCase();
+      filterApprovalsBySearch(searchTerm);
+    });
+  }
+  
+  const filterSelect = document.getElementById('filterType');
+  if (filterSelect) {
+    filterSelect.addEventListener('change', (e) => {
+      const filterType = e.target.value;
+      filterApprovalsByType(filterType);
+    });
+  }
+}
+
+// Filter approvals by search term
+function filterApprovalsBySearch(searchTerm) {
+  const approvalItems = document.querySelectorAll('.approval-item');
+  
+  approvalItems.forEach(item => {
+    const text = item.textContent.toLowerCase();
+    if (text.includes(searchTerm)) {
+      item.style.display = 'flex';
+    } else {
+      item.style.display = 'none';
+    }
+  });
+}
+
+// Filter approvals by type
+function filterApprovalsByType(filterType) {
+  const approvalItems = document.querySelectorAll('.approval-item');
+  
+  approvalItems.forEach(item => {
+    const typeElement = item.querySelector('p strong:contains("Type:")');
+    if (typeElement) {
+      const type = typeElement.nextSibling.textContent.toLowerCase();
+      if (filterType === 'all' || type === filterType) {
+        item.style.display = 'flex';
+      } else {
+        item.style.display = 'none';
+      }
+    }
+  });
+}
