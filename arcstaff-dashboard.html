@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arcular+ Staff Dashboard</title>
+    <link rel="stylesheet" href="arcstaff.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="logo1.png">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+    <!-- Loading State -->
+    <div id="loadingState" class="loading-state">
+        <div class="loading-spinner"></div>
+        <p>Loading dashboard...</p>
+    </div>
+
+    <!-- Dashboard Content -->
+    <div id="dashboardContent" class="dashboard-container" style="display: none;">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <img src="logo1.png" alt="Arcular+ Logo" class="logo">
+                <h1>ARC Staff Dashboard</h1>
+            </div>
+            <div class="header-right">
+                <div class="user-info">
+                    <span id="userName">Staff Member</span>
+                    <span id="userEmail">staff@arcular.com</span>
+                </div>
+                <button id="refreshBtn" class="refresh-btn" title="Refresh Dashboard">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <button id="logoutBtn" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="dashboard-main">
+            <!-- Stats Overview -->
+            <section class="stats-section">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-hospital"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="hospitalCount">0</h3>
+                            <p>Pending Hospitals</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-user-md"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="doctorCount">0</h3>
+                            <p>Pending Doctors</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-user-nurse"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="nurseCount">0</h3>
+                            <p>Pending Nurses</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-flask"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="labCount">0</h3>
+                            <p>Pending Labs</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-pills"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="pharmacyCount">0</h3>
+                            <p>Pending Pharmacies</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pending Approvals -->
+            <section class="approvals-section">
+                <div class="section-header">
+                    <h2>Pending Approvals</h2>
+                    <div class="section-actions">
+                        <button id="viewAllBtn" class="btn btn-primary">
+                            <i class="fas fa-list"></i> View All
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="pendingApprovalsList" class="approvals-list">
+                    <!-- Pending approvals will be populated here -->
+                </div>
+            </section>
+
+            <!-- Recent Activity -->
+            <section class="activity-section">
+                <div class="section-header">
+                    <h2>Recent Activity</h2>
+                </div>
+                <div id="recentActivityList" class="activity-list">
+                    <!-- Recent activity will be populated here -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Approval Modal -->
+    <div id="approvalModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Review Application</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="modalContent">
+                    <!-- Modal content will be populated here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="approveBtn" class="btn btn-success">
+                    <i class="fas fa-check"></i> Approve
+                </button>
+                <button id="rejectBtn" class="btn btn-danger">
+                    <i class="fas fa-times"></i> Reject
+                </button>
+                <button id="cancelBtn" class="btn btn-secondary">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rejection Modal -->
+    <div id="rejectionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Reject Application</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="rejectionReason">Reason for Rejection:</label>
+                    <textarea id="rejectionReason" rows="4" placeholder="Please provide a reason for rejection..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="confirmRejectBtn" class="btn btn-danger">
+                    <i class="fas fa-times"></i> Confirm Rejection
+                </button>
+                <button id="cancelRejectBtn" class="btn btn-secondary">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div id="messageContainer" class="message-container"></div>
+
+    <!-- Scripts -->
+    <script src="script.js"></script>
+</body>
+</html>

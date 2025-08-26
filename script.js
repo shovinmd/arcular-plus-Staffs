@@ -1540,8 +1540,339 @@ function checkArcStaffSession() {
       window.location.href = 'login.html';
     } else {
       console.log('✅ Firebase user verified, session valid');
+      // Initialize dashboard if we're on the dashboard page
+      if (window.location.pathname.includes('arcstaff-dashboard.html')) {
+        initializeArcStaffDashboard();
+      }
     }
   });
+}
+
+// Initialize ARC Staff Dashboard
+async function initializeArcStaffDashboard() {
+  console.log('🚀 Initializing ARC Staff Dashboard...');
+  
+  try {
+    // Show loading state
+    showLoadingState();
+    
+    // Get user profile
+    const idToken = localStorage.getItem('staff_idToken');
+    if (!idToken) {
+      throw new Error('No authentication token found');
+    }
+    
+    // Get current user from Firebase
+    const user = firebase.auth().currentUser;
+    if (!user) {
+      throw new Error('No authenticated user found');
+    }
+    
+    // Update user info in header
+    document.getElementById('userName').textContent = user.displayName || user.email.split('@')[0];
+    document.getElementById('userEmail').textContent = user.email;
+    
+    // Fetch pending stakeholders data
+    await fetchPendingStakeholders();
+    
+    // Setup event listeners
+    setupDashboardEventListeners();
+    
+    // Hide loading and show dashboard
+    hideLoadingState();
+    showDashboardContent();
+    
+    console.log('✅ Dashboard initialized successfully');
+    
+  } catch (error) {
+    console.error('❌ Dashboard initialization error:', error);
+    showErrorMessage('Failed to initialize dashboard: ' + error.message);
+    hideLoadingState();
+  }
+}
+
+// Fetch pending stakeholders data
+async function fetchPendingStakeholders() {
+  try {
+    const idToken = localStorage.getItem('staff_idToken');
+    const response = await fetch('https://arcular-plus-backend.onrender.com/staff/api/stakeholders/pending', {
+      headers: {
+        'Authorization': `Bearer ${idToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch pending stakeholders');
+    }
+    
+    const stakeholders = await response.json();
+    console.log('📊 Fetched pending stakeholders:', stakeholders);
+    
+    // Update stats
+    updateDashboardStats(stakeholders);
+    
+    // Render pending approvals list
+    renderPendingApprovals(stakeholders);
+    
+  } catch (error) {
+    console.error('❌ Error fetching pending stakeholders:', error);
+    showErrorMessage('Failed to fetch pending approvals: ' + error.message);
+  }
+}
+
+// Update dashboard statistics
+function updateDashboardStats(stakeholders) {
+  const stats = {
+    hospital: 0,
+    doctor: 0,
+    nurse: 0,
+    lab: 0,
+    pharmacy: 0
+  };
+  
+  stakeholders.forEach(stakeholder => {
+    if (stakeholder.type && stats.hasOwnProperty(stakeholder.type)) {
+      stats[stakeholder.type]++;
+    }
+  });
+  
+  document.getElementById('hospitalCount').textContent = stats.hospital;
+  document.getElementById('doctorCount').textContent = stats.doctor;
+  document.getElementById('nurseCount').textContent = stats.nurse;
+  document.getElementById('labCount').textContent = stats.lab;
+  document.getElementById('pharmacyCount').textContent = stats.pharmacy;
+}
+
+// Render pending approvals list
+function renderPendingApprovals(stakeholders) {
+  const container = document.getElementById('pendingApprovalsList');
+  if (!container) return;
+  
+  if (stakeholders.length === 0) {
+    container.innerHTML = '<div class="no-data">No pending approvals</div>';
+    return;
+  }
+  
+  const approvalsHTML = stakeholders.slice(0, 5).map(stakeholder => `
+    <div class="approval-item">
+      <div class="approval-info">
+        <h4>${stakeholder.name || stakeholder.fullName || 'Unknown'}</h4>
+        <p><strong>Type:</strong> ${stakeholder.type}</p>
+        <p><strong>Email:</strong> ${stakeholder.email}</p>
+        <p><strong>Submitted:</strong> ${new Date(stakeholder.submittedAt).toLocaleDateString()}</p>
+      </div>
+      <div class="approval-actions">
+        <button class="btn btn-success btn-sm" onclick="viewStakeholderDetails('${stakeholder._id}', '${stakeholder.type}')">
+          <i class="fas fa-eye"></i> View Details
+        </button>
+      </div>
+    </div>
+  `).join('');
+  
+  container.innerHTML = approvalsHTML;
+}
+
+// Setup dashboard event listeners
+function setupDashboardEventListeners() {
+  // Refresh button
+  const refreshBtn = document.getElementById('refreshBtn');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', async () => {
+      await fetchPendingStakeholders();
+      showSuccessMessage('Dashboard refreshed successfully');
+    });
+  }
+  
+  // Logout button
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', async () => {
+      if (confirm('Are you sure you want to logout?')) {
+        await firebase.auth().signOut();
+        localStorage.removeItem('staff_idToken');
+        window.location.href = 'login.html';
+      }
+    });
+  }
+  
+  // View all button
+  const viewAllBtn = document.getElementById('viewAllBtn');
+  if (viewAllBtn) {
+    viewAllBtn.addEventListener('click', () => {
+      // TODO: Implement view all functionality
+      showSuccessMessage('View all functionality coming soon!');
+    });
+  }
+}
+
+// View stakeholder details
+async function viewStakeholderDetails(stakeholderId, userType) {
+  try {
+    const idToken = localStorage.getItem('staff_idToken');
+    const response = await fetch(`https://arcular-plus-backend.onrender.com/staff/service-provider/${userType}/${stakeholderId}`, {
+      headers: {
+        'Authorization': `Bearer ${idToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch stakeholder details');
+    }
+    
+    const data = await response.json();
+    showStakeholderModal(data.data);
+    
+  } catch (error) {
+    console.error('❌ Error fetching stakeholder details:', error);
+    showErrorMessage('Failed to fetch stakeholder details: ' + error.message);
+  }
+}
+
+// Show stakeholder modal
+function showStakeholderModal(stakeholderData) {
+  const modal = document.getElementById('approvalModal');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalContent = document.getElementById('modalContent');
+  
+  if (!modal || !modalTitle || !modalContent) return;
+  
+  modalTitle.textContent = `Review ${stakeholderData.userType} Application`;
+  
+  const contentHTML = `
+    <div class="stakeholder-details">
+      <h4>Basic Information</h4>
+      <div class="info-grid">
+        ${Object.entries(stakeholderData.providerInfo.basicInfo).map(([key, value]) => 
+          `<div class="info-item"><strong>${key}:</strong> ${value || 'N/A'}</div>`
+        ).join('')}
+      </div>
+      
+      <h4>Documents</h4>
+      <div class="documents-list">
+        ${Object.entries(stakeholderData.documents).map(([key, url]) => 
+          `<div class="document-item"><a href="${url}" target="_blank">${key}</a></div>`
+        ).join('')}
+      </div>
+      
+      <h4>Status</h4>
+      <div class="status-info">
+        <p><strong>Approval Status:</strong> ${stakeholderData.providerInfo.status.approvalStatus}</p>
+        <p><strong>Registration Date:</strong> ${new Date(stakeholderData.providerInfo.status.registrationDate).toLocaleDateString()}</p>
+      </div>
+    </div>
+  `;
+  
+  modalContent.innerHTML = contentHTML;
+  
+  // Setup modal event listeners
+  setupModalEventListeners(stakeholderData);
+  
+  modal.style.display = 'block';
+}
+
+// Setup modal event listeners
+function setupModalEventListeners(stakeholderData) {
+  const approveBtn = document.getElementById('approveBtn');
+  const rejectBtn = document.getElementById('rejectBtn');
+  const cancelBtn = document.getElementById('cancelBtn');
+  const closeBtn = document.querySelector('.close');
+  
+  if (approveBtn) {
+    approveBtn.onclick = () => handleApproveStakeholder(stakeholderData.userId);
+  }
+  
+  if (rejectBtn) {
+    rejectBtn.onclick = () => showRejectionModal(stakeholderData.userId);
+  }
+  
+  if (cancelBtn) {
+    cancelBtn.onclick = () => closeModal('approvalModal');
+  }
+  
+  if (closeBtn) {
+    closeBtn.onclick = () => closeModal('approvalModal');
+  }
+}
+
+// Show rejection modal
+function showRejectionModal(stakeholderId) {
+  closeModal('approvalModal');
+  const modal = document.getElementById('rejectionModal');
+  if (modal) {
+    modal.style.display = 'block';
+    
+    // Setup rejection modal event listeners
+    const confirmRejectBtn = document.getElementById('confirmRejectBtn');
+    const cancelRejectBtn = document.getElementById('cancelRejectBtn');
+    const closeBtn = modal.querySelector('.close');
+    
+    if (confirmRejectBtn) {
+      confirmRejectBtn.onclick = () => handleRejectStakeholder(stakeholderId);
+    }
+    
+    if (cancelRejectBtn) {
+      cancelRejectBtn.onclick = () => closeModal('rejectionModal');
+    }
+    
+    if (closeBtn) {
+      closeBtn.onclick = () => closeModal('rejectionModal');
+    }
+  }
+}
+
+// Close modal
+function closeModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
+
+// Loading state functions
+function showLoadingState() {
+  const loadingState = document.getElementById('loadingState');
+  const dashboardContent = document.getElementById('dashboardContent');
+  if (loadingState) loadingState.style.display = 'flex';
+  if (dashboardContent) dashboardContent.style.display = 'none';
+}
+
+function hideLoadingState() {
+  const loadingState = document.getElementById('loadingState');
+  if (loadingState) loadingState.style.display = 'none';
+}
+
+function showDashboardContent() {
+  const dashboardContent = document.getElementById('dashboardContent');
+  if (dashboardContent) dashboardContent.style.display = 'block';
+}
+
+// Message functions
+function showSuccessMessage(message) {
+  showMessage(message, 'success');
+}
+
+function showErrorMessage(message) {
+  showMessage(message, 'error');
+}
+
+function showMessage(message, type) {
+  const container = document.getElementById('messageContainer');
+  if (!container) return;
+  
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `message message-${type}`;
+  messageDiv.textContent = message;
+  
+  container.appendChild(messageDiv);
+  
+  // Auto-remove after 5 seconds
+  setTimeout(() => {
+    if (messageDiv.parentNode) {
+      messageDiv.parentNode.removeChild(messageDiv);
+    }
+  }, 5000);
 }
 
 function setupArcStaffLogout() {
@@ -1611,29 +1942,82 @@ document.addEventListener('click', async function(e) {
 async function handleApproveStakeholder(id) {
   const idToken = localStorage.getItem('staff_idToken');
   if (!idToken) return;
+  
   try {
+    showSuccessMessage('Processing approval...');
+    
     const res = await fetch(`https://arcular-plus-backend.onrender.com/staff/api/stakeholders/${id}/approve`, {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + idToken }
     });
-    if (!res.ok) throw new Error('Failed to approve stakeholder');
-    await fetchAndRenderPendingStakeholders();
+    
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.message || 'Failed to approve stakeholder');
+    }
+    
+    const result = await res.json();
+    console.log('✅ Stakeholder approved:', result);
+    
+    // Close modal
+    closeModal('approvalModal');
+    
+    // Show success message
+    showSuccessMessage('Stakeholder approved successfully! They can now access their dashboard.');
+    
+    // Refresh dashboard data
+    await fetchPendingStakeholders();
+    
   } catch (err) {
-    alert(err.message);
+    console.error('❌ Approval error:', err);
+    showErrorMessage('Failed to approve stakeholder: ' + err.message);
   }
 }
 
 async function handleRejectStakeholder(id) {
   const idToken = localStorage.getItem('staff_idToken');
   if (!idToken) return;
+  
   try {
+    const reason = document.getElementById('rejectionReason').value.trim();
+    if (!reason) {
+      showErrorMessage('Please provide a reason for rejection');
+      return;
+    }
+    
+    showSuccessMessage('Processing rejection...');
+    
     const res = await fetch(`https://arcular-plus-backend.onrender.com/staff/api/stakeholders/${id}/reject`, {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + idToken }
+      headers: { 
+        'Authorization': 'Bearer ' + idToken,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ reason: reason })
     });
-    if (!res.ok) throw new Error('Failed to reject stakeholder');
-    await fetchAndRenderPendingStakeholders();
+    
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.message || 'Failed to reject stakeholder');
+    }
+    
+    const result = await res.json();
+    console.log('✅ Stakeholder rejected:', result);
+    
+    // Close modal
+    closeModal('rejectionModal');
+    
+    // Clear rejection reason
+    document.getElementById('rejectionReason').value = '';
+    
+    // Show success message
+    showSuccessMessage('Stakeholder rejected successfully. They will receive an email with the rejection reason.');
+    
+    // Refresh dashboard data
+    await fetchPendingStakeholders();
+    
   } catch (err) {
-    alert(err.message);
+    console.error('❌ Rejection error:', err);
+    showErrorMessage('Failed to reject stakeholder: ' + err.message);
   }
 } 
