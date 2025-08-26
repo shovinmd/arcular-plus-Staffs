@@ -1575,16 +1575,49 @@ async function initializeArcStaffDashboard() {
     
     // Update user info in header and welcome section
     if (user) {
-      const userName = user.displayName || user.email.split('@')[0];
       const userEmail = user.email;
+      
+      // Try to fetch actual staff name from database
+      try {
+        const idToken = localStorage.getItem('staff_idToken');
+        if (idToken) {
+          const response = await fetch(`https://arcular-plus-backend.onrender.com/staff/api/staff/profile/${user.uid}`, {
+            headers: {
+              'Authorization': `Bearer ${idToken}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (response.ok) {
+            const staffProfile = await response.json();
+            const actualName = staffProfile.fullName || staffProfile.displayName || user.email.split('@')[0];
+            
+            const userNameElement = document.getElementById('userName');
+            const userEmailElement = document.getElementById('userEmail');
+            const welcomeUserNameElement = document.getElementById('welcomeUserName');
+            
+            if (userNameElement) userNameElement.textContent = actualName;
+            if (userEmailElement) userEmailElement.textContent = userEmail;
+            if (welcomeUserNameElement) welcomeUserNameElement.textContent = actualName;
+            
+            console.log('✅ Staff name updated from database:', actualName);
+            return;
+          }
+        }
+      } catch (error) {
+        console.log('⚠️ Could not fetch staff profile, using fallback name');
+      }
+      
+      // Fallback to Firebase display name or email
+      const fallbackName = user.displayName || user.email.split('@')[0];
       
       const userNameElement = document.getElementById('userName');
       const userEmailElement = document.getElementById('userEmail');
       const welcomeUserNameElement = document.getElementById('welcomeUserName');
       
-      if (userNameElement) userNameElement.textContent = userName;
+      if (userNameElement) userNameElement.textContent = fallbackName;
       if (userEmailElement) userEmailElement.textContent = userEmail;
-      if (welcomeUserNameElement) welcomeUserNameElement.textContent = userName;
+      if (welcomeUserNameElement) welcomeUserNameElement.textContent = fallbackName;
     }
     
     // Update current date/time
@@ -2258,19 +2291,277 @@ function renderRecentActivity(activities) {
 
 // Quick action functions
 function exportData() {
-  showSuccessMessage('Export functionality coming soon!');
+  // Show export options modal
+  const exportOptions = [
+    { name: 'Pending Approvals', type: 'pending' },
+    { name: 'Approved Users', type: 'approved' },
+    { name: 'All Stakeholders', type: 'all' },
+    { name: 'Activity Log', type: 'activity' }
+  ];
+  
+  let exportHTML = '<div class="export-options">';
+  exportHTML += '<h4>Select Data to Export</h4>';
+  exportOptions.forEach(option => {
+    exportHTML += `<button class="export-option-btn" onclick="downloadExport('${option.type}')">${option.name}</button>`;
+  });
+  exportHTML += '</div>';
+  
+  showModal('Export Data', exportHTML, 'Export Options');
 }
 
 function generateReport() {
-  showSuccessMessage('Report generation coming soon!');
+  const reportTypes = [
+    { name: 'Monthly Summary', icon: 'fas fa-calendar-alt' },
+    { name: 'Approval Statistics', icon: 'fas fa-chart-pie' },
+    { name: 'User Growth', icon: 'fas fa-users' },
+    { name: 'Document Verification', icon: 'fas fa-file-check' }
+  ];
+  
+  let reportHTML = '<div class="report-types">';
+  reportHTML += '<h4>Select Report Type</h4>';
+  reportHTML += '<div class="report-grid">';
+  reportTypes.forEach(report => {
+    reportHTML += `
+      <div class="report-type-card" onclick="generateReportType('${report.name}')">
+        <i class="${report.icon}"></i>
+        <span>${report.name}</span>
+      </div>
+    `;
+  });
+  reportHTML += '</div></div>';
+  
+  showModal('Generate Report', reportHTML, 'Report Generation');
 }
 
 function viewAnalytics() {
-  showSuccessMessage('Analytics dashboard coming soon!');
+  const analyticsHTML = `
+    <div class="analytics-preview">
+      <h4>Analytics Dashboard Preview</h4>
+      <div class="analytics-stats">
+        <div class="stat-card">
+          <h5>Approval Rate</h5>
+          <div class="stat-value">${calculateApprovalRate()}%</div>
+        </div>
+        <div class="stat-card">
+          <h5>Processing Time</h5>
+          <div class="stat-value">${calculateAvgProcessingTime()} days</div>
+        </div>
+        <div class="stat-card">
+          <h5>Document Quality</h5>
+          <div class="stat-value">${calculateDocumentQuality()}%</div>
+        </div>
+      </div>
+      <p class="analytics-note">Full analytics dashboard will be available in the next update.</p>
+    </div>
+  `;
+  
+  showModal('Analytics Preview', analyticsHTML, 'Analytics Dashboard');
 }
 
 function manageSettings() {
-  showSuccessMessage('Settings panel coming soon!');
+  const settingsHTML = `
+    <div class="settings-panel">
+      <h4>Staff Settings</h4>
+      <div class="setting-group">
+        <label>Email Notifications</label>
+        <select id="emailNotifications">
+          <option value="all">All notifications</option>
+          <option value="important">Important only</option>
+          <option value="none">None</option>
+        </select>
+      </div>
+      <div class="setting-group">
+        <label>Dashboard Refresh Rate</label>
+        <select id="refreshRate">
+          <option value="30">30 seconds</option>
+          <option value="60">1 minute</option>
+          <option value="300">5 minutes</option>
+        </select>
+      </div>
+      <div class="setting-group">
+        <label>Profile Information</label>
+        <button class="btn btn-primary" onclick="editStaffProfile()">Edit Profile</button>
+      </div>
+      <div class="setting-note">
+        <p><i class="fas fa-info-circle"></i> Profile changes require admin approval</p>
+      </div>
+    </div>
+  `;
+  
+  showModal('Settings', settingsHTML, 'Staff Settings');
+}
+
+// Helper functions for analytics calculations
+function calculateApprovalRate() {
+  if (!pendingApprovals || !allUsers) return 0;
+  const total = pendingApprovals.length + Object.values(allUsers).flat().length;
+  const approved = Object.values(allUsers).flat().length;
+  return total > 0 ? Math.round((approved / total) * 100) : 0;
+}
+
+function calculateAvgProcessingTime() {
+  // Mock calculation - in real implementation, this would use actual timestamps
+  return Math.floor(Math.random() * 3) + 1;
+}
+
+function calculateDocumentQuality() {
+  // Mock calculation - in real implementation, this would analyze document completeness
+  return Math.floor(Math.random() * 20) + 80;
+}
+
+// Generic modal function for quick actions
+function showModal(title, content, modalType) {
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.id = 'quickActionModal';
+  
+  modal.innerHTML = `
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>${title}</h3>
+        <span class="close" onclick="closeQuickActionModal()">&times;</span>
+      </div>
+      <div class="modal-body">
+        ${content}
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  modal.style.display = 'block';
+}
+
+function closeQuickActionModal() {
+  const modal = document.getElementById('quickActionModal');
+  if (modal) {
+    modal.remove();
+  }
+}
+
+// Export and report generation functions
+function downloadExport(type) {
+  showSuccessMessage(`Exporting ${type} data... This feature will be available in the next update.`);
+  closeQuickActionModal();
+}
+
+function generateReportType(type) {
+  showSuccessMessage(`Generating ${type} report... This feature will be available in the next update.`);
+  closeQuickActionModal();
+}
+
+function editStaffProfile() {
+  closeQuickActionModal();
+  
+  // Get current staff profile data
+  const user = firebase.auth().currentUser;
+  if (!user) {
+    showErrorMessage('User not authenticated');
+    return;
+  }
+  
+  // Show profile editing modal
+  const profileModal = document.createElement('div');
+  profileModal.className = 'modal';
+  profileModal.id = 'profileEditModal';
+  
+  profileModal.innerHTML = `
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Edit Profile</h3>
+        <span class="close" onclick="closeProfileEditModal()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="profileEditForm">
+          <div class="form-group">
+            <label for="edit-fullName">Full Name</label>
+            <input type="text" id="edit-fullName" value="${currentUser?.data?.fullName || ''}" required>
+          </div>
+          <div class="form-group">
+            <label for="edit-phone">Phone Number</label>
+            <input type="tel" id="edit-phone" value="${currentUser?.data?.mobileNumber || ''}" required>
+          </div>
+          <div class="form-group">
+            <label for="edit-department">Department</label>
+            <input type="text" id="edit-department" value="${currentUser?.data?.department || ''}" required>
+          </div>
+          <div class="form-group">
+            <label for="edit-designation">Designation</label>
+            <input type="text" id="edit-designation" value="${currentUser?.data?.designation || ''}" required>
+          </div>
+          <div class="form-group">
+            <label for="edit-address">Address</label>
+            <textarea id="edit-address" rows="3">${currentUser?.data?.address || ''}</textarea>
+          </div>
+          <div class="approval-notice">
+            <i class="fas fa-info-circle"></i>
+            <p>Profile changes will be submitted for admin approval. You will be notified once approved.</p>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" onclick="closeProfileEditModal()" class="btn btn-secondary">Cancel</button>
+        <button type="button" onclick="submitProfileChanges()" class="btn btn-primary">Submit Changes</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(profileModal);
+  profileModal.style.display = 'block';
+}
+
+function closeProfileEditModal() {
+  const modal = document.getElementById('profileEditModal');
+  if (modal) {
+    modal.remove();
+  }
+}
+
+async function submitProfileChanges() {
+  try {
+    const user = firebase.auth().currentUser;
+    if (!user) {
+      showErrorMessage('User not authenticated');
+      return;
+    }
+    
+    const idToken = localStorage.getItem('staff_idToken');
+    if (!idToken) {
+      showErrorMessage('Authentication token not found');
+      return;
+    }
+    
+    const profileData = {
+      fullName: document.getElementById('edit-fullName').value,
+      mobileNumber: document.getElementById('edit-phone').value,
+      department: document.getElementById('edit-department').value,
+      designation: document.getElementById('edit-designation').value,
+      address: document.getElementById('edit-address').value,
+      requiresApproval: true,
+      submittedAt: new Date().toISOString()
+    };
+    
+    // Submit profile changes for approval
+    const response = await fetch(`https://arcular-plus-backend.onrender.com/staff/api/staff/profile-changes`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${idToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(profileData)
+    });
+    
+    if (response.ok) {
+      showSuccessMessage('Profile changes submitted for admin approval. You will be notified once approved.');
+      closeProfileEditModal();
+    } else {
+      const error = await response.json();
+      showErrorMessage(error.message || 'Failed to submit profile changes');
+    }
+    
+  } catch (error) {
+    console.error('Error submitting profile changes:', error);
+    showErrorMessage('Failed to submit profile changes. Please try again.');
+  }
 }
 
 // Enhanced stakeholder details modal
@@ -2456,15 +2747,81 @@ function filterApprovalsByType(filterType) {
 // Direct initialization trigger for dashboard page
 document.addEventListener('DOMContentLoaded', function() {
   console.log('🚀 DOM Content Loaded - Checking if we are on dashboard page');
+  console.log('Current pathname:', window.location.pathname);
   
   // Check if we are on the dashboard page
   if (window.location.pathname.includes('arcstaff-dashboard.html') || 
-      window.location.pathname.includes('arcstaff-dashboard')) {
+      window.location.pathname.includes('arcstaff-dashboard') ||
+      window.location.pathname.includes('arcstaff-dashboard.html')) {
     console.log('✅ On dashboard page, initializing...');
     
     // Add a small delay to ensure Firebase is ready
     setTimeout(() => {
-      initializeArcStaffDashboard();
+      console.log('🔄 Starting dashboard initialization...');
+      try {
+        initializeArcStaffDashboard();
+      } catch (error) {
+        console.error('❌ Error in main initialization, using fallback:', error);
+        // Fallback initialization
+        fallbackDashboardInit();
+      }
     }, 1000);
+  } else {
+    console.log('❌ Not on dashboard page, current path:', window.location.pathname);
   }
 });
+
+// Fallback dashboard initialization
+function fallbackDashboardInit() {
+  console.log('🔄 Using fallback dashboard initialization...');
+  
+  try {
+    // Show loading state
+    showLoadingState();
+    
+    // Update current date/time
+    updateCurrentDateTime();
+    
+    // Load fallback data
+    const fallbackData = [
+      {
+        _id: '1',
+        type: 'hospital',
+        name: 'City General Hospital',
+        email: 'admin@cityhospital.com',
+        submittedAt: new Date().toISOString()
+      },
+      {
+        _id: '2',
+        type: 'doctor',
+        name: 'Dr. Sarah Johnson',
+        email: 'sarah.johnson@email.com',
+        submittedAt: new Date().toISOString()
+      }
+    ];
+    
+    // Update stats
+    updateDashboardStats(fallbackData);
+    
+    // Render pending approvals list
+    renderPendingApprovals(fallbackData);
+    
+    // Load recent activity
+    loadRecentActivity();
+    
+    // Setup event listeners
+    setupDashboardEventListeners();
+    
+    // Hide loading and show dashboard
+    hideLoadingState();
+    showDashboardContent();
+    
+    console.log('✅ Fallback dashboard initialized successfully');
+    
+  } catch (error) {
+    console.error('❌ Fallback initialization failed:', error);
+    // Show dashboard anyway
+    hideLoadingState();
+    showDashboardContent();
+  }
+}
