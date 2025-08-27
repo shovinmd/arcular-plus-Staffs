@@ -36,49 +36,31 @@ async function fetchPendingApprovals() {
     try {
         const token = await getAuthToken();
         
-        // Fetch all pending approvals from different service providers
-        const [hospitals, doctors, nurses, labs, pharmacies] = await Promise.all([
-            fetch(`${API_BASE_URL}/hospitals/pending-approvals`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            }).then(res => res.json()).catch(() => ({ success: false, data: [] })),
-            
-            fetch(`${API_BASE_URL}/doctors/pending-approvals`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            }).then(res => res.json()).catch(() => ({ success: false, data: [] })),
-            
-            fetch(`${API_BASE_URL}/nurses/pending-approvals`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            }).then(res => res.json()).catch(() => ({ success: false, data: [] })),
-            
-            fetch(`${API_BASE_URL}/labs/pending-approvals`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            }).then(res => res.json()).catch(() => ({ success: false, data: [] })),
-            
-            fetch(`${API_BASE_URL}/pharmacies/pending-approvals`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            }).then(res => res.json()).catch(() => ({ success: false, data: [] }))
-        ]);
-
-        // Process and combine all pending approvals
-        const allPending = [];
+        // Fetch all pending approvals from the arc-staff endpoint
+        const response = await fetch(`${API_BASE_URL}/arc-staff/pending-approvals`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
         
-        if (hospitals.success && hospitals.data) {
-            allPending.push(...hospitals.data.map(h => ({ ...h, type: 'hospital' })));
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-        if (doctors.success && doctors.data) {
-            allPending.push(...doctors.data.map(d => ({ ...d, type: 'doctor' })));
+        
+        const result = await response.json();
+        
+        if (result.success && result.pendingUsers) {
+            // Transform the data to match expected format
+            return result.pendingUsers.map(user => ({
+                ...user,
+                type: user.userType || user.type,
+                id: user.uid,
+                name: user.fullName || user.hospitalName || 'Unknown',
+                email: user.email,
+                registrationDate: user.createdAt
+            }));
+        } else {
+            console.error('Backend returned error:', result);
+            return [];
         }
-        if (nurses.success && nurses.data) {
-            allPending.push(...nurses.data.map(n => ({ ...n, type: 'nurse' })));
-        }
-        if (labs.success && labs.data) {
-            allPending.push(...labs.data.map(l => ({ ...l, type: 'lab' })));
-        }
-        if (pharmacies.success && pharmacies.data) {
-            allPending.push(...pharmacies.data.map(p => ({ ...p, type: 'pharmacy' })));
-        }
-
-        return allPending;
     } catch (error) {
         console.error('Error fetching pending approvals:', error);
         return [];
@@ -103,7 +85,30 @@ async function getAuthToken() {
 async function fetchServiceProviderDetails(type, id) {
     try {
         const token = await getAuthToken();
-        const response = await fetch(`${API_BASE_URL}/${type}/${id}`, {
+        
+        // Use the appropriate endpoint based on type
+        let endpoint;
+        switch (type) {
+            case 'hospital':
+                endpoint = `${API_BASE_URL}/hospitals/uid/${id}`;
+                break;
+            case 'doctor':
+                endpoint = `${API_BASE_URL}/doctors/uid/${id}`;
+                break;
+            case 'nurse':
+                endpoint = `${API_BASE_URL}/nurses/uid/${id}`;
+                break;
+            case 'lab':
+                endpoint = `${API_BASE_URL}/labs/uid/${id}`;
+                break;
+            case 'pharmacy':
+                endpoint = `${API_BASE_URL}/pharmacies/uid/${id}`;
+                break;
+            default:
+                throw new Error(`Unknown service provider type: ${type}`);
+        }
+        
+        const response = await fetch(endpoint, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         
@@ -123,7 +128,9 @@ async function fetchServiceProviderDetails(type, id) {
 async function approveServiceProvider(type, id, notes = '') {
     try {
         const token = await getAuthToken();
-        const response = await fetch(`${API_BASE_URL}/${type}/${id}/approve`, {
+        
+        // Use the arc-staff approval endpoint
+        const response = await fetch(`${API_BASE_URL}/arc-staff/approve/${id}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -131,7 +138,8 @@ async function approveServiceProvider(type, id, notes = '') {
             },
             body: JSON.stringify({
                 approvedBy: currentUser?.uid || 'staff',
-                notes: notes
+                notes: notes,
+                userType: type
             })
         });
         
@@ -151,7 +159,9 @@ async function approveServiceProvider(type, id, notes = '') {
 async function rejectServiceProvider(type, id, reason, category, nextSteps) {
     try {
         const token = await getAuthToken();
-        const response = await fetch(`${API_BASE_URL}/${type}/${id}/reject`, {
+        
+        // Use the arc-staff rejection endpoint
+        const response = await fetch(`${API_BASE_URL}/arc-staff/reject/${id}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -161,7 +171,8 @@ async function rejectServiceProvider(type, id, reason, category, nextSteps) {
                 rejectedBy: currentUser?.uid || 'staff',
                 reason: reason,
                 category: category,
-                nextSteps: nextSteps
+                nextSteps: nextSteps,
+                userType: type
             })
         });
         
@@ -179,7 +190,12 @@ async function rejectServiceProvider(type, id, reason, category, nextSteps) {
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
-    initializeApp();
+    // Check if we're on the dashboard page
+    if (window.location.pathname.includes('arcstaff-dashboard.html')) {
+        checkArcStaffSession();
+    } else {
+        initializeApp();
+    }
 
     // --- ARC Staff Login Logic ---
     const loginForm = document.getElementById('loginForm');
@@ -1747,7 +1763,7 @@ async function fetchPendingStakeholders() {
   try {
     const idToken = localStorage.getItem('staff_idToken');
     
-    const response = await fetch('https://arcular-plus-backend.onrender.com/staff/api/stakeholders/pending', {
+    const response = await fetch('https://arcular-plus-backend.onrender.com/api/arc-staff/pending-approvals', {
       headers: {
         'Authorization': `Bearer ${idToken}`,
         'Content-Type': 'application/json'
@@ -1756,8 +1772,8 @@ async function fetchPendingStakeholders() {
     
     if (response.ok) {
       const result = await response.json();
-      const stakeholders = result.data || [];
-      console.log('📊 Fetched pending stakeholders from backend:', stakeholders);
+      const stakeholders = result.pendingUsers || [];
+      console.log('📊 Fetched pending approvals from backend:', stakeholders);
       
       // Update stats
       updateDashboardStats(stakeholders);
@@ -1765,7 +1781,7 @@ async function fetchPendingStakeholders() {
       // Render pending approvals list
       renderPendingApprovals(stakeholders);
     } else {
-      console.error('❌ Failed to fetch pending stakeholders:', response.status);
+      console.error('❌ Failed to fetch pending approvals:', response.status);
       showErrorMessage('Failed to load pending approvals. Please try again.');
       
       // Show empty state
