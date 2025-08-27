@@ -67,6 +67,133 @@ async function fetchPendingApprovals() {
     }
 }
 
+// Fetch all approved service providers from backend
+async function fetchAllServiceProviders() {
+    try {
+        console.log('🔄 Starting to fetch all service providers...');
+        const token = await getAuthToken();
+        console.log('✅ Got auth token:', token ? 'Token received' : 'No token');
+        
+        // Fetch all service providers in parallel
+        console.log('🔄 Fetching hospitals...');
+        const hospitalsRes = await fetch(`${API_BASE_URL}/hospitals`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        console.log('🏥 Hospitals response status:', hospitalsRes.status, hospitalsRes.ok);
+        
+        console.log('🔄 Fetching doctors...');
+        const doctorsRes = await fetch(`${API_BASE_URL}/doctors`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        console.log('👨‍⚕️ Doctors response status:', doctorsRes.status, doctorsRes.ok);
+        
+        console.log('🔄 Fetching nurses...');
+        const nursesRes = await fetch(`${API_BASE_URL}/nurses`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        console.log('👩‍⚕️ Nurses response status:', nursesRes.status, nursesRes.ok);
+        
+        console.log('🔄 Fetching labs...');
+        const labsRes = await fetch(`${API_BASE_URL}/labs`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        console.log('🧪 Labs response status:', labsRes.status, labsRes.ok);
+        
+        console.log('🔄 Fetching pharmacies...');
+        const pharmaciesRes = await fetch(`${API_BASE_URL}/pharmacies`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        console.log('💊 Pharmacies response status:', pharmaciesRes.status, pharmaciesRes.ok);
+        
+        // Parse responses
+        const hospitals = hospitalsRes.ok ? await hospitalsRes.json() : [];
+        const doctors = doctorsRes.ok ? await doctorsRes.json() : [];
+        const nurses = nursesRes.ok ? await nursesRes.json() : [];
+        const labs = labsRes.ok ? await labsRes.json() : [];
+        const pharmacies = pharmaciesRes.ok ? await pharmaciesRes.json() : [];
+        
+        console.log('📊 Raw responses:', {
+            hospitals: hospitals,
+            doctors: doctors,
+            nurses: nurses,
+            labs: labs,
+            pharmacies: pharmacies
+        });
+        
+        // Transform data to match expected format
+        const allUsersData = {
+            hospitals: (hospitals.hospitals || hospitals).map(h => ({
+                id: h.uid || h._id,
+                name: h.hospitalName || h.fullName || 'Unknown',
+                registrationNumber: h.registrationNumber || h.licenseNumber || 'N/A',
+                contact: h.mobileNumber || h.phoneNumber || 'N/A',
+                email: h.email || 'N/A',
+                address: h.address || 'N/A',
+                status: h.approvalStatus || 'approved'
+            })),
+            doctors: (doctors.data || doctors).map(d => ({
+                id: d.uid || d._id,
+                name: d.fullName || 'Unknown',
+                licenseNumber: d.licenseNumber || d.medicalRegistrationNumber || 'N/A',
+                specialization: d.specialization || 'N/A',
+                contact: d.mobileNumber || d.phoneNumber || 'N/A',
+                email: d.email || 'N/A',
+                experience: d.experienceYears || 'N/A',
+                status: d.approvalStatus || 'approved'
+            })),
+            nurses: (nurses.data || nurses).map(n => ({
+                id: n.uid || n._id,
+                name: n.fullName || 'Unknown',
+                licenseNumber: n.licenseNumber || n.registrationNumber || 'N/A',
+                department: n.department || n.specialization || 'N/A',
+                contact: n.mobileNumber || n.phoneNumber || 'N/A',
+                email: n.email || 'N/A',
+                experience: n.experienceYears || 'N/A',
+                status: n.approvalStatus || 'approved'
+            })),
+            labs: (labs.data || labs).map(l => ({
+                id: l.uid || l._id,
+                name: l.labName || l.fullName || 'Unknown',
+                licenseNumber: l.licenseNumber || l.registrationNumber || 'N/A',
+                contact: l.mobileNumber || l.phoneNumber || 'N/A',
+                email: l.email || 'N/A',
+                services: l.services || 'N/A',
+                status: l.approvalStatus || 'approved'
+            })),
+            pharmacies: (pharmacies.data || pharmacies).map(p => ({
+                id: p.uid || p._id,
+                name: p.pharmacyName || p.fullName || 'Unknown',
+                licenseNumber: p.licenseNumber || p.registrationNumber || 'N/A',
+                contact: p.mobileNumber || p.phoneNumber || 'N/A',
+                email: p.email || 'N/A',
+                services: p.services || 'N/A',
+                status: p.approvalStatus || 'approved'
+            }))
+        };
+        
+        console.log('✅ Fetched all service providers:', {
+            hospitals: allUsersData.hospitals.length,
+            doctors: allUsersData.doctors.length,
+            nurses: allUsersData.nurses.length,
+            labs: allUsersData.labs.length,
+            pharmacies: allUsersData.pharmacies.length
+        });
+        
+        return allUsersData;
+        
+    } catch (error) {
+        console.error('❌ Error fetching all service providers:', error);
+        // Return empty data on error
+        return {
+            hospitals: [],
+            doctors: [],
+            nurses: [],
+            labs: [],
+            pharmacies: []
+        };
+    }
+}
+
 // Get Firebase auth token for API calls
 async function getAuthToken() {
     try {
@@ -377,6 +504,7 @@ function initializeApp() {
     
     // Load initial data
     loadPendingApprovals();
+    loadAllUsers();
 }
 
 // Loading state management
@@ -903,6 +1031,89 @@ function viewDetails(userId) {
     modal.style.display = 'block';
 }
 
+// View user details for approved service providers
+function viewUserDetails(type, userId) {
+    const user = allUsers[type + 's'].find(u => u.id === userId);
+    if (!user) {
+        console.error('User not found:', type, userId);
+        return;
+    }
+    
+    // Use the existing modal structure
+    const modal = document.getElementById('approvalModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalContent = document.getElementById('modalContent');
+    
+    modalTitle.textContent = `${type.charAt(0).toUpperCase() + type.slice(1)} Details`;
+    
+    modalContent.innerHTML = `
+        <div class="detail-grid">
+            <div class="detail-item">
+                <label>Name</label>
+                <span>${user.name}</span>
+            </div>
+            <div class="detail-item">
+                <label>License/Registration Number</label>
+                <span>${user.licenseNumber || user.registrationNumber}</span>
+            </div>
+            <div class="detail-item">
+                <label>Contact</label>
+                <span>${user.contact}</span>
+            </div>
+            <div class="detail-item">
+                <label>Email</label>
+                <span>${user.email}</span>
+            </div>
+            ${user.address ? `
+            <div class="detail-item">
+                <label>Address</label>
+                <span>${user.address}</span>
+            </div>
+            ` : ''}
+            ${user.specialization ? `
+            <div class="detail-item">
+                <label>Specialization</label>
+                <span>${user.specialization}</span>
+            </div>
+            ` : ''}
+            ${user.department ? `
+            <div class="detail-item">
+                <label>Department</label>
+                <span>${user.department}</span>
+            </div>
+            ` : ''}
+            ${user.experience ? `
+            <div class="detail-item">
+                <label>Experience</label>
+                <span>${user.experience}</span>
+            </div>
+            ` : ''}
+            ${user.services ? `
+            <div class="detail-item">
+                <label>Services</label>
+                <span>${user.services}</span>
+            </div>
+            ` : ''}
+            <div class="detail-item">
+                <label>Status</label>
+                <span class="status-badge ${user.status}">${user.status}</span>
+            </div>
+        </div>
+    `;
+    
+    // Show only view button for approved users
+    const approveBtn = document.getElementById('approveBtn');
+    const rejectBtn = document.getElementById('rejectBtn');
+    const requestDocsBtn = document.getElementById('requestDocsBtn');
+    
+    if (approveBtn) approveBtn.style.display = 'none';
+    if (rejectBtn) rejectBtn.style.display = 'none';
+    if (requestDocsBtn) requestDocsBtn.style.display = 'none';
+    
+    // Show modal
+    modal.style.display = 'block';
+}
+
 function closeModal() {
     document.getElementById('detailModal').style.display = 'none';
 }
@@ -949,10 +1160,20 @@ async function rejectUser(userId) {
 }
 
 function loadHospitals() {
+    console.log('🏥 Loading hospitals...');
     const tbody = document.getElementById('hospitalsTable');
+    console.log('🏥 Found hospitals table:', tbody);
+    
+    if (!tbody) {
+        console.error('❌ Hospitals table not found!');
+        return;
+    }
+    
     const hospitals = allUsers.hospitals;
+    console.log('🏥 Hospitals data:', hospitals);
     
     if (hospitals.length === 0) {
+        console.log('🏥 No hospitals found, showing empty state');
         tbody.innerHTML = `
             <tr>
                 <td colspan="5" class="empty-state">
@@ -965,6 +1186,7 @@ function loadHospitals() {
         return;
     }
     
+    console.log('🏥 Rendering', hospitals.length, 'hospitals');
     tbody.innerHTML = hospitals.map(hospital => `
         <tr>
             <td>${hospital.name}</td>
@@ -978,13 +1200,25 @@ function loadHospitals() {
             </td>
         </tr>
     `).join('');
+    
+    console.log('🏥 Hospitals loaded successfully');
 }
 
 function loadDoctors() {
+    console.log('👨‍⚕️ Loading doctors...');
     const tbody = document.getElementById('doctorsTable');
+    console.log('👨‍⚕️ Found doctors table:', tbody);
+    
+    if (!tbody) {
+        console.error('❌ Doctors table not found!');
+        return;
+    }
+    
     const doctors = allUsers.doctors;
+    console.log('👨‍⚕️ Doctors data:', doctors);
     
     if (doctors.length === 0) {
+        console.log('👨‍⚕️ No doctors found, showing empty state');
         tbody.innerHTML = `
             <tr>
                 <td colspan="6" class="empty-state">
@@ -997,6 +1231,7 @@ function loadDoctors() {
         return;
     }
     
+    console.log('👨‍⚕️ Rendering', doctors.length, 'doctors');
     tbody.innerHTML = doctors.map(doctor => `
         <tr>
             <td>${doctor.name}</td>
@@ -1011,6 +1246,8 @@ function loadDoctors() {
             </td>
         </tr>
     `).join('');
+    
+    console.log('👨‍⚕️ Doctors loaded successfully');
 }
 
 function loadNurses() {
@@ -1110,12 +1347,47 @@ function loadPharmacies() {
     `).join('');
 }
 
-function loadAllUsers() {
-    loadHospitals();
-    loadDoctors();
-    loadNurses();
-    loadLabs();
-    loadPharmacies();
+async function loadAllUsers() {
+    try {
+        console.log('🔄 Loading all service providers...');
+        
+        // Fetch all service providers from backend
+        const allUsersData = await fetchAllServiceProviders();
+        
+        // Update the global allUsers object
+        allUsers.hospitals = allUsersData.hospitals;
+        allUsers.doctors = allUsersData.doctors;
+        allUsers.nurses = allUsersData.nurses;
+        allUsers.labs = allUsersData.labs;
+        allUsers.pharmacies = allUsersData.pharmacies;
+        
+        console.log('✅ All service providers loaded:', allUsers);
+        
+        // Now load the UI for each type
+        console.log('🔄 Loading hospitals UI...');
+        loadHospitals();
+        console.log('🔄 Loading doctors UI...');
+        loadDoctors();
+        console.log('🔄 Loading nurses UI...');
+        loadNurses();
+        console.log('🔄 Loading labs UI...');
+        loadLabs();
+        console.log('🔄 Loading pharmacies UI...');
+        loadPharmacies();
+        
+        console.log('✅ All UI components loaded');
+        
+    } catch (error) {
+        console.error('❌ Error loading all users:', error);
+        showErrorMessage('Failed to load service provider data. Please refresh the page.');
+        
+        // Load empty states
+        loadHospitals();
+        loadDoctors();
+        loadNurses();
+        loadLabs();
+        loadPharmacies();
+    }
 }
 
 function filterPendingApprovals() {
@@ -1727,6 +1999,13 @@ async function initializeArcStaffDashboard() {
       await fetchPendingStakeholders();
     } catch (error) {
       console.log('⚠️ Error fetching stakeholders, continuing with basic data');
+    }
+    
+    // Load all service providers data (with fallback)
+    try {
+      await loadAllUsers();
+    } catch (error) {
+      console.log('⚠️ Error loading service providers, continuing with basic data');
     }
     
     // Load recent activity

@@ -201,6 +201,173 @@
                 </div>
             </section>
 
+            <!-- Service Providers Tables -->
+            <section class="service-providers-section">
+                <div class="section-header">
+                    <h2>Service Providers</h2>
+                    <p>View and manage all approved service providers</p>
+                </div>
+                
+                <!-- Navigation Tabs -->
+                <div class="nav-tabs">
+                    <button class="nav-item active" data-tab="hospitals">
+                        <i class="fas fa-hospital"></i> Hospitals
+                    </button>
+                    <button class="nav-item" data-tab="doctors">
+                        <i class="fas fa-user-md"></i> Doctors
+                    </button>
+                    <button class="nav-item" data-tab="nurses">
+                        <i class="fas fa-user-nurse"></i> Nurses
+                    </button>
+                    <button class="nav-item" data-tab="labs">
+                        <i class="fas fa-flask"></i> Labs
+                    </button>
+                    <button class="nav-item" data-tab="pharmacies">
+                        <i class="fas fa-pills"></i> Pharmacies
+                    </button>
+                </div>
+                
+                <!-- Tab Content -->
+                <div class="tab-content">
+                    <!-- Hospitals Tab -->
+                    <div id="hospitals" class="tab-pane active">
+                        <div class="table-header">
+                            <h3>Approved Hospitals</h3>
+                            <div class="search-box">
+                                <input type="text" id="hospitalSearch" placeholder="Search hospitals...">
+                                <i class="fas fa-search"></i>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Hospital Name</th>
+                                        <th>Registration Number</th>
+                                        <th>Contact</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="hospitalsTable">
+                                    <!-- Hospitals will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Doctors Tab -->
+                    <div id="doctors" class="tab-pane">
+                        <div class="table-header">
+                            <h3>Approved Doctors</h3>
+                            <div class="search-box">
+                                <input type="text" id="doctorSearch" placeholder="Search doctors...">
+                                <i class="fas fa-search"></i>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Doctor Name</th>
+                                        <th>License Number</th>
+                                        <th>Specialization</th>
+                                        <th>Contact</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="doctorsTable">
+                                    <!-- Doctors will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Nurses Tab -->
+                    <div id="nurses" class="tab-pane">
+                        <div class="table-header">
+                            <h3>Approved Nurses</h3>
+                            <div class="search-box">
+                                <input type="text" id="nurseSearch" placeholder="Search nurses...">
+                                <i class="fas fa-search"></i>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Nurse Name</th>
+                                        <th>License Number</th>
+                                        <th>Department</th>
+                                        <th>Contact</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="nursesTable">
+                                    <!-- Nurses will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Labs Tab -->
+                    <div id="labs" class="tab-pane">
+                        <div class="table-header">
+                            <h3>Approved Labs</h3>
+                            <div class="search-box">
+                                <input type="text" id="labSearch" placeholder="Search labs...">
+                                <i class="fas fa-search"></i>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Lab Name</th>
+                                        <th>License Number</th>
+                                        <th>Contact</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="labsTable">
+                                    <!-- Labs will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Pharmacies Tab -->
+                    <div id="pharmacies" class="tab-pane">
+                        <div class="table-header">
+                            <h3>Approved Pharmacies</h3>
+                            <div class="search-box">
+                                <input type="text" id="pharmacySearch" placeholder="Search pharmacies...">
+                                <i class="fas fa-search"></i>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Pharmacy Name</th>
+                                        <th>License Number</th>
+                                        <th>Contact</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pharmaciesTable">
+                                    <!-- Pharmacies will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
             <!-- Quick Actions -->
             <section class="quick-actions-section">
                 <div class="section-header">
