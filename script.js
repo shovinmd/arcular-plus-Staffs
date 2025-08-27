@@ -35,34 +35,47 @@ if (typeof firebase !== 'undefined' && !firebase.apps.length) {
 async function fetchPendingApprovals() {
     try {
         const token = await getAuthToken();
+        console.log('🔍 Fetching pending approvals with token:', token ? 'Token received' : 'No token');
         
         // Fetch all pending approvals from the arc-staff endpoint
         const response = await fetch(`${API_BASE_URL}/arc-staff/pending-approvals`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         
+        console.log('📡 Response status:', response.status, response.ok);
+        
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const result = await response.json();
+        console.log('📋 Raw pending approvals result:', result);
         
         if (result.success && result.pendingUsers) {
             // Transform the data to match expected format
-            return result.pendingUsers.map(user => ({
+            const transformedUsers = result.pendingUsers.map(user => ({
                 ...user,
                 type: user.userType || user.type,
-                id: user.uid,
-                name: user.fullName || user.hospitalName || 'Unknown',
+                id: user.uid || user._id,
+                name: user.fullName || user.hospitalName || user.labName || user.pharmacyName || 'Unknown',
                 email: user.email,
-                registrationDate: user.createdAt
+                registrationDate: user.createdAt || user.registrationDate,
+                // Include document URLs for display
+                licenseDocumentUrl: user.licenseDocumentUrl,
+                registrationCertificateUrl: user.registrationCertificateUrl,
+                buildingPermitUrl: user.buildingPermitUrl,
+                profileImageUrl: user.profileImageUrl,
+                identityProofUrl: user.identityProofUrl
             }));
+            
+            console.log('✅ Transformed pending approvals:', transformedUsers);
+            return transformedUsers;
         } else {
             console.error('Backend returned error:', result);
             return [];
         }
     } catch (error) {
-        console.error('Error fetching pending approvals:', error);
+        console.error('❌ Error fetching pending approvals:', error);
         return [];
     }
 }
@@ -186,6 +199,7 @@ async function getAuthToken() {
 async function fetchServiceProviderDetails(type, id) {
     try {
         const token = await getAuthToken();
+        console.log(`🔍 Fetching ${type} details for ID: ${id}`);
         
         // Use the appropriate endpoint based on type
         let endpoint;
@@ -209,18 +223,37 @@ async function fetchServiceProviderDetails(type, id) {
                 throw new Error(`Unknown service provider type: ${type}`);
         }
         
+        console.log(`🌐 Calling endpoint: ${endpoint}`);
+        
         const response = await fetch(endpoint, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
+        
+        console.log(`📡 Response status: ${response.status}`);
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const data = await response.json();
-        return data.success ? data.data : null;
+        console.log(`📋 Raw response data:`, data);
+        
+        if (data.success && data.data) {
+            // Add type information for proper display
+            const result = { ...data.data, type: type };
+            console.log(`✅ Processed ${type} details:`, result);
+            return result;
+        } else if (data.success && data.hospital) {
+            // Handle case where data is directly in response
+            const result = { ...data.hospital, type: type };
+            console.log(`✅ Processed ${type} details (direct):`, result);
+            return result;
+        } else {
+            console.error(`❌ Invalid response format for ${type}:`, data);
+            return null;
+        }
     } catch (error) {
-        console.error(`Error fetching ${type} details:`, error);
+        console.error(`❌ Error fetching ${type} details:`, error);
         return null;
     }
 }
@@ -3407,6 +3440,10 @@ function renderPendingApprovalsList() {
                             <i class="fas fa-calendar"></i>
                             Submitted: ${submittedDate}
                         </span>
+                        <div class="document-status">
+                            <i class="fas fa-file-alt"></i>
+                            <span>Documents: ${getDocumentStatus(approval)}</span>
+                        </div>
                     </div>
                 </div>
                 
@@ -3438,6 +3475,59 @@ function getTypeIcon(type) {
         'pharmacy': 'fas fa-pills'
     };
     return icons[type] || 'fas fa-user';
+}
+
+// Get document status for display
+function getDocumentStatus(approval) {
+    const documents = [];
+    
+    if (approval.licenseDocumentUrl) documents.push('License');
+    if (approval.registrationCertificateUrl) documents.push('Registration');
+    if (approval.buildingPermitUrl) documents.push('Building Permit');
+    if (approval.profileImageUrl) documents.push('Profile Image');
+    if (approval.identityProofUrl) documents.push('Identity Proof');
+    
+    if (documents.length === 0) {
+        return '<span class="text-warning">No documents uploaded</span>';
+    } else if (documents.length >= 3) {
+        return `<span class="text-success">${documents.length} documents uploaded</span>`;
+    } else {
+        return `<span class="text-info">${documents.length} documents uploaded</span>`;
+    }
+}
+
+// Show approval status in modal
+function showApprovalStatus(details) {
+    const modalContent = document.getElementById('modalContent');
+    if (!modalContent) return;
+    
+    // Add approval status section at the top
+    const statusSection = document.createElement('div');
+    statusSection.className = 'approval-status-section';
+    statusSection.innerHTML = `
+        <div class="status-header">
+            <h4><i class="fas fa-info-circle"></i> Current Status</h4>
+        </div>
+        <div class="status-content">
+            <div class="status-item">
+                <label>Approval Status:</label>
+                <span class="status-badge ${details.approvalStatus || 'pending'}">${details.approvalStatus || 'pending'}</span>
+            </div>
+            <div class="status-item">
+                <label>Is Approved:</label>
+                <span class="status-badge ${details.isApproved ? 'approved' : 'pending'}">${details.isApproved ? 'Yes' : 'No'}</span>
+            </div>
+            ${details.createdAt ? `
+            <div class="status-item">
+                <label>Registration Date:</label>
+                <span>${new Date(details.createdAt).toLocaleDateString()}</span>
+            </div>
+            ` : ''}
+        </div>
+    `;
+    
+    // Insert at the beginning of modal content
+    modalContent.insertBefore(statusSection, modalContent.firstChild);
 }
 
 // Get color class for service provider type
@@ -3515,7 +3605,10 @@ function populateApprovalModal(details, type) {
     modalContent.innerHTML = detailsHTML;
     
     // Store current approval info for approve/reject actions
-    window.currentApproval = { id: details._id, type: type, details: details };
+    window.currentApproval = { id: details._id || details.uid, type: type, details: details };
+    
+    // Show approval status
+    showApprovalStatus(details);
 }
 
 // Create HTML for hospital details
@@ -3586,6 +3679,9 @@ function createHospitalDetailsHTML(hospital) {
                             </a>
                         </div>
                     ` : ''}
+                </div>
+                <div class="document-summary">
+                    <p><strong>Document Status:</strong> ${getDocumentStatus(hospital)}</p>
                 </div>
             </div>
         </div>
@@ -3938,10 +4034,16 @@ async function approveApplication(id, type) {
             closeModal();
             
             // Show success message
-            showSuccessMessage(`${type.charAt(0).toUpperCase() + type.slice(1)} approved successfully!`);
+            showSuccessMessage(`${type.charAt(0).toUpperCase() + type.slice(1)} approved successfully! The service provider can now login to their dashboard.`);
             
-            // Refresh dashboard
+            // Refresh dashboard data
             await loadDashboardData();
+            
+            // Refresh approved service providers list
+            await loadAllUsers();
+            
+            // Refresh pending approvals list
+            await loadPendingApprovalsFromBackend();
         } else {
             throw new Error('Approval failed');
         }
