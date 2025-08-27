@@ -90,12 +90,17 @@ async function fetchAllServiceProviders() {
         // Use the new arc-staff endpoint to get all approved service providers
         console.log('🔄 Fetching all approved service providers from arc-staff endpoint...');
         const response = await fetch(`${API_BASE_URL}/arc-staff/approved-service-providers`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
         });
         console.log('📊 Response status:', response.status, response.ok);
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorText = await response.text();
+            console.error('❌ HTTP Error Response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
         }
         
         const result = await response.json();
@@ -106,10 +111,15 @@ async function fetchAllServiceProviders() {
         }
         
         const allUsersData = result.data;
+        console.log('📊 Extracted data:', allUsersData);
+        
+        if (!allUsersData) {
+            throw new Error('No data received from backend');
+        }
         
         // Transform data to match expected format
         const transformedData = {
-            hospitals: allUsersData.hospitals.map(h => ({
+            hospitals: (allUsersData.hospitals || []).map(h => ({
                 id: h.uid || h._id,
                 name: h.hospitalName || h.fullName || 'Unknown',
                 registrationNumber: h.registrationNumber || h.licenseNumber || 'N/A',
@@ -118,7 +128,7 @@ async function fetchAllServiceProviders() {
                 address: h.address || 'N/A',
                 status: h.approvalStatus || 'approved'
             })),
-            doctors: allUsersData.doctors.map(d => ({
+            doctors: (allUsersData.doctors || []).map(d => ({
                 id: d.uid || d._id,
                 name: d.fullName || 'Unknown',
                 licenseNumber: d.licenseNumber || d.medicalRegistrationNumber || 'N/A',
@@ -128,7 +138,7 @@ async function fetchAllServiceProviders() {
                 experience: d.experienceYears || 'N/A',
                 status: d.approvalStatus || 'approved'
             })),
-            nurses: allUsersData.nurses.map(n => ({
+            nurses: (allUsersData.nurses || []).map(n => ({
                 id: n.uid || n._id,
                 name: n.fullName || 'Unknown',
                 licenseNumber: n.licenseNumber || n.registrationNumber || 'N/A',
@@ -138,7 +148,7 @@ async function fetchAllServiceProviders() {
                 experience: n.experienceYears || 'N/A',
                 status: n.approvalStatus || 'approved'
             })),
-            labs: allUsersData.labs.map(l => ({
+            labs: (allUsersData.labs || []).map(l => ({
                 id: l.uid || l._id,
                 name: l.labName || l.fullName || 'Unknown',
                 licenseNumber: l.licenseNumber || l.registrationNumber || 'N/A',
@@ -147,7 +157,7 @@ async function fetchAllServiceProviders() {
                 services: l.services || 'N/A',
                 status: l.approvalStatus || 'approved'
             })),
-            pharmacies: allUsersData.pharmacies.map(p => ({
+            pharmacies: (allUsersData.pharmacies || []).map(p => ({
                 id: p.uid || p._id,
                 name: p.pharmacyName || p.fullName || 'Unknown',
                 licenseNumber: p.licenseNumber || p.registrationNumber || 'N/A',
@@ -166,10 +176,22 @@ async function fetchAllServiceProviders() {
             pharmacies: transformedData.pharmacies.length
         });
         
+        console.log('✅ Transformed data sample:', {
+            hospitals: transformedData.hospitals.slice(0, 2),
+            doctors: transformedData.doctors.slice(0, 2),
+            nurses: transformedData.nurses.slice(0, 2),
+            labs: transformedData.labs.slice(0, 2),
+            pharmacies: transformedData.pharmacies.slice(0, 2)
+        });
+        
         return transformedData;
         
     } catch (error) {
         console.error('❌ Error fetching all service providers:', error);
+        console.error('❌ Error details:', {
+            message: error.message,
+            stack: error.stack
+        });
         // Return empty data on error
         return {
             hospitals: [],
@@ -184,13 +206,26 @@ async function fetchAllServiceProviders() {
 // Get Firebase auth token for API calls
 async function getAuthToken() {
     try {
+        console.log('🔑 Getting Firebase auth token...');
         const user = firebase.auth().currentUser;
+        console.log('👤 Current Firebase user:', user ? user.email : 'No user');
+        
         if (user) {
-            return await user.getIdToken();
+            const token = await user.getIdToken();
+            console.log('✅ Got Firebase token:', token ? 'Token received' : 'No token');
+            return token;
         }
-        throw new Error('No authenticated user');
+        
+        // Try to get token from localStorage as fallback
+        const storedToken = localStorage.getItem('staff_idToken');
+        if (storedToken) {
+            console.log('✅ Using stored token from localStorage');
+            return storedToken;
+        }
+        
+        throw new Error('No authenticated user or stored token');
     } catch (error) {
-        console.error('Error getting auth token:', error);
+        console.error('❌ Error getting auth token:', error);
         throw error;
     }
 }
@@ -1363,15 +1398,16 @@ async function loadAllUsers() {
         
         // Fetch all service providers from backend
         const allUsersData = await fetchAllServiceProviders();
+        console.log('📊 Received data from backend:', allUsersData);
         
         // Update the global allUsers object
-        allUsers.hospitals = allUsersData.hospitals;
-        allUsers.doctors = allUsersData.doctors;
-        allUsers.nurses = allUsersData.nurses;
-        allUsers.labs = allUsersData.labs;
-        allUsers.pharmacies = allUsersData.pharmacies;
+        allUsers.hospitals = allUsersData.hospitals || [];
+        allUsers.doctors = allUsersData.doctors || [];
+        allUsers.nurses = allUsersData.nurses || [];
+        allUsers.labs = allUsersData.labs || [];
+        allUsers.pharmacies = allUsersData.pharmacies || [];
         
-        console.log('✅ All service providers loaded:', allUsers);
+        console.log('✅ Global allUsers object updated:', allUsers);
         
         // Now load the UI for each type
         console.log('🔄 Loading hospitals UI...');
@@ -1392,6 +1428,12 @@ async function loadAllUsers() {
         
     } catch (error) {
         console.error('❌ Error loading all users:', error);
+        console.error('❌ Error details:', {
+            message: error.message,
+            stack: error.stack
+        });
+        
+        // Show error message to user
         showErrorMessage('Failed to load service provider data. Please refresh the page.');
         
         // Hide loading states
@@ -1970,7 +2012,17 @@ async function initializeArcStaffDashboard() {
       console.log('⚠️ Dashboard initialization timeout, showing dashboard anyway');
       hideLoadingState();
       showDashboardContent();
-    }, 10000); // 10 seconds timeout
+      
+      // Try to load data even after timeout
+      setTimeout(async () => {
+        try {
+          console.log('🔄 Attempting to load data after timeout...');
+          await loadAllUsers();
+        } catch (error) {
+          console.error('❌ Failed to load data after timeout:', error);
+        }
+      }, 1000);
+    }, 5000); // Reduced to 5 seconds timeout
     
     // Get user profile
     const idToken = localStorage.getItem('staff_idToken');
@@ -2281,12 +2333,19 @@ function setupDashboardEventListeners() {
 
 // Setup tab switching functionality
 function setupTabSwitching() {
+  console.log('🔄 Setting up tab switching...');
   const navItems = document.querySelectorAll('.nav-item');
   const tabPanes = document.querySelectorAll('.tab-pane');
   
-  navItems.forEach(item => {
+  console.log('📊 Found nav items:', navItems.length);
+  console.log('📊 Found tab panes:', tabPanes.length);
+  
+  navItems.forEach((item, index) => {
+    const targetTab = item.getAttribute('data-tab');
+    console.log(`📋 Nav item ${index}: targetTab = ${targetTab}`);
+    
     item.addEventListener('click', () => {
-      const targetTab = item.getAttribute('data-tab');
+      console.log(`🔄 Switching to tab: ${targetTab}`);
       
       // Remove active class from all nav items and tab panes
       navItems.forEach(nav => nav.classList.remove('active'));
@@ -2297,9 +2356,14 @@ function setupTabSwitching() {
       const targetPane = document.getElementById(targetTab);
       if (targetPane) {
         targetPane.classList.add('active');
+        console.log(`✅ Tab ${targetTab} activated`);
+      } else {
+        console.warn(`⚠️ Tab pane ${targetTab} not found`);
       }
     });
   });
+  
+  console.log('✅ Tab switching setup complete');
 }
 
 // Setup modal close functionality
@@ -3200,41 +3264,63 @@ function setupSearchFunctionality() {
   if (hospitalSearch) {
     hospitalSearch.addEventListener('input', (e) => {
       const searchTerm = e.target.value.toLowerCase();
-      filterTableRows('hospitalsTable', searchTerm, ['name', 'registrationNumber', 'contact']);
+      console.log('🏥 Hospital search:', searchTerm);
+      filterTableRows('hospitalsTable', searchTerm, [0, 1, 2]); // name, registrationNumber, contact
     });
+    console.log('✅ Hospital search setup');
+  } else {
+    console.warn('⚠️ Hospital search input not found');
   }
   
   const doctorSearch = document.getElementById('doctorSearch');
   if (doctorSearch) {
     doctorSearch.addEventListener('input', (e) => {
       const searchTerm = e.target.value.toLowerCase();
-      filterTableRows('doctorsTable', searchTerm, ['name', 'licenseNumber', 'specialization', 'contact']);
+      console.log('👨‍⚕️ Doctor search:', searchTerm);
+      filterTableRows('doctorsTable', searchTerm, [0, 1, 2, 3]); // name, licenseNumber, specialization, contact
     });
+    console.log('✅ Doctor search setup');
+  } else {
+    console.warn('⚠️ Doctor search input not found');
   }
   
-  const nurseSearch = document.getElementById('nurseSearch');
+    const nurseSearch = document.getElementById('nurseSearch');
   if (nurseSearch) {
     nurseSearch.addEventListener('input', (e) => {
       const searchTerm = e.target.value.toLowerCase();
-      filterTableRows('nursesTable', searchTerm, ['name', 'licenseNumber', 'department', 'contact']);
+      console.log('👩‍⚕️ Nurse search:', searchTerm);
+      filterTableRows('nursesTable', searchTerm, [0, 1, 2, 3]); // name, licenseNumber, department, contact
     });
+    console.log('✅ Nurse search setup');
+  } else {
+    console.warn('⚠️ Nurse search input not found');
   }
   
   const labSearch = document.getElementById('labSearch');
   if (labSearch) {
     labSearch.addEventListener('input', (e) => {
       const searchTerm = e.target.value.toLowerCase();
-      filterTableRows('labsTable', searchTerm, ['name', 'licenseNumber', 'contact']);
+      console.log('🔬 Lab search:', searchTerm);
+      filterTableRows('labsTable', searchTerm, [0, 1, 2]); // name, licenseNumber, contact
     });
+    console.log('✅ Lab search setup');
+  } else {
+    console.warn('⚠️ Lab search input not found');
   }
   
   const pharmacySearch = document.getElementById('pharmacySearch');
   if (pharmacySearch) {
     pharmacySearch.addEventListener('input', (e) => {
       const searchTerm = e.target.value.toLowerCase();
-      filterTableRows('pharmaciesTable', searchTerm, ['name', 'licenseNumber', 'contact']);
+      console.log('💊 Pharmacy search:', searchTerm);
+      filterTableRows('pharmaciesTable', searchTerm, [0, 1, 2]); // name, licenseNumber, contact
     });
+    console.log('✅ Pharmacy search setup');
+  } else {
+    console.warn('⚠️ Pharmacy search input not found');
   }
+  
+  console.log('✅ Search functionality setup complete');
 }
 
 // Generic function to filter table rows
