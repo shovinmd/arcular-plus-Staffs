@@ -74,55 +74,29 @@ async function fetchAllServiceProviders() {
         const token = await getAuthToken();
         console.log('✅ Got auth token:', token ? 'Token received' : 'No token');
         
-        // Fetch all service providers in parallel
-        console.log('🔄 Fetching hospitals...');
-        const hospitalsRes = await fetch(`${API_BASE_URL}/hospitals`, {
+        // Use the new arc-staff endpoint to get all approved service providers
+        console.log('🔄 Fetching all approved service providers from arc-staff endpoint...');
+        const response = await fetch(`${API_BASE_URL}/arc-staff/approved-service-providers`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        console.log('🏥 Hospitals response status:', hospitalsRes.status, hospitalsRes.ok);
+        console.log('📊 Response status:', response.status, response.ok);
         
-        console.log('🔄 Fetching doctors...');
-        const doctorsRes = await fetch(`${API_BASE_URL}/doctors`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        console.log('👨‍⚕️ Doctors response status:', doctorsRes.status, doctorsRes.ok);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         
-        console.log('🔄 Fetching nurses...');
-        const nursesRes = await fetch(`${API_BASE_URL}/nurses`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        console.log('👩‍⚕️ Nurses response status:', nursesRes.status, nursesRes.ok);
+        const result = await response.json();
+        console.log('📊 Raw response:', result);
         
-        console.log('🔄 Fetching labs...');
-        const labsRes = await fetch(`${API_BASE_URL}/labs`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        console.log('🧪 Labs response status:', labsRes.status, labsRes.ok);
+        if (!result.success) {
+            throw new Error(result.message || 'Failed to fetch service providers');
+        }
         
-        console.log('🔄 Fetching pharmacies...');
-        const pharmaciesRes = await fetch(`${API_BASE_URL}/pharmacies`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        console.log('💊 Pharmacies response status:', pharmaciesRes.status, pharmaciesRes.ok);
-        
-        // Parse responses
-        const hospitals = hospitalsRes.ok ? await hospitalsRes.json() : [];
-        const doctors = doctorsRes.ok ? await doctorsRes.json() : [];
-        const nurses = nursesRes.ok ? await nursesRes.json() : [];
-        const labs = labsRes.ok ? await labsRes.json() : [];
-        const pharmacies = pharmaciesRes.ok ? await pharmaciesRes.json() : [];
-        
-        console.log('📊 Raw responses:', {
-            hospitals: hospitals,
-            doctors: doctors,
-            nurses: nurses,
-            labs: labs,
-            pharmacies: pharmacies
-        });
+        const allUsersData = result.data;
         
         // Transform data to match expected format
-        const allUsersData = {
-            hospitals: (hospitals.hospitals || hospitals).map(h => ({
+        const transformedData = {
+            hospitals: allUsersData.hospitals.map(h => ({
                 id: h.uid || h._id,
                 name: h.hospitalName || h.fullName || 'Unknown',
                 registrationNumber: h.registrationNumber || h.licenseNumber || 'N/A',
@@ -131,7 +105,7 @@ async function fetchAllServiceProviders() {
                 address: h.address || 'N/A',
                 status: h.approvalStatus || 'approved'
             })),
-            doctors: (doctors.data || doctors).map(d => ({
+            doctors: allUsersData.doctors.map(d => ({
                 id: d.uid || d._id,
                 name: d.fullName || 'Unknown',
                 licenseNumber: d.licenseNumber || d.medicalRegistrationNumber || 'N/A',
@@ -141,7 +115,7 @@ async function fetchAllServiceProviders() {
                 experience: d.experienceYears || 'N/A',
                 status: d.approvalStatus || 'approved'
             })),
-            nurses: (nurses.data || nurses).map(n => ({
+            nurses: allUsersData.nurses.map(n => ({
                 id: n.uid || n._id,
                 name: n.fullName || 'Unknown',
                 licenseNumber: n.licenseNumber || n.registrationNumber || 'N/A',
@@ -151,7 +125,7 @@ async function fetchAllServiceProviders() {
                 experience: n.experienceYears || 'N/A',
                 status: n.approvalStatus || 'approved'
             })),
-            labs: (labs.data || labs).map(l => ({
+            labs: allUsersData.labs.map(l => ({
                 id: l.uid || l._id,
                 name: l.labName || l.fullName || 'Unknown',
                 licenseNumber: l.licenseNumber || l.registrationNumber || 'N/A',
@@ -160,7 +134,7 @@ async function fetchAllServiceProviders() {
                 services: l.services || 'N/A',
                 status: l.approvalStatus || 'approved'
             })),
-            pharmacies: (pharmacies.data || pharmacies).map(p => ({
+            pharmacies: allUsersData.pharmacies.map(p => ({
                 id: p.uid || p._id,
                 name: p.pharmacyName || p.fullName || 'Unknown',
                 licenseNumber: p.licenseNumber || p.registrationNumber || 'N/A',
@@ -172,14 +146,14 @@ async function fetchAllServiceProviders() {
         };
         
         console.log('✅ Fetched all service providers:', {
-            hospitals: allUsersData.hospitals.length,
-            doctors: allUsersData.doctors.length,
-            nurses: allUsersData.nurses.length,
-            labs: allUsersData.labs.length,
-            pharmacies: allUsersData.pharmacies.length
+            hospitals: transformedData.hospitals.length,
+            doctors: transformedData.doctors.length,
+            nurses: transformedData.nurses.length,
+            labs: transformedData.labs.length,
+            pharmacies: transformedData.pharmacies.length
         });
         
-        return allUsersData;
+        return transformedData;
         
     } catch (error) {
         console.error('❌ Error fetching all service providers:', error);
@@ -1351,6 +1325,9 @@ async function loadAllUsers() {
     try {
         console.log('🔄 Loading all service providers...');
         
+        // Show loading state for tables
+        showTableLoadingStates();
+        
         // Fetch all service providers from backend
         const allUsersData = await fetchAllServiceProviders();
         
@@ -1377,9 +1354,15 @@ async function loadAllUsers() {
         
         console.log('✅ All UI components loaded');
         
+        // Hide loading states
+        hideTableLoadingStates();
+        
     } catch (error) {
         console.error('❌ Error loading all users:', error);
         showErrorMessage('Failed to load service provider data. Please refresh the page.');
+        
+        // Hide loading states
+        hideTableLoadingStates();
         
         // Load empty states
         loadHospitals();
@@ -1388,6 +1371,33 @@ async function loadAllUsers() {
         loadLabs();
         loadPharmacies();
     }
+}
+
+// Show loading states for all tables
+function showTableLoadingStates() {
+    const tableIds = ['hospitalsTable', 'doctorsTable', 'nursesTable', 'labsTable', 'pharmaciesTable'];
+    
+    tableIds.forEach(tableId => {
+        const tbody = document.getElementById(tableId);
+        if (tbody) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="loading-state">
+                        <div class="loading-spinner">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>Loading...</span>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+    });
+}
+
+// Hide loading states for all tables
+function hideTableLoadingStates() {
+    // Loading states will be replaced when actual data is loaded
+    console.log('✅ Loading states hidden');
 }
 
 function filterPendingApprovals() {
@@ -1619,10 +1629,7 @@ function downloadDocument(filename) {
     }, 1000);
 }
 
-function viewUserDetails(type, userId) {
-    // Implementation for viewing approved user details
-    showNotification(`Viewing ${type} details...`, 'info');
-}
+// Removed duplicate viewUserDetails function
 
 function logout() {
     if (confirm('Are you sure you want to logout?')) {
@@ -2229,11 +2236,37 @@ function setupDashboardEventListeners() {
     });
   }
   
+  // Setup tab switching functionality
+  setupTabSwitching();
+  
   // Setup search functionality
   setupSearchFunctionality();
   
   // Setup modal close functionality
   setupModalCloseFunctionality();
+}
+
+// Setup tab switching functionality
+function setupTabSwitching() {
+  const navItems = document.querySelectorAll('.nav-item');
+  const tabPanes = document.querySelectorAll('.tab-pane');
+  
+  navItems.forEach(item => {
+    item.addEventListener('click', () => {
+      const targetTab = item.getAttribute('data-tab');
+      
+      // Remove active class from all nav items and tab panes
+      navItems.forEach(nav => nav.classList.remove('active'));
+      tabPanes.forEach(pane => pane.classList.remove('active'));
+      
+      // Add active class to clicked nav item and corresponding tab pane
+      item.classList.add('active');
+      const targetPane = document.getElementById(targetTab);
+      if (targetPane) {
+        targetPane.classList.add('active');
+      }
+    });
+  });
 }
 
 // Setup modal close functionality
@@ -3112,6 +3145,7 @@ async function handleDocumentRequest(stakeholderId) {
 
 // Enhanced search functionality
 function setupSearchFunctionality() {
+  // Pending approvals search
   const searchInput = document.getElementById('searchApprovals');
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
@@ -3127,6 +3161,70 @@ function setupSearchFunctionality() {
       filterApprovalsByType(filterType);
     });
   }
+  
+  // Approved service providers search
+  const hospitalSearch = document.getElementById('hospitalSearch');
+  if (hospitalSearch) {
+    hospitalSearch.addEventListener('input', (e) => {
+      const searchTerm = e.target.value.toLowerCase();
+      filterTableRows('hospitalsTable', searchTerm, ['name', 'registrationNumber', 'contact']);
+    });
+  }
+  
+  const doctorSearch = document.getElementById('doctorSearch');
+  if (doctorSearch) {
+    doctorSearch.addEventListener('input', (e) => {
+      const searchTerm = e.target.value.toLowerCase();
+      filterTableRows('doctorsTable', searchTerm, ['name', 'licenseNumber', 'specialization', 'contact']);
+    });
+  }
+  
+  const nurseSearch = document.getElementById('nurseSearch');
+  if (nurseSearch) {
+    nurseSearch.addEventListener('input', (e) => {
+      const searchTerm = e.target.value.toLowerCase();
+      filterTableRows('nursesTable', searchTerm, ['name', 'licenseNumber', 'department', 'contact']);
+    });
+  }
+  
+  const labSearch = document.getElementById('labSearch');
+  if (labSearch) {
+    labSearch.addEventListener('input', (e) => {
+      const searchTerm = e.target.value.toLowerCase();
+      filterTableRows('labsTable', searchTerm, ['name', 'licenseNumber', 'contact']);
+    });
+  }
+  
+  const pharmacySearch = document.getElementById('pharmacySearch');
+  if (pharmacySearch) {
+    pharmacySearch.addEventListener('input', (e) => {
+      const searchTerm = e.target.value.toLowerCase();
+      filterTableRows('pharmaciesTable', searchTerm, ['name', 'licenseNumber', 'contact']);
+    });
+  }
+}
+
+// Generic function to filter table rows
+function filterTableRows(tableId, searchTerm, columnIndexes) {
+  const tbody = document.getElementById(tableId);
+  if (!tbody) return;
+  
+  const rows = tbody.querySelectorAll('tr');
+  
+  rows.forEach(row => {
+    const cells = row.querySelectorAll('td');
+    let shouldShow = false;
+    
+    // Check if any of the specified columns contain the search term
+    columnIndexes.forEach(index => {
+      if (cells[index] && cells[index].textContent.toLowerCase().includes(searchTerm)) {
+        shouldShow = true;
+      }
+    });
+    
+    // Show/hide the row
+    row.style.display = shouldShow || searchTerm === '' ? '' : 'none';
+  });
 }
 
 // Filter approvals by search term
