@@ -489,6 +489,7 @@
                 <div class="login-footer">
                     <p>© 2025 Arcular+ Healthcare Platform. All rights reserved.</p>
                     <p>For technical support, contact: support@arcularplus.com</p>
+                    <button onclick="clearTokens()" style="margin-top: 10px; padding: 5px 10px; background: #e74c3c; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">Clear Tokens (Debug)</button>
                 </div>
             </div>
         </div>
@@ -498,22 +499,7 @@
     <script src="script.js"></script>
     
     <script>
-        // Firebase configuration for Arcular+ project
-        const firebaseConfig = {
-            apiKey: "AIzaSyBzK4SQ44cv6k8EiNF9B2agNASArWQrstk",
-            authDomain: "arcularplus-7e66c.firebaseapp.com",
-            projectId: "arcularplus-7e66c",
-            storageBucket: "arcularplus-7e66c.firebasestorage.app",
-            messagingSenderId: "239874151024",
-            appId: "1:239874151024:android:7e0d9de0400c6bb9fb5ab5"
-        };
-
-        // Initialize Firebase if not already initialized
-        if (typeof firebase !== 'undefined' && !firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        } else if (typeof firebase === 'undefined') {
-            console.warn('Firebase SDK not loaded');
-        }
+        // Firebase is initialized in script.js
 
         // Function to update staff type display
         function updateStaffTypeDisplay() {
@@ -533,6 +519,13 @@
             console.log('🔍 HTML DOMContentLoaded fired');
             console.log('🔍 Current pathname:', window.location.pathname);
             console.log('🔍 Script.js loaded:', typeof window.initializeLoginPage !== 'undefined');
+            
+            // Clear any existing tokens to prevent redirect loops
+            console.log('🧹 Clearing existing tokens to prevent redirect loops');
+            localStorage.removeItem('staff_idToken');
+            localStorage.removeItem('staffType');
+            sessionStorage.removeItem('adminLoggedIn');
+            sessionStorage.removeItem('adminEmail');
             
             // Check if script.js functions are available
             if (typeof window.initializeLoginPage === 'undefined') {
@@ -649,6 +642,19 @@
             // Pre-fill with a test email (you can change this to your actual staff email)
             document.getElementById('email').value = 'staff1@gmail.com';
         });
+
+        // Function to manually clear tokens (for debugging)
+        function clearTokens() {
+            localStorage.removeItem('staff_idToken');
+            localStorage.removeItem('staffType');
+            sessionStorage.removeItem('adminLoggedIn');
+            sessionStorage.removeItem('adminEmail');
+            console.log('🧹 All tokens cleared');
+            alert('All tokens cleared. Please refresh the page.');
+        }
+
+        // Expose clearTokens globally for debugging
+        window.clearTokens = clearTokens;
     </script>
 </body>
 </html> 
