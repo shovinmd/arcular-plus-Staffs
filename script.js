@@ -802,42 +802,47 @@ function initializeLoginPage() {
                             const result = await response.json();
                             console.log('✅ Staff access verified:', result);
                             
-                            // Store token and staff type
-                            localStorage.setItem('staff_idToken', idToken);
-                            localStorage.setItem('staffType', staffType);
+                                                    // Store token and staff type
+                        localStorage.setItem('staff_idToken', idToken);
+                        localStorage.setItem('staffType', staffType);
+                        
+                        // Debug: Show what's stored
+                        console.log('💾 Stored in localStorage:');
+                        console.log('  - staff_idToken:', idToken ? 'Present' : 'Missing');
+                        console.log('  - staffType:', staffType);
+                        
+                        // Show success message
+                        showLoginSuccess('Login successful! Redirecting to dashboard...');
+                        
+                        // Redirect based on staff type
+                        console.log('🔀 Staff type selected:', staffType);
+                        console.log('✅ Token and staff type stored in localStorage');
+                        
+                        // Set redirect flag to prevent multiple redirects
+                        redirectInProgress = true;
+                        console.log('🚩 Redirect flag set to prevent conflicts');
+                        
+                        setTimeout(() => {
+                            console.log('🔄 Redirecting to dashboard for staff type:', staffType);
                             
-                            // Show success message
-                            showLoginSuccess('Login successful! Redirecting to dashboard...');
-                            
-                            // Redirect based on staff type
-                            console.log('🔀 Staff type selected:', staffType);
-                            console.log('✅ Token and staff type stored in localStorage');
-                            
-                            // Set redirect flag to prevent multiple redirects
-                            redirectInProgress = true;
-                            console.log('🚩 Redirect flag set to prevent conflicts');
-                            
-                            setTimeout(() => {
-                                console.log('🔄 Redirecting to dashboard for staff type:', staffType);
-                                
-                                switch(staffType) {
-                                    case 'arcstaff':
-                                        console.log('🔄 Redirecting to ARC Staff Dashboard');
-                                        window.location.href = 'arcstaff-dashboard.html';
-                                        break;
-                                    case 'backend_manager':
-                                        console.log('🔄 Redirecting to Backend Manager Dashboard');
-                                        window.location.href = 'https://arcular-plus-backend-man.vercel.app/';
-                                        break;
-                                    case 'patient_supervisor':
-                                        console.log('🔄 Redirecting to Patient Supervisor Dashboard');
-                                        window.location.href = 'https://arcular-plus-backend-man-65aq.vercel.app/';
-                                        break;
-                                    default:
-                                        console.error('❌ Invalid staff type selected');
-                                        throw new Error('Please select a valid staff type');
-                                }
-                            }, 2000);
+                            switch(staffType) {
+                                case 'arcstaff':
+                                    console.log('🔄 Redirecting to ARC Staff Dashboard');
+                                    window.location.href = 'arcstaff-dashboard.html';
+                                    break;
+                                case 'backend_manager':
+                                    console.log('🔄 Redirecting to Backend Manager Dashboard');
+                                    window.location.href = 'https://arcular-plus-backend-man.vercel.app/';
+                                    break;
+                                case 'patient_supervisor':
+                                    console.log('🔄 Redirecting to Patient Supervisor Dashboard');
+                                    window.location.href = 'https://arcular-plus-backend-man-65aq.vercel.app/';
+                                    break;
+                                default:
+                                    console.error('❌ Invalid staff type selected');
+                                    throw new Error('Please select a valid staff type');
+                            }
+                        }, 2000);
                             
                         } else {
                             const errorData = await response.json();
