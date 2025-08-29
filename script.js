@@ -612,11 +612,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                 break;
                             case 'backend_manager':
                                 console.log('🔄 Redirecting to Backend Manager Dashboard');
-                                window.location.href = '../BackendManager/index.html';
+                                window.location.href = 'https://arcular-plus-backend-man.vercel.app/';
                                 break;
                             case 'patient_supervisor':
                                 console.log('🔄 Redirecting to Patient Supervisor Dashboard');
-                                window.location.href = '../PatientSupervisor/index.html';
+                                window.location.href = 'https://arcular-plus-backend-man-65aq.vercel.app/';
                                 break;
                             default:
                                 console.error('❌ Invalid staff type selected');
@@ -717,12 +717,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         switch(staffType) {
                             case 'backend_manager':
-                                console.log('🔄 Redirecting Backend Manager to:', '../BackendManager/index.html');
-                                window.location.href = '../BackendManager/index.html';
+                                console.log('🔄 Redirecting Backend Manager to:', 'https://arcular-plus-backend-man.vercel.app/');
+                                window.location.href = 'https://arcular-plus-backend-man.vercel.app/';
                                 return;
                             case 'patient_supervisor':
-                                console.log('🔄 Redirecting Patient Supervisor to:', '../PatientSupervisor/index.html');
-                                window.location.href = '../PatientSupervisor/index.html';
+                                console.log('🔄 Redirecting Patient Supervisor to:', 'https://arcular-plus-backend-man-65aq.vercel.app/');
+                                window.location.href = 'https://arcular-plus-backend-man-65aq.vercel.app/';
                                 return;
                             default:
                                 console.log('⚠️ Unknown staff type:', staffType);
@@ -2273,12 +2273,12 @@ function checkArcStaffSession() {
         
         switch(staffType) {
           case 'backend_manager':
-            console.log('🔄 checkArcStaffSession: Redirecting Backend Manager to:', '../BackendManager/index.html');
-            window.location.href = '../BackendManager/index.html';
+            console.log('🔄 checkArcStaffSession: Redirecting Backend Manager to:', 'https://arcular-plus-backend-man.vercel.app/');
+            window.location.href = 'https://arcular-plus-backend-man.vercel.app/';
             return;
           case 'patient_supervisor':
-            console.log('🔄 checkArcStaffSession: Redirecting Patient Supervisor to:', '../PatientSupervisor/index.html');
-            window.location.href = '../PatientSupervisor/index.html';
+            console.log('🔄 checkArcStaffSession: Redirecting Patient Supervisor to:', 'https://arcular-plus-backend-man-65aq.vercel.app/');
+            window.location.href = 'https://arcular-plus-backend-man-65aq.vercel.app/';
             return;
         }
       } else if (redirectInProgress) {
