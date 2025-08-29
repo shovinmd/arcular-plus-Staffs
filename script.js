@@ -539,6 +539,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check if we're on the dashboard page
     if (window.location.pathname.includes('arcstaff-dashboard.html')) {
         checkArcStaffSession();
+    } else if (window.location.pathname.includes('index.html') || window.location.pathname.endsWith('/')) {
+        // We're on the login page
+        console.log('🔐 Initializing login page...');
+        initializeLoginPage();
     } else {
         initializeApp();
     }
@@ -546,35 +550,48 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- ARC Staff Login Logic ---
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
+        console.log('✅ Login form found, adding event listener');
         loginForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const staffType = document.getElementById('staffType').value;
-            const errorDiv = document.getElementById('login-error');
             
-            if (errorDiv) errorDiv.textContent = '';
+            // Hide any existing messages
+            hideLoginMessages();
             
             // Validate staff type selection
             if (!staffType) {
-                if (errorDiv) {
-                    errorDiv.textContent = 'Please select your staff type';
-                    errorDiv.style.display = 'block';
-                } else {
-                    alert('Please select your staff type');
-                }
+                showLoginError('Please select your staff type');
                 return;
             }
             
+            // Show loading state
+            const loginBtn = document.getElementById('loginBtn');
+            const btnText = loginBtn.querySelector('.btn-text');
+            const spinner = document.getElementById('loginSpinner');
+            
+            if (btnText && spinner) {
+                btnText.style.display = 'none';
+                spinner.style.display = 'block';
+                loginBtn.disabled = true;
+            }
+            
             try {
+                console.log('🔐 Attempting Firebase authentication...');
+                
                 // Firebase authentication
                 const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
                 const user = userCredential.user;
-                const idToken = await user.getIdToken();
+                console.log('✅ Firebase auth successful:', user.email);
                 
-                // Verify staff access
+                const idToken = await user.getIdToken();
+                console.log('✅ ID token obtained');
+                
+                // Verify staff access with backend
                 try {
+                    console.log('🌐 Verifying staff access with backend...');
                     const response = await fetch('https://arcular-plus-backend.onrender.com/staff/api/staff/verify', {
                         method: 'POST',
                         headers: {
@@ -588,16 +605,20 @@ document.addEventListener('DOMContentLoaded', function() {
                         })
                     });
                     
+                    console.log('📡 Backend response status:', response.status);
+                    
                     if (response.ok) {
                         const result = await response.json();
                         console.log('✅ Staff access verified:', result);
                         
                         // Store token and staff type
                         localStorage.setItem('staff_idToken', idToken);
-                        localStorage.setItem('staffType', document.getElementById('staffType').value);
+                        localStorage.setItem('staffType', staffType);
+                        
+                        // Show success message
+                        showLoginSuccess('Login successful! Redirecting to dashboard...');
                         
                         // Redirect based on staff type
-                        const staffType = document.getElementById('staffType').value;
                         console.log('🔀 Staff type selected:', staffType);
                         console.log('✅ Token and staff type stored in localStorage');
                         
@@ -605,25 +626,31 @@ document.addEventListener('DOMContentLoaded', function() {
                         redirectInProgress = true;
                         console.log('🚩 Redirect flag set to prevent conflicts');
                         
-                        switch(staffType) {
-                            case 'arcstaff':
-                                console.log('🔄 Staying on ARC Staff Dashboard');
-                                // No redirect needed for ARC Staff, just show the dashboard
-                                break;
-                            case 'backend_manager':
-                                console.log('🔄 Redirecting to Backend Manager Dashboard');
-                                window.location.href = 'https://arcular-plus-backend-man.vercel.app/';
-                                break;
-                            case 'patient_supervisor':
-                                console.log('🔄 Redirecting to Patient Supervisor Dashboard');
-                                window.location.href = 'https://arcular-plus-backend-man-65aq.vercel.app/';
-                                break;
-                            default:
-                                console.error('❌ Invalid staff type selected');
-                                throw new Error('Please select a valid staff type');
-                        }
+                        setTimeout(() => {
+                            console.log('🔄 Redirecting to dashboard for staff type:', staffType);
+                            
+                            switch(staffType) {
+                                case 'arcstaff':
+                                    console.log('🔄 Redirecting to ARC Staff Dashboard');
+                                    window.location.href = 'arcstaff-dashboard.html';
+                                    break;
+                                case 'backend_manager':
+                                    console.log('🔄 Redirecting to Backend Manager Dashboard');
+                                    window.location.href = 'https://arcular-plus-backend-man.vercel.app/';
+                                    break;
+                                case 'patient_supervisor':
+                                    console.log('🔄 Redirecting to Patient Supervisor Dashboard');
+                                    window.location.href = 'https://arcular-plus-backend-man-65aq.vercel.app/';
+                                    break;
+                                default:
+                                    console.error('❌ Invalid staff type selected');
+                                    throw new Error('Please select a valid staff type');
+                            }
+                        }, 2000);
+                        
                     } else {
                         const errorData = await response.json();
+                        console.error('❌ Backend error:', errorData);
                         throw new Error(errorData.message || 'Staff access verification failed');
                     }
                 } catch (fetchError) {
@@ -635,12 +662,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
             } catch (error) {
-                console.error('Login error:', error);
-                if (errorDiv) {
-                    errorDiv.textContent = error.message || 'Login failed';
-                    errorDiv.style.display = 'block';
-                } else {
-                    alert('Login failed: ' + error.message);
+                console.error('❌ Login error:', error);
+                showLoginError(error.message || 'Login failed. Please check your credentials.');
+                
+                // Reset form
+                document.getElementById('password').value = '';
+            } finally {
+                // Reset loading state
+                if (btnText && spinner) {
+                    btnText.style.display = 'block';
+                    spinner.style.display = 'none';
+                    loginBtn.disabled = false;
                 }
             }
         });
@@ -793,6 +825,112 @@ function initializeApp() {
     // Load initial data
     loadPendingApprovals();
     loadAllUsers();
+}
+
+function initializeLoginPage() {
+    console.log('🔐 Setting up login page functionality...');
+    
+    // Check if already logged in
+    const hasToken = localStorage.getItem('staff_idToken');
+    const staffType = localStorage.getItem('staffType');
+    
+    if (hasToken && staffType) {
+        console.log('✅ User already logged in, redirecting to dashboard');
+        
+        let dashboardUrl;
+        switch (staffType) {
+            case 'arcstaff':
+                dashboardUrl = 'arcstaff-dashboard.html';
+                break;
+            case 'backend_manager':
+                dashboardUrl = 'https://arcular-plus-backend-man.vercel.app/';
+                break;
+            case 'patient_supervisor':
+                dashboardUrl = 'https://arcular-plus-backend-man-65aq.vercel.app/';
+                break;
+            default:
+                dashboardUrl = 'arcstaff-dashboard.html';
+        }
+        
+        // Add a small delay to prevent rapid redirects
+        setTimeout(() => {
+            window.location.href = dashboardUrl;
+        }, 500);
+        return;
+    }
+    
+    // Set up forgot password functionality
+    const forgotPasswordLink = document.querySelector('.forgot-password');
+    if (forgotPasswordLink) {
+        forgotPasswordLink.addEventListener('click', async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            
+            if (!email) {
+                showLoginError('Please enter your email address first.');
+                return;
+            }
+            
+            try {
+                // Show loading state
+                showLoginSuccess('Sending password reset email...');
+                
+                // Send password reset email via Firebase
+                await firebase.auth().sendPasswordResetEmail(email);
+                
+                showLoginSuccess('Password reset email sent! Check your inbox.');
+            } catch (error) {
+                console.error('Password reset error:', error);
+                showLoginError('Failed to send password reset email: ' + error.message);
+            }
+        });
+    }
+    
+    console.log('✅ Login page functionality initialized');
+}
+
+// Login page helper functions
+function showLoginError(message) {
+    const errorDiv = document.getElementById('login-error');
+    const errorText = document.getElementById('login-error-text');
+    
+    if (errorDiv && errorText) {
+        errorText.textContent = message;
+        errorDiv.style.display = 'flex';
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            errorDiv.style.display = 'none';
+        }, 5000);
+    } else {
+        console.error('Error elements not found:', message);
+        alert('Error: ' + message);
+    }
+}
+
+function showLoginSuccess(message) {
+    const successDiv = document.getElementById('successMessage');
+    const successText = successDiv.querySelector('span');
+    
+    if (successDiv && successText) {
+        successText.textContent = message;
+        successDiv.style.display = 'flex';
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            successDiv.style.display = 'none';
+        }, 5000);
+    } else {
+        console.log('Success:', message);
+    }
+}
+
+function hideLoginMessages() {
+    const errorDiv = document.getElementById('login-error');
+    const successDiv = document.getElementById('successMessage');
+    
+    if (errorDiv) errorDiv.style.display = 'none';
+    if (successDiv) successDiv.style.display = 'none';
 }
 
 // Loading state management
