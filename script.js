@@ -607,8 +607,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         switch(staffType) {
                             case 'arcstaff':
-                                console.log('🔄 Redirecting to ARC Staff Dashboard');
-                                window.location.href = 'arcstaff-dashboard.html';
+                                console.log('🔄 Staying on ARC Staff Dashboard');
+                                // No redirect needed for ARC Staff, just show the dashboard
                                 break;
                             case 'backend_manager':
                                 console.log('🔄 Redirecting to Backend Manager Dashboard');

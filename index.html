@@ -512,8 +512,8 @@
             console.warn('Firebase SDK not loaded');
         }
 
-        // Login functionality with Firebase
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        // Login functionality is handled by script.js to prevent conflicts
+        // Removed duplicate login handler
             e.preventDefault();
             
             const email = document.getElementById('email').value;
@@ -597,10 +597,10 @@
                                     dashboardUrl = 'arcstaff-dashboard.html';
                                     break;
                                 case 'backend_manager':
-                                    dashboardUrl = '../BackendManager/index.html';
+                                    dashboardUrl = 'https://arcular-plus-backend-man.vercel.app/';
                                     break;
                                 case 'patient_supervisor':
-                                    dashboardUrl = '../PatientSupervisor/index.html';
+                                    dashboardUrl = 'https://arcular-plus-backend-man-65aq.vercel.app/';
                                     break;
                                 default:
                                     dashboardUrl = 'arcstaff-dashboard.html';
@@ -632,12 +632,7 @@
                 // Reset form
                 document.getElementById('password').value = '';
             } finally {
-                // Reset button state
-                btnText.style.display = 'block';
-                spinner.style.display = 'none';
-                loginBtn.disabled = false;
-            }
-        });
+
 
         function showErrorMessage(message) {
             const errorDiv = document.getElementById('errorMessage');
@@ -689,10 +684,10 @@
                         dashboardUrl = 'arcstaff-dashboard.html';
                         break;
                     case 'backend_manager':
-                        dashboardUrl = '../BackendManager/index.html';
+                        dashboardUrl = 'https://arcular-plus-backend-man.vercel.app/';
                         break;
                     case 'patient_supervisor':
-                        dashboardUrl = '../PatientSupervisor/index.html';
+                        dashboardUrl = 'https://arcular-plus-backend-man-65aq.vercel.app/';
                         break;
                     default:
                         dashboardUrl = 'arcstaff-dashboard.html';
@@ -724,10 +719,10 @@
                                     dashboardUrl = 'arcstaff-dashboard.html';
                                     break;
                                 case 'backend_manager':
-                                    dashboardUrl = '../BackendManager/index.html';
+                                    dashboardUrl = 'https://arcular-plus-backend-man.vercel.app/';
                                     break;
                                 case 'patient_supervisor':
-                                    dashboardUrl = '../PatientSupervisor/index.html';
+                                    dashboardUrl = 'https://arcular-plus-backend-man-65aq.vercel.app/';
                                     break;
                             }
                         }
