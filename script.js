@@ -535,24 +535,34 @@ document.addEventListener('DOMContentLoaded', function() {
     // Reset redirect flag on page load
     redirectInProgress = false;
     console.log('🔄 Page loaded, redirect flag reset');
+    console.log('🔍 Current URL:', window.location.href);
+    console.log('🔍 Current pathname:', window.location.pathname);
+    console.log('🔍 Current hostname:', window.location.hostname);
     
     // Check if we're on the dashboard page
     if (window.location.pathname.includes('arcstaff-dashboard.html')) {
+        console.log('🏠 On ARC Staff Dashboard page');
         checkArcStaffSession();
-    } else if (window.location.pathname.includes('index.html') || window.location.pathname.endsWith('/')) {
+    } else if (window.location.pathname.includes('index.html') || window.location.pathname.endsWith('/') || window.location.pathname === '') {
         // We're on the login page
-        console.log('🔐 Initializing login page...');
+        console.log('🔐 On login page, initializing...');
         initializeLoginPage();
     } else {
+        console.log('📱 On other page, initializing app...');
         initializeApp();
     }
 
     // --- ARC Staff Login Logic ---
     const loginForm = document.getElementById('loginForm');
+    console.log('🔍 Looking for login form...');
+    console.log('🔍 Login form element:', loginForm);
+    
     if (loginForm) {
         console.log('✅ Login form found, adding event listener');
         loginForm.addEventListener('submit', async function(e) {
+            console.log('🚀 Login form submit event triggered!');
             e.preventDefault();
+            console.log('✅ Form submission prevented');
             
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
