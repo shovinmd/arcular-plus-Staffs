@@ -440,7 +440,7 @@
                     <span>Login successful! Redirecting...</span>
                 </div>
 
-                <form class="login-form" id="loginForm">
+                <form class="login-form" id="loginForm" onsubmit="return false;">
                     <div class="form-group">
                         <label for="email">Email Address</label>
                         <div class="input-icon">
@@ -480,7 +480,7 @@
                         <a href="#" class="forgot-password">Forgot Password?</a>
                     </div>
 
-                    <button type="submit" class="login-btn" id="loginBtn">
+                    <button type="button" class="login-btn" id="loginBtn" onclick="handleLoginClick()">
                         <span class="btn-text">Sign In</span>
                         <div class="spinner" id="loginSpinner"></div>
                     </button>
@@ -541,6 +541,78 @@
             }
         });
 
+        // Direct login handler function
+        function handleLoginClick() {
+            console.log('🔐 Direct login button click handler triggered');
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const staffType = document.getElementById('staffType').value;
+            
+            console.log('📝 Form data:', { email, staffType });
+            
+            if (!email || !password) {
+                alert('Please enter both email and password');
+                return;
+            }
+            
+            if (!staffType) {
+                alert('Please select your staff type');
+                return;
+            }
+            
+            // Try to use the main login handler if available
+            if (typeof window.handleMainLogin === 'function') {
+                console.log('✅ Using main login handler');
+                window.handleMainLogin(email, password, staffType);
+            } else {
+                console.log('⚠️ Main login handler not available, using backup');
+                handleBackupLogin(email, password, staffType);
+            }
+        }
+
+        // Backup login handler function
+        async function handleBackupLogin(email, password, staffType) {
+            try {
+                console.log('🔐 Attempting Firebase authentication...');
+                const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                console.log('✅ Firebase auth successful:', user.email);
+                
+                const idToken = await user.getIdToken();
+                console.log('✅ ID token obtained');
+                
+                // Store token and staff type
+                localStorage.setItem('staff_idToken', idToken);
+                localStorage.setItem('staffType', staffType);
+                
+                // Redirect based on staff type
+                console.log('🔄 Redirecting to dashboard for staff type:', staffType);
+                
+                let dashboardUrl;
+                switch(staffType) {
+                    case 'arcstaff':
+                        dashboardUrl = 'arcstaff-dashboard.html';
+                        break;
+                    case 'backend_manager':
+                        dashboardUrl = 'https://arcular-plus-backend-man.vercel.app/';
+                        break;
+                    case 'patient_supervisor':
+                        dashboardUrl = 'https://arcular-plus-backend-man-65aq.vercel.app/';
+                        break;
+                    default:
+                        dashboardUrl = 'arcstaff-dashboard.html';
+                }
+                
+                console.log('🎯 Redirecting to:', dashboardUrl);
+                window.location.href = dashboardUrl;
+                
+            } catch (error) {
+                console.error('❌ Login error:', error);
+                alert('Login failed: ' + error.message);
+            }
+        }
+
         // Backup login handler in case script.js fails to load
         function setupBackupLoginHandler() {
             console.log('🔧 Setting up backup login handler...');
@@ -548,57 +620,23 @@
             if (loginForm) {
                 loginForm.addEventListener('submit', async function(e) {
                     e.preventDefault();
-                    console.log('🔐 Backup login handler triggered');
+                    console.log('🔐 Backup form submit handler triggered');
                     
                     const email = document.getElementById('email').value;
                     const password = document.getElementById('password').value;
                     const staffType = document.getElementById('staffType').value;
                     
-                    console.log('📝 Form data:', { email, staffType });
+                    if (!email || !password) {
+                        alert('Please enter both email and password');
+                        return;
+                    }
                     
                     if (!staffType) {
                         alert('Please select your staff type');
                         return;
                     }
                     
-                    try {
-                        console.log('🔐 Attempting Firebase authentication...');
-                        const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
-                        const user = userCredential.user;
-                        console.log('✅ Firebase auth successful:', user.email);
-                        
-                        const idToken = await user.getIdToken();
-                        console.log('✅ ID token obtained');
-                        
-                        // Store token and staff type
-                        localStorage.setItem('staff_idToken', idToken);
-                        localStorage.setItem('staffType', staffType);
-                        
-                        // Redirect based on staff type
-                        console.log('🔄 Redirecting to dashboard for staff type:', staffType);
-                        
-                        let dashboardUrl;
-                        switch(staffType) {
-                            case 'arcstaff':
-                                dashboardUrl = 'arcstaff-dashboard.html';
-                                break;
-                            case 'backend_manager':
-                                dashboardUrl = 'https://arcular-plus-backend-man.vercel.app/';
-                                break;
-                            case 'patient_supervisor':
-                                dashboardUrl = 'https://arcular-plus-backend-man-65aq.vercel.app/';
-                                break;
-                            default:
-                                dashboardUrl = 'arcstaff-dashboard.html';
-                        }
-                        
-                        console.log('🎯 Redirecting to:', dashboardUrl);
-                        window.location.href = dashboardUrl;
-                        
-                    } catch (error) {
-                        console.error('❌ Login error:', error);
-                        alert('Login failed: ' + error.message);
-                    }
+                    handleBackupLogin(email, password, staffType);
                 });
                 console.log('✅ Backup login handler set up');
             } else {

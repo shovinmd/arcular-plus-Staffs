@@ -559,14 +559,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (loginForm) {
         console.log('✅ Login form found, adding event listener');
-        loginForm.addEventListener('submit', async function(e) {
-            console.log('🚀 Login form submit event triggered!');
-            e.preventDefault();
-            console.log('✅ Form submission prevented');
-            
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const staffType = document.getElementById('staffType').value;
+        // Create the main login handler function
+        async function handleMainLogin(email, password, staffType) {
+            console.log('🚀 Main login handler triggered!');
             
             // Hide any existing messages
             hideLoginMessages();
@@ -685,6 +680,33 @@ document.addEventListener('DOMContentLoaded', function() {
                     loginBtn.disabled = false;
                 }
             }
+        }
+        
+        // Expose the main login handler globally
+        window.handleMainLogin = handleMainLogin;
+        
+        // Add form submit event listener
+        loginForm.addEventListener('submit', async function(e) {
+            console.log('🚀 Login form submit event triggered!');
+            e.preventDefault();
+            console.log('✅ Form submission prevented');
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const staffType = document.getElementById('staffType').value;
+            
+            if (!email || !password) {
+                showLoginError('Please enter both email and password');
+                return;
+            }
+            
+            if (!staffType) {
+                showLoginError('Please select your staff type');
+                return;
+            }
+            
+            // Call the main login handler
+            handleMainLogin(email, password, staffType);
         });
     }
 
