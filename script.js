@@ -11,6 +11,13 @@ let allUsers = {
     pharmacies: []
 };
 
+// Current selected service provider
+let currentProviderType = null;
+let currentProviderData = {
+    approved: [],
+    pending: []
+};
+
 // Backend API configuration
 const API_BASE_URL = 'https://arcular-plus-backend.onrender.com/api';
 
@@ -4654,3 +4661,558 @@ function closeRejectionModal() {
   // Clear current rejection
   window.currentRejection = null;
 }
+
+// ===== NEW REDESIGNED DASHBOARD FUNCTIONS =====
+
+// Initialize sidebar navigation
+function initializeSidebarNavigation() {
+    const navItems = document.querySelectorAll('.nav-item');
+    
+    navItems.forEach(item => {
+        item.addEventListener('click', () => {
+            // Remove active class from all items
+            navItems.forEach(nav => nav.classList.remove('active'));
+            
+            // Add active class to clicked item
+            item.classList.add('active');
+            
+            // Get provider type
+            const providerType = item.dataset.provider;
+            currentProviderType = providerType;
+            
+            // Load service provider data
+            loadServiceProviderData(providerType);
+        });
+    });
+}
+
+// Load service provider data for selected type
+async function loadServiceProviderData(providerType) {
+    try {
+        console.log(`🔄 Loading data for ${providerType}...`);
+        
+        // Show loading state
+        showServiceProviderLoading();
+        
+        // Fetch data from backend
+        const token = await getAuthToken();
+        const response = await fetch(`${API_BASE_URL}/arc-staff/service-providers/${providerType}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            currentProviderData = {
+                approved: result.data.approved || [],
+                pending: result.data.pending || []
+            };
+            
+            // Update sidebar counts
+            updateSidebarCounts(providerType, currentProviderData);
+            
+            // Render service provider lists
+            renderServiceProviderLists(providerType);
+        } else {
+            throw new Error(result.message || 'Failed to fetch data');
+        }
+        
+    } catch (error) {
+        console.error(`❌ Error loading ${providerType} data:`, error);
+        showErrorMessage(`Failed to load ${providerType} data`);
+        showServiceProviderError();
+    }
+}
+
+// Show loading state for service provider content
+function showServiceProviderLoading() {
+    const content = document.getElementById('serviceProviderContent');
+    content.innerHTML = `
+        <div class="loading-state-content">
+            <div class="loading-spinner">
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+            </div>
+            <p>Loading ${currentProviderType} data...</p>
+        </div>
+    `;
+}
+
+// Show error state for service provider content
+function showServiceProviderError() {
+    const content = document.getElementById('serviceProviderContent');
+    content.innerHTML = `
+        <div class="error-state-content">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3>Error Loading Data</h3>
+            <p>Failed to load ${currentProviderType} information. Please try again.</p>
+            <button class="btn btn-primary" onclick="loadServiceProviderData('${currentProviderType}')">
+                <i class="fas fa-redo"></i> Retry
+            </button>
+        </div>
+    `;
+}
+
+// Update sidebar counts
+function updateSidebarCounts(providerType, data) {
+    const approvedCount = document.getElementById(`${providerType}ApprovedCount`);
+    const pendingCount = document.getElementById(`${providerType}PendingCount`);
+    
+    if (approvedCount) approvedCount.textContent = data.approved.length;
+    if (pendingCount) pendingCount.textContent = data.pending.length;
+}
+
+// Render service provider lists
+function renderServiceProviderLists(providerType) {
+    const content = document.getElementById('serviceProviderContent');
+    
+    content.innerHTML = `
+        <div class="service-provider-lists">
+            <div class="list-section">
+                <div class="section-header">
+                    <h2>Pending Approvals</h2>
+                    <span class="count-badge pending">${currentProviderData.pending.length}</span>
+                </div>
+                <div class="list-container">
+                    ${renderPendingList(providerType)}
+                </div>
+            </div>
+            
+            <div class="list-section">
+                <div class="section-header">
+                    <h2>Approved Providers</h2>
+                    <span class="count-badge approved">${currentProviderData.approved.length}</span>
+                </div>
+                <div class="list-container">
+                    ${renderApprovedList(providerType)}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Render pending list
+function renderPendingList(providerType) {
+    if (currentProviderData.pending.length === 0) {
+        return `
+            <div class="empty-state">
+                <i class="fas fa-check-circle"></i>
+                <p>No pending approvals for ${providerType}</p>
+            </div>
+        `;
+    }
+    
+    return currentProviderData.pending.map(provider => `
+        <div class="list-item pending" data-id="${provider.id}" data-type="${providerType}">
+            <div class="item-info">
+                <div class="item-name">${provider.name || provider.fullName || provider.hospitalName || provider.labName || provider.pharmacyName}</div>
+                <div class="item-details">
+                    <span class="email">${provider.email}</span>
+                    <span class="date">${formatDate(provider.createdAt || provider.registrationDate)}</span>
+                </div>
+            </div>
+            <div class="item-actions">
+                <button class="btn btn-primary btn-sm" onclick="viewProviderDetails('${provider.id}', '${providerType}')">
+                    <i class="fas fa-eye"></i> View
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Render approved list
+function renderApprovedList(providerType) {
+    if (currentProviderData.approved.length === 0) {
+        return `
+            <div class="empty-state">
+                <i class="fas fa-info-circle"></i>
+                <p>No approved ${providerType} yet</p>
+            </div>
+        `;
+    }
+    
+    return currentProviderData.approved.map(provider => `
+        <div class="list-item approved" data-id="${provider.id}" data-type="${providerType}">
+            <div class="item-info">
+                <div class="item-name">${provider.name || provider.fullName || provider.hospitalName || provider.labName || provider.pharmacyName}</div>
+                <div class="item-details">
+                    <span class="email">${provider.email}</span>
+                    <span class="date">${formatDate(provider.createdAt || provider.registrationDate)}</span>
+                </div>
+            </div>
+            <div class="item-actions">
+                <button class="btn btn-secondary btn-sm" onclick="viewProviderDetails('${provider.id}', '${providerType}')">
+                    <i class="fas fa-eye"></i> View
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// View provider details
+async function viewProviderDetails(providerId, providerType) {
+    try {
+        console.log(`🔍 Viewing details for ${providerType} with ID: ${providerId}`);
+        
+        // Fetch detailed information
+        const token = await getAuthToken();
+        const response = await fetch(`${API_BASE_URL}/arc-staff/provider-details/${providerType}/${providerId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            const provider = result.data;
+            
+            // Populate modal with provider details
+            populateProviderDetailsModal(provider, providerType);
+            
+            // Show modal
+            document.getElementById('providerDetailsModal').style.display = 'block';
+        } else {
+            throw new Error(result.message || 'Failed to fetch provider details');
+        }
+        
+    } catch (error) {
+        console.error('❌ Error viewing provider details:', error);
+        showErrorMessage('Failed to load provider details');
+    }
+}
+
+// Populate provider details modal
+function populateProviderDetailsModal(provider, providerType) {
+    const modalTitle = document.getElementById('providerModalTitle');
+    const modalContent = document.getElementById('providerDetailsContent');
+    
+    modalTitle.textContent = `${providerType.charAt(0).toUpperCase() + providerType.slice(1)} Details`;
+    
+    modalContent.innerHTML = `
+        <div class="provider-details">
+            <div class="detail-section">
+                <h4>Basic Information</h4>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <label>Name:</label>
+                        <span>${provider.name || provider.fullName || provider.hospitalName || provider.labName || provider.pharmacyName}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Email:</label>
+                        <span>${provider.email}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Phone:</label>
+                        <span>${provider.mobileNumber || provider.phoneNumber || 'N/A'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Registration Date:</label>
+                        <span>${formatDate(provider.createdAt || provider.registrationDate)}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="detail-section">
+                <h4>Documents</h4>
+                <div class="document-grid">
+                    ${renderDocumentSection(provider, providerType)}
+                </div>
+            </div>
+            
+            <div class="detail-section">
+                <h4>Additional Information</h4>
+                <div class="detail-grid">
+                    ${renderAdditionalInfo(provider, providerType)}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Store current provider for approval/rejection
+    window.currentProvider = { ...provider, type: providerType };
+}
+
+// Render document section
+function renderDocumentSection(provider, providerType) {
+    const documents = [];
+    
+    if (provider.profileImageUrl) {
+        documents.push({
+            name: 'Profile Image',
+            url: provider.profileImageUrl,
+            type: 'image'
+        });
+    }
+    
+    if (provider.licenseDocumentUrl) {
+        documents.push({
+            name: 'License Document',
+            url: provider.licenseDocumentUrl,
+            type: 'document'
+        });
+    }
+    
+    if (provider.identityProofUrl) {
+        documents.push({
+            name: 'Identity Proof',
+            url: provider.identityProofUrl,
+            type: 'document'
+        });
+    }
+    
+    if (provider.registrationCertificateUrl) {
+        documents.push({
+            name: 'Registration Certificate',
+            url: provider.registrationCertificateUrl,
+            type: 'document'
+        });
+    }
+    
+    if (documents.length === 0) {
+        return '<p>No documents uploaded</p>';
+    }
+    
+    return documents.map(doc => `
+        <div class="document-item">
+            <div class="document-info">
+                <i class="fas fa-${doc.type === 'image' ? 'image' : 'file-alt'}"></i>
+                <span>${doc.name}</span>
+            </div>
+            <button class="btn btn-sm btn-secondary" onclick="viewDocument('${doc.url}', '${doc.name}')">
+                <i class="fas fa-eye"></i> View
+            </button>
+        </div>
+    `).join('');
+}
+
+// Render additional information
+function renderAdditionalInfo(provider, providerType) {
+    const info = [];
+    
+    switch (providerType) {
+        case 'hospital':
+            if (provider.hospitalName) info.push(['Hospital Name', provider.hospitalName]);
+            if (provider.registrationNumber) info.push(['Registration Number', provider.registrationNumber]);
+            if (provider.address) info.push(['Address', provider.address]);
+            break;
+        case 'doctor':
+            if (provider.specialization) info.push(['Specialization', provider.specialization]);
+            if (provider.medicalRegistrationNumber) info.push(['Medical Registration', provider.medicalRegistrationNumber]);
+            if (provider.experienceYears) info.push(['Experience', `${provider.experienceYears} years`]);
+            break;
+        case 'nurse':
+            if (provider.department) info.push(['Department', provider.department]);
+            if (provider.registrationNumber) info.push(['Registration Number', provider.registrationNumber]);
+            break;
+        case 'lab':
+            if (provider.labName) info.push(['Lab Name', provider.labName]);
+            if (provider.services) info.push(['Services', provider.services]);
+            break;
+        case 'pharmacy':
+            if (provider.pharmacyName) info.push(['Pharmacy Name', provider.pharmacyName]);
+            if (provider.services) info.push(['Services', provider.services]);
+            break;
+    }
+    
+    if (info.length === 0) {
+        return '<p>No additional information available</p>';
+    }
+    
+    return info.map(([label, value]) => `
+        <div class="detail-item">
+            <label>${label}:</label>
+            <span>${value}</span>
+        </div>
+    `).join('');
+}
+
+// View document
+function viewDocument(url, name) {
+    if (url) {
+        window.open(url, '_blank');
+    } else {
+        showErrorMessage('Document not available');
+    }
+}
+
+// Initialize settings functionality
+function initializeSettings() {
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsModal = document.getElementById('settingsModal');
+    const closeBtn = settingsModal.querySelector('.close');
+    const saveBtn = document.getElementById('saveSettingsBtn');
+    const cancelBtn = document.getElementById('cancelSettingsBtn');
+    
+    // Open settings modal
+    settingsBtn.addEventListener('click', () => {
+        loadStaffProfile();
+        settingsModal.style.display = 'block';
+    });
+    
+    // Close settings modal
+    closeBtn.addEventListener('click', () => {
+        settingsModal.style.display = 'none';
+    });
+    
+    // Save settings
+    saveBtn.addEventListener('click', saveStaffSettings);
+    
+    // Cancel settings
+    cancelBtn.addEventListener('click', () => {
+        settingsModal.style.display = 'none';
+    });
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', (event) => {
+        if (event.target === settingsModal) {
+            settingsModal.style.display = 'none';
+        }
+    });
+}
+
+// Load staff profile
+async function loadStaffProfile() {
+    try {
+        const token = await getAuthToken();
+        const response = await fetch(`${API_BASE_URL}/arc-staff/profile`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+                const profile = result.data;
+                
+                // Populate form fields
+                document.getElementById('staffName').value = profile.fullName || '';
+                document.getElementById('staffEmail').value = profile.email || '';
+                document.getElementById('staffPhone').value = profile.mobileNumber || '';
+                document.getElementById('staffDepartment').value = profile.department || '';
+            }
+        }
+    } catch (error) {
+        console.error('❌ Error loading staff profile:', error);
+    }
+}
+
+// Save staff settings
+async function saveStaffSettings() {
+    try {
+        const formData = {
+            fullName: document.getElementById('staffName').value,
+            mobileNumber: document.getElementById('staffPhone').value,
+            department: document.getElementById('staffDepartment').value,
+            emailNotifications: document.getElementById('emailNotifications').checked,
+            dashboardNotifications: document.getElementById('dashboardNotifications').checked
+        };
+        
+        const token = await getAuthToken();
+        const response = await fetch(`${API_BASE_URL}/arc-staff/update-profile`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+                showSuccessMessage('Settings saved successfully!');
+                document.getElementById('settingsModal').style.display = 'none';
+                
+                // Update header display
+                if (formData.fullName) {
+                    document.getElementById('userName').textContent = formData.fullName;
+                }
+            } else {
+                throw new Error(result.message || 'Failed to save settings');
+            }
+        } else {
+            throw new Error('Failed to save settings');
+        }
+        
+    } catch (error) {
+        console.error('❌ Error saving settings:', error);
+        showErrorMessage('Failed to save settings');
+    }
+}
+
+// Format date helper
+function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
+}
+
+// Initialize new dashboard functionality
+function initializeNewDashboard() {
+    console.log('🚀 Initializing new dashboard functionality...');
+    
+    // Initialize sidebar navigation
+    initializeSidebarNavigation();
+    
+    // Initialize settings
+    initializeSettings();
+    
+    // Load initial counts
+    loadInitialCounts();
+    
+    console.log('✅ New dashboard functionality initialized');
+}
+
+// Load initial counts for sidebar
+async function loadInitialCounts() {
+    try {
+        const token = await getAuthToken();
+        const response = await fetch(`${API_BASE_URL}/arc-staff/dashboard-counts`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+                const counts = result.data;
+                
+                // Update all sidebar counts
+                Object.keys(counts).forEach(providerType => {
+                    const approvedCount = document.getElementById(`${providerType}ApprovedCount`);
+                    const pendingCount = document.getElementById(`${providerType}PendingCount`);
+                    
+                    if (approvedCount) approvedCount.textContent = counts[providerType].approved || 0;
+                    if (pendingCount) pendingCount.textContent = counts[providerType].pending || 0;
+                });
+            }
+        }
+    } catch (error) {
+        console.error('❌ Error loading initial counts:', error);
+    }
+}
+
+// Close provider details modal
+function closeProviderDetailsModal() {
+    document.getElementById('providerDetailsModal').style.display = 'none';
+    window.currentProvider = null;
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 DOM loaded, initializing new dashboard...');
+    
+    // Initialize the new dashboard functionality
+    initializeNewDashboard();
+});
