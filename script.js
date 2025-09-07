@@ -622,6 +622,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         staffNameElement.textContent = staffProfile.data.fullName || user.email;
                     }
                     
+                    // Update header with staff name
+                    const userNameElement = document.getElementById('userName');
+                    if (userNameElement) {
+                        userNameElement.textContent = staffProfile.data.fullName || user.email;
+                    }
+                    
+                    // Update staff status in settings
+                    updateStaffStatus(staffProfile.data);
+                    
                     // All users are now ARC Staff only
                     console.log('✅ User is ARC Staff, staying on dashboard');
                     
@@ -2520,6 +2529,31 @@ function checkArcStaffSession() {
       initializeArcStaffDashboard();
     }
   });
+}
+
+// Update staff status in settings modal
+function updateStaffStatus(staffData) {
+    const statusElement = document.getElementById('staffStatus');
+    const lastUpdatedElement = document.getElementById('lastUpdated');
+    const adminCommentsElement = document.getElementById('adminComments');
+    
+    if (statusElement) {
+        if (staffData.isApproved) {
+            statusElement.textContent = 'Approved';
+            statusElement.className = 'status-badge approved';
+        } else {
+            statusElement.textContent = 'Pending Admin Approval';
+            statusElement.className = 'status-badge pending';
+        }
+    }
+    
+    if (lastUpdatedElement && staffData.updatedAt) {
+        lastUpdatedElement.textContent = new Date(staffData.updatedAt).toLocaleDateString();
+    }
+    
+    if (adminCommentsElement && staffData.adminComments) {
+        adminCommentsElement.innerHTML = `<p>${staffData.adminComments}</p>`;
+    }
 }
 
 // Initialize ARC Staff Dashboard
@@ -5687,12 +5721,20 @@ async function loadStaffProfile() {
                 document.getElementById('staffBio').value = profile.bio || '';
                 
                 console.log('📋 Staff profile loaded:', profile);
+                
+                // Update status information
+                updateStaffStatus(profile);
             }
         }
     } catch (error) {
         console.error('❌ Error loading staff profile:', error);
         showErrorMessage('Failed to load profile data');
     }
+}
+
+// Load staff data into form (alias for loadStaffProfile)
+function loadStaffDataIntoForm() {
+    loadStaffProfile();
 }
 
 // Save staff settings
@@ -5704,8 +5746,6 @@ async function saveStaffSettings() {
             department: document.getElementById('staffDepartment').value,
             address: document.getElementById('staffAddress').value,
             bio: document.getElementById('staffBio').value,
-            emailNotifications: document.getElementById('emailNotifications').checked,
-            dashboardNotifications: document.getElementById('dashboardNotifications').checked,
             requiresApproval: true,
             submittedAt: new Date().toISOString()
         };
@@ -6756,13 +6796,32 @@ window.approveServiceProvider = approveServiceProviderImproved;
 window.rejectServiceProvider = rejectServiceProviderImproved;
 window.loadDashboardData = loadDashboardDataImproved;
 
+// Quick Actions Functions
+function exportStaffData() {
+    console.log('📊 Exporting staff data...');
+    showNotification('Exporting staff data...', 'info');
+    // TODO: Implement actual export functionality
+}
+
+function generateStaffReport() {
+    console.log('📈 Generating staff report...');
+    showNotification('Generating staff report...', 'info');
+    // TODO: Implement actual report generation
+}
+
+function generateReports() {
+    console.log('📋 Generating Excel reports...');
+    showNotification('Generating Excel reports...', 'info');
+    // TODO: Implement actual Excel report generation
+}
+
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 DOM loaded, initializing improved dashboard...');
 
     // Initialize the improved dashboard functionality
     initializeNewDashboard();
-    
+
     // Also initialize improved functionality
     setTimeout(() => {
       loadDashboardDataImproved();
