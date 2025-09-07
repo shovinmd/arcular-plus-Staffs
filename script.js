@@ -41,10 +41,15 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase if not already initialized
-if (typeof firebase !== 'undefined' && !firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-} else if (typeof firebase === 'undefined') {
-    console.warn('Firebase SDK not loaded');
+if (typeof firebase !== 'undefined') {
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+        console.log('✅ Firebase initialized successfully');
+    } else {
+        console.log('✅ Firebase already initialized');
+    }
+} else {
+    console.error('❌ Firebase SDK not loaded');
 }
 
 // Stats Functions
@@ -617,35 +622,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         staffNameElement.textContent = staffProfile.data.fullName || user.email;
                     }
                     
-                    // Check staff type and redirect if needed
-                    const staffType = localStorage.getItem('staffType');
-                    console.log('🔍 Checking staff type for redirection:', staffType);
-                    
-                    // Only redirect if we're on the ARC Staff dashboard and user is not ARC Staff
-                    if (window.location.pathname.includes('arcstaff-dashboard.html') && staffType && staffType !== 'arcstaff' && !redirectInProgress) {
-                        console.log('🔄 Staff type mismatch, redirecting to appropriate dashboard');
-                        redirectInProgress = true; // Set flag to prevent multiple redirects
-                        
-                        switch(staffType) {
-                            case 'backend_manager':
-                                console.log('🔄 Redirecting Backend Manager to:', 'https://arcular-plus-backend-man.vercel.app/');
-                                window.location.href = 'https://arcular-plus-backend-man.vercel.app/';
-                                return;
-                            case 'patient_supervisor':
-                                console.log('🔄 Redirecting Patient Supervisor to:', 'https://arcular-plus-backend-man-65aq.vercel.app/');
-                                window.location.href = 'https://arcular-plus-backend-man-65aq.vercel.app/';
-                                return;
-                            default:
-                                console.log('⚠️ Unknown staff type:', staffType);
-                                break;
-                        }
-                    } else {
-                        if (redirectInProgress) {
-                            console.log('🚩 Redirect already in progress, skipping additional redirects');
-                        } else {
-                            console.log('✅ Staff type is ARC Staff or not on ARC Staff dashboard, staying put');
-                        }
-                    }
+                    // All users are now ARC Staff only
+                    console.log('✅ User is ARC Staff, staying on dashboard');
                     
                     // Initialize dashboard
                     await initializeArcStaffDashboard();
@@ -713,23 +691,11 @@ function initializeLoginPage() {
     const hasToken = localStorage.getItem('staff_idToken');
     const staffType = localStorage.getItem('staffType');
     
-    if (hasToken && staffType) {
+    if (hasToken) {
         console.log('✅ User already logged in, redirecting to dashboard');
         
-        let dashboardUrl;
-        switch (staffType) {
-            case 'arcstaff':
-                dashboardUrl = 'arcstaff-dashboard.html';
-                break;
-            case 'backend_manager':
-                dashboardUrl = 'https://arcular-plus-backend-man.vercel.app/';
-                break;
-            case 'patient_supervisor':
-                dashboardUrl = 'https://arcular-plus-backend-man-65aq.vercel.app/';
-                break;
-            default:
-                dashboardUrl = 'arcstaff-dashboard.html';
-        }
+        // All users go to ARC Staff dashboard
+        let dashboardUrl = 'arcstaff-dashboard.html';
         
         console.log('🎯 Redirecting to:', dashboardUrl);
         // Redirect immediately without delay
@@ -746,17 +712,14 @@ function initializeLoginPage() {
             console.log('✅ Login form found, adding event listener');
             
             // Create the main login handler function
-            async function handleMainLogin(email, password, staffType) {
+            async function handleMainLogin(email, password) {
                 console.log('🚀 Main login handler triggered!');
                 
                 // Hide any existing messages
                 hideLoginMessages();
                 
-                // Validate staff type selection
-                if (!staffType) {
-                    showLoginError('Please select your staff type');
-                    return;
-                }
+                // All users are ARC Staff
+                const actualStaffType = 'arcstaff';
                 
                 // Show loading state
                 const loginBtn = document.getElementById('loginBtn');
@@ -804,18 +767,18 @@ function initializeLoginPage() {
                             
                                                     // Store token and staff type
                         localStorage.setItem('staff_idToken', idToken);
-                        localStorage.setItem('staffType', staffType);
+                        localStorage.setItem('staffType', 'arcstaff');
                         
                         // Debug: Show what's stored
                         console.log('💾 Stored in localStorage:');
                         console.log('  - staff_idToken:', idToken ? 'Present' : 'Missing');
-                        console.log('  - staffType:', staffType);
+                        console.log('  - staffType: arcstaff');
                         
                         // Show success message
                         showLoginSuccess('Login successful! Redirecting to dashboard...');
                         
                         // Redirect based on staff type
-                        console.log('🔀 Staff type selected:', staffType);
+                        console.log('🔀 Staff type: ARC Staff');
                         console.log('✅ Token and staff type stored in localStorage');
                         
                         // Set redirect flag to prevent multiple redirects
@@ -823,25 +786,8 @@ function initializeLoginPage() {
                         console.log('🚩 Redirect flag set to prevent conflicts');
                         
                         setTimeout(() => {
-                            console.log('🔄 Redirecting to dashboard for staff type:', staffType);
-                            
-                            switch(staffType) {
-                                case 'arcstaff':
-                                    console.log('🔄 Redirecting to ARC Staff Dashboard');
-                                    window.location.href = 'arcstaff-dashboard.html';
-                                    break;
-                                case 'backend_manager':
-                                    console.log('🔄 Redirecting to Backend Manager Dashboard');
-                                    window.location.href = 'https://arcular-plus-backend-man.vercel.app/';
-                                    break;
-                                case 'patient_supervisor':
-                                    console.log('🔄 Redirecting to Patient Supervisor Dashboard');
-                                    window.location.href = 'https://arcular-plus-backend-man-65aq.vercel.app/';
-                                    break;
-                                default:
-                                    console.error('❌ Invalid staff type selected');
-                                    throw new Error('Please select a valid staff type');
-                            }
+                            console.log('🔄 Redirecting to ARC Staff Dashboard');
+                            window.location.href = 'arcstaff-dashboard.html';
                         }, 2000);
                             
                         } else {
@@ -884,20 +830,14 @@ function initializeLoginPage() {
                 
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
-                const staffType = document.getElementById('staffType').value;
                 
                 if (!email || !password) {
                     showLoginError('Please enter both email and password');
                     return;
                 }
                 
-                if (!staffType) {
-                    showLoginError('Please select your staff type');
-                    return;
-                }
-                
-                // Call the main login handler
-                handleMainLogin(email, password, staffType);
+                // Call the main login handler (always ARC Staff)
+                handleMainLogin(email, password);
             });
             
             console.log('✅ Login form event listener added');
@@ -2439,7 +2379,7 @@ function checkArcStaffSession() {
     return;
   }
   
-  console.log('✅ Token found, staff type:', staffType, 'verifying with Firebase');
+  console.log('✅ Token found, verifying with Firebase');
   // Verify token with Firebase
   firebase.auth().onAuthStateChanged(function(user) {
     if (!user) {
@@ -2450,24 +2390,8 @@ function checkArcStaffSession() {
     } else {
       console.log('✅ Firebase user verified, session valid');
       
-      // Only redirect if user is not ARC Staff (let main onAuthStateChanged handle other redirects)
-      if (staffType && staffType !== 'arcstaff' && !redirectInProgress) {
-        console.log('🔄 User is not ARC Staff, redirecting to appropriate dashboard');
-        redirectInProgress = true; // Set flag to prevent multiple redirects
-        
-        switch(staffType) {
-          case 'backend_manager':
-            console.log('🔄 checkArcStaffSession: Redirecting Backend Manager to:', 'https://arcular-plus-backend-man.vercel.app/');
-            window.location.href = 'https://arcular-plus-backend-man.vercel.app/';
-            return;
-          case 'patient_supervisor':
-            console.log('🔄 checkArcStaffSession: Redirecting Patient Supervisor to:', 'https://arcular-plus-backend-man-65aq.vercel.app/');
-            window.location.href = 'https://arcular-plus-backend-man-65aq.vercel.app/';
-            return;
-        }
-      } else if (redirectInProgress) {
-        console.log('🚩 checkArcStaffSession: Redirect already in progress, skipping');
-      }
+      // All users are ARC Staff, no redirection needed
+      console.log('✅ User is ARC Staff, staying on dashboard');
       
       // Initialize dashboard for ARC Staff
       initializeArcStaffDashboard();
