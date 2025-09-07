@@ -5825,23 +5825,22 @@ async function loadStaffProfile() {
         
         if (response.ok) {
             const result = await response.json();
-            if (result.success) {
+            if (result.success && result.staff) {
                 const profile = result.staff; // Backend returns 'staff' not 'data'
                 
-                // Populate form fields
+                console.log('📋 Staff profile loaded:', profile);
+                
+                // Populate form fields with null checks
                 document.getElementById('staffName').value = profile.fullName || '';
-                document.getElementById('staffEmail').value = profile.email || '';
                 document.getElementById('staffPhone').value = profile.mobileNumber || '';
                 document.getElementById('staffDepartment').value = profile.department || '';
                 document.getElementById('staffAddress').value = profile.address || '';
                 document.getElementById('staffBio').value = profile.bio || '';
                 
-                console.log('📋 Staff profile loaded:', profile);
-                
                 // Update status information
                 updateStaffStatus(profile);
             } else {
-                console.error('❌ Profile loading failed:', result.message);
+                console.error('❌ Profile loading failed:', result.message || 'No staff data received');
                 showErrorMessage(result.message || 'Failed to load profile data');
             }
         } else {
@@ -5851,6 +5850,20 @@ async function loadStaffProfile() {
     } catch (error) {
         console.error('❌ Error loading staff profile:', error);
         showErrorMessage('Failed to load profile data');
+        
+        // Set default values for form fields
+        document.getElementById('staffName').value = '';
+        document.getElementById('staffPhone').value = '';
+        document.getElementById('staffDepartment').value = '';
+        document.getElementById('staffAddress').value = '';
+        document.getElementById('staffBio').value = '';
+        
+        // Set default status
+        updateStaffStatus({
+            isApproved: false,
+            lastUpdated: null,
+            reviewNotes: 'Profile data not available'
+        });
     }
 }
 

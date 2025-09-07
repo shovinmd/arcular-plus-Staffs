@@ -1933,12 +1933,20 @@ body {
 #profileEditModal .form-group input,
 #profileEditModal .form-group textarea {
     width: 100%;
-    padding: 12px;
-    border: 1px solid #d1d5db;
+    padding: 12px 16px;
+    border: 2px solid #d1d5db;
     border-radius: 8px;
     font-size: 14px;
     background: white;
     transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+#profileEditModal .form-group input::placeholder,
+#profileEditModal .form-group textarea::placeholder {
+    color: #999;
+    font-style: italic;
+    opacity: 0.8;
 }
 
 #profileEditModal .form-group input:focus,
@@ -1946,9 +1954,71 @@ body {
     outline: none;
     border-color: #3b82f6;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    background-color: #fafbff;
+}
+
+#profileEditModal .form-group input:required:invalid {
+    border-color: #ff6b6b;
+}
+
+#profileEditModal .form-group input:required:valid {
+    border-color: #51cf66;
 }
 
 #profileEditModal .form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Settings Modal Form Styling */
+#settingsModal .form-group {
+    margin-bottom: 20px;
+}
+
+#settingsModal .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+}
+
+#settingsModal .form-group input,
+#settingsModal .form-group textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    background-color: #fff;
+    box-sizing: border-box;
+}
+
+#settingsModal .form-group input::placeholder,
+#settingsModal .form-group textarea::placeholder {
+    color: #999;
+    font-style: italic;
+    opacity: 0.8;
+}
+
+#settingsModal .form-group input:focus,
+#settingsModal .form-group textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background-color: #fafbff;
+}
+
+#settingsModal .form-group input:required:invalid {
+    border-color: #ff6b6b;
+}
+
+#settingsModal .form-group input:required:valid {
+    border-color: #51cf66;
+}
+
+#settingsModal .form-group textarea {
     resize: vertical;
     min-height: 80px;
 }
