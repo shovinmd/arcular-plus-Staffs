@@ -538,52 +538,6 @@
         </div>
     </div>
 
-    <!-- Approval Modal -->
-    <div id="approvalModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="approvalModalTitle">Approve Service Provider</h3>
-                <span class="close" onclick="closeApprovalModal()">&times;</span>
-            </div>
-            <div class="modal-body">
-                <div id="approvalContent">
-                    <!-- Approval content will be populated here -->
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button id="confirmApprovalBtn" class="btn btn-success">
-                    <i class="fas fa-check"></i> Confirm Approval
-                </button>
-                <button class="btn btn-secondary" onclick="closeApprovalModal()">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Rejection Modal -->
-    <div id="rejectionModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="rejectionModalTitle">Reject Service Provider</h3>
-                <span class="close" onclick="closeRejectionModal()">&times;</span>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="rejectionReason">Rejection Reason *</label>
-                    <textarea id="rejectionReason" rows="4" placeholder="Please provide a detailed reason for rejection..." required></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="rejectionComments">Additional Comments</label>
-                    <textarea id="rejectionComments" rows="3" placeholder="Any additional comments or suggestions for the applicant..."></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button id="confirmRejectionBtn" class="btn btn-danger">
-                    <i class="fas fa-times"></i> Confirm Rejection
-                </button>
-                <button class="btn btn-secondary" onclick="closeRejectionModal()">Cancel</button>
-            </div>
-        </div>
-    </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
@@ -647,8 +601,6 @@
                 showError('Invalid provider parameters');
             }
             
-            // Setup modal event listeners
-            setupModalEventListeners();
         });
         
         // Load provider details
@@ -775,19 +727,6 @@
                         </div>
                     </div>
                     
-                    ${!(provider.isApproved && provider.approvalStatus === 'approved') ? `
-                    <div class="action-buttons">
-                        <button class="btn btn-success" onclick="openApprovalModal()">
-                            <i class="fas fa-check"></i> Approve Application
-                        </button>
-                        <button class="btn btn-danger" onclick="openRejectionModal()">
-                            <i class="fas fa-times"></i> Reject Application
-                        </button>
-                        <button class="btn btn-secondary" onclick="requestAdditionalDocuments()">
-                            <i class="fas fa-file-plus"></i> Request Additional Documents
-                        </button>
-                    </div>
-                    ` : ''}
                     
                     ${provider.comments && provider.comments.length > 0 ? `
                     <div class="comments-section">
@@ -1012,119 +951,7 @@
             window.open(url, '_blank');
         }
         
-        // Open approval modal
-        function openApprovalModal() {
-            document.getElementById('approvalModalTitle').textContent = `Approve ${currentProviderType.charAt(0).toUpperCase() + currentProviderType.slice(1)}`;
-            document.getElementById('approvalContent').innerHTML = `
-                <p>Are you sure you want to approve this ${currentProviderType} application?</p>
-                <p><strong>Applicant:</strong> ${currentProvider.name || currentProvider.fullName}</p>
-                <p><strong>Email:</strong> ${currentProvider.email}</p>
-            `;
-            document.getElementById('approvalModal').style.display = 'block';
-        }
         
-        // Close approval modal
-        function closeApprovalModal() {
-            document.getElementById('approvalModal').style.display = 'none';
-        }
-        
-        // Open rejection modal
-        function openRejectionModal() {
-            document.getElementById('rejectionModalTitle').textContent = `Reject ${currentProviderType.charAt(0).toUpperCase() + currentProviderType.slice(1)}`;
-            document.getElementById('rejectionReason').value = '';
-            document.getElementById('rejectionComments').value = '';
-            document.getElementById('rejectionModal').style.display = 'block';
-        }
-        
-        // Close rejection modal
-        function closeRejectionModal() {
-            document.getElementById('rejectionModal').style.display = 'none';
-        }
-        
-        // Setup modal event listeners
-        function setupModalEventListeners() {
-            // Approval confirmation
-            document.getElementById('confirmApprovalBtn').addEventListener('click', async () => {
-                try {
-                    await approveProvider();
-                    closeApprovalModal();
-                } catch (error) {
-                    console.error('Error approving provider:', error);
-                    showErrorMessage('Failed to approve provider');
-                }
-            });
-            
-            // Rejection confirmation
-            document.getElementById('confirmRejectionBtn').addEventListener('click', async () => {
-                const reason = document.getElementById('rejectionReason').value.trim();
-                const comments = document.getElementById('rejectionComments').value.trim();
-                
-                if (!reason) {
-                    showErrorMessage('Please provide a rejection reason');
-                    return;
-                }
-                
-                try {
-                    await rejectProvider(reason, comments);
-                    closeRejectionModal();
-                } catch (error) {
-                    console.error('Error rejecting provider:', error);
-                    showErrorMessage('Failed to reject provider');
-                }
-            });
-        }
-        
-        // Approve provider
-        async function approveProvider() {
-            const token = await getAuthToken();
-            const response = await fetch(`${API_BASE_URL}/arc-staff/approve/${currentProvider.uid}`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    userType: currentProviderType,
-                    notes: 'Approved by ARC Staff'
-                })
-            });
-            
-            if (response.ok) {
-                showSuccessMessage('✅ Provider approved successfully! Email notification sent. You can now login to the platform.');
-                // Refresh the page to show updated status
-                setTimeout(() => {
-                    loadProviderDetails(currentProvider.uid, currentProviderType);
-                }, 1000);
-            } else {
-                throw new Error('Failed to approve provider');
-            }
-        }
-        
-        // Reject provider
-        async function rejectProvider(reason, comments) {
-            const token = await getAuthToken();
-            const response = await fetch(`${API_BASE_URL}/arc-staff/reject/${currentProvider.uid}`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    userType: currentProviderType,
-                    reason: reason
-                })
-            });
-            
-            if (response.ok) {
-                showSuccessMessage('❌ Provider rejected successfully! Email notification sent with feedback. Please register again after 24-48 hours with the requested changes.');
-                // Redirect back to dashboard since the provider data is deleted
-                setTimeout(() => {
-                    window.location.href = 'arcstaff-dashboard.html';
-                }, 2000);
-            } else {
-                throw new Error('Failed to reject provider');
-            }
-        }
         
         // Request additional documents
         async function requestAdditionalDocuments() {
