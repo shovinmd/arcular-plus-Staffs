@@ -447,7 +447,7 @@ async function fetchServiceProviderDetails(type, id) {
 }
 
 // Approve a service provider
-async function approveServiceProvider(type, id, notes = '') {
+async function approveServiceProvider(id, type, notes = '') {
     try {
         const token = await getAuthToken();
         
@@ -459,9 +459,8 @@ async function approveServiceProvider(type, id, notes = '') {
                 'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
-                approvedBy: currentUser?.uid || 'staff',
-                notes: notes,
-                userType: type
+                userType: type,
+                notes: notes
             })
         });
         
@@ -470,15 +469,19 @@ async function approveServiceProvider(type, id, notes = '') {
         }
         
         const data = await response.json();
+        if (data.success) {
+            showSuccessMessage(`✅ ${type.charAt(0).toUpperCase() + type.slice(1)} approved successfully! Email notification sent. You can now login to the platform.`);
+        }
         return data.success;
     } catch (error) {
         console.error(`Error approving ${type}:`, error);
+        showErrorMessage(`Error approving ${type}: ${error.message}`);
         return false;
     }
 }
 
 // Reject a service provider
-async function rejectServiceProvider(type, id, reason, category, nextSteps) {
+async function rejectServiceProvider(id, type, reason, category, nextSteps) {
     try {
         const token = await getAuthToken();
         
@@ -490,11 +493,8 @@ async function rejectServiceProvider(type, id, reason, category, nextSteps) {
                 'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
-                rejectedBy: currentUser?.uid || 'staff',
-                reason: reason,
-                category: category,
-                nextSteps: nextSteps,
-                userType: type
+                userType: type,
+                reason: reason
             })
         });
         
@@ -503,9 +503,13 @@ async function rejectServiceProvider(type, id, reason, category, nextSteps) {
         }
         
         const data = await response.json();
+        if (data.success) {
+            showSuccessMessage(`❌ ${type.charAt(0).toUpperCase() + type.slice(1)} rejected successfully! Email notification sent with feedback. Please register again after 24-48 hours with the requested changes.`);
+        }
         return data.success;
     } catch (error) {
         console.error(`Error rejecting ${type}:`, error);
+        showErrorMessage(`Error rejecting ${type}: ${error.message}`);
         return false;
     }
 }
@@ -1658,12 +1662,12 @@ function loadHospitals() {
                             <span class="stat-label">Total</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">${hospitals.filter(h => h.isApproved).length}</span>
-                            <span class="stat-label">Approved</span>
+                            <span class="stat-number">${hospitals.filter(h => !h.isApproved || h.approvalStatus === 'pending').length}</span>
+                            <span class="stat-label">Pending</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">${hospitals.filter(h => !h.isApproved).length}</span>
-                            <span class="stat-label">Pending</span>
+                            <span class="stat-number">${hospitals.filter(h => h.isApproved && h.approvalStatus === 'approved').length}</span>
+                            <span class="stat-label">Approved</span>
                         </div>
                     </div>
                     <button class="refresh-btn" onclick="loadHospitals()" title="Refresh Hospitals">
@@ -1695,8 +1699,8 @@ function loadHospitals() {
                                     <div class="provider-info-main">
                                         <h3>${hospital.name || hospital.hospitalName || 'Unknown Hospital'}</h3>
                                         <p class="provider-email">${hospital.email}</p>
-                                        <span class="status-badge-large ${hospital.isApproved ? 'approved' : 'pending'}">
-                                            ${hospital.isApproved ? 'Approved' : 'Pending Approval'}
+                                        <span class="status-badge-large ${hospital.isApproved && hospital.approvalStatus === 'approved' ? 'approved' : 'pending'}">
+                                            ${hospital.isApproved && hospital.approvalStatus === 'approved' ? 'Approved' : 'Pending Approval'}
                                         </span>
                                     </div>
                                 </div>
@@ -1724,11 +1728,11 @@ function loadHospitals() {
                                                 <button class="btn btn-primary" onclick="viewProviderDetails('${hospital.uid || hospital._id}', 'hospital')">
                                                     <i class="fas fa-eye"></i> View Details
                                                 </button>
-                                    ${!hospital.isApproved ? `
-                                        <button class="btn btn-success" onclick="approveServiceProvider('${hospital._id}', 'hospital')">
+                                    ${!(hospital.isApproved && hospital.approvalStatus === 'approved') ? `
+                                        <button class="btn btn-success" onclick="approveServiceProvider('${hospital.uid || hospital._id}', 'hospital')">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
-                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${hospital._id}', 'hospital')">
+                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${hospital.uid || hospital._id}', 'hospital')">
                                             <i class="fas fa-times"></i> Reject
                                         </button>
                                     ` : ''}
@@ -1844,10 +1848,10 @@ function loadDoctors() {
                                                     <i class="fas fa-eye"></i> View Details
                                                 </button>
                                     ${!doctor.isApproved ? `
-                                        <button class="btn btn-success" onclick="approveServiceProvider('${doctor._id}', 'doctor')">
+                                        <button class="btn btn-success" onclick="approveServiceProvider('${doctor.uid || doctor._id}', 'doctor')">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
-                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${doctor._id}', 'doctor')">
+                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${doctor.uid || doctor._id}', 'doctor')">
                                             <i class="fas fa-times"></i> Reject
                                         </button>
                                     ` : ''}
@@ -1963,10 +1967,10 @@ function loadNurses() {
                                         <i class="fas fa-eye"></i> View Details
                                     </button>
                                     ${!nurse.isApproved ? `
-                                        <button class="btn btn-success" onclick="approveServiceProvider('${nurse._id}', 'nurse')">
+                                        <button class="btn btn-success" onclick="approveServiceProvider('${nurse.uid || nurse._id}', 'nurse')">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
-                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${nurse._id}', 'nurse')">
+                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${nurse.uid || nurse._id}', 'nurse')">
                                             <i class="fas fa-times"></i> Reject
                                         </button>
                                     ` : ''}
@@ -2134,12 +2138,12 @@ function loadPharmacies() {
                             <span class="stat-label">Total</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">${pharmacies.filter(p => p.isApproved).length}</span>
-                            <span class="stat-label">Approved</span>
+                            <span class="stat-number">${pharmacies.filter(p => !p.isApproved || p.approvalStatus === 'pending').length}</span>
+                            <span class="stat-label">Pending</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">${pharmacies.filter(p => !p.isApproved).length}</span>
-                            <span class="stat-label">Pending</span>
+                            <span class="stat-number">${pharmacies.filter(p => p.isApproved && p.approvalStatus === 'approved').length}</span>
+                            <span class="stat-label">Approved</span>
                         </div>
                     </div>
                     <button class="refresh-btn" onclick="loadPharmacies()" title="Refresh Pharmacies">
@@ -2163,7 +2167,7 @@ function loadPharmacies() {
                 ` : `
                     <div class="provider-grid-screen">
                         ${pharmacies.map(pharmacy => `
-                            <div class="provider-card-screen" data-status="${pharmacy.isApproved ? 'approved' : 'pending'}">
+                            <div class="provider-card-screen" data-status="${pharmacy.isApproved && pharmacy.approvalStatus === 'approved' ? 'approved' : 'pending'}">
                                 <div class="card-header">
                                     <div class="provider-avatar-large">
                                         <i class="fas fa-pills"></i>
@@ -2171,8 +2175,8 @@ function loadPharmacies() {
                                     <div class="provider-info-main">
                                         <h3>${pharmacy.name || pharmacy.pharmacyName || 'Unknown Pharmacy'}</h3>
                                         <p class="provider-email">${pharmacy.email}</p>
-                                        <span class="status-badge-large ${pharmacy.isApproved ? 'approved' : 'pending'}">
-                                            ${pharmacy.isApproved ? 'Approved' : 'Pending Approval'}
+                                        <span class="status-badge-large ${pharmacy.isApproved && pharmacy.approvalStatus === 'approved' ? 'approved' : 'pending'}">
+                                            ${pharmacy.isApproved && pharmacy.approvalStatus === 'approved' ? 'Approved' : 'Pending Approval'}
                                         </span>
                                     </div>
                                 </div>
@@ -2200,11 +2204,11 @@ function loadPharmacies() {
                                     <button class="btn btn-primary" onclick="viewProviderDetails('${pharmacy.uid || pharmacy._id}', 'pharmacy')">
                                         <i class="fas fa-eye"></i> View Details
                                     </button>
-                                    ${!pharmacy.isApproved ? `
-                                        <button class="btn btn-success" onclick="approveServiceProvider('${pharmacy._id}', 'pharmacy')">
+                                    ${!(pharmacy.isApproved && pharmacy.approvalStatus === 'approved') ? `
+                                        <button class="btn btn-success" onclick="approveServiceProvider('${pharmacy.uid || pharmacy._id}', 'pharmacy')">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
-                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${pharmacy._id}', 'pharmacy')">
+                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${pharmacy.uid || pharmacy._id}', 'pharmacy')">
                                             <i class="fas fa-times"></i> Reject
                                         </button>
                                     ` : ''}
@@ -7177,7 +7181,7 @@ function showDashboardOverview() {
                         <p>Manage hospital registrations</p>
                         <div class="card-stats">
                             <span class="stat">Total: ${allUsers.hospitals?.length || 0}</span>
-                            <span class="stat">Pending: ${allUsers.hospitals?.filter(h => !h.isApproved).length || 0}</span>
+                            <span class="stat">Pending: ${allUsers.hospitals?.filter(h => !h.isApproved || h.approvalStatus === 'pending').length || 0}</span>
                         </div>
                     </div>
                     <div class="overview-card" onclick="loadDoctors()">
@@ -7188,7 +7192,7 @@ function showDashboardOverview() {
                         <p>Manage doctor registrations</p>
                         <div class="card-stats">
                             <span class="stat">Total: ${allUsers.doctors?.length || 0}</span>
-                            <span class="stat">Pending: ${allUsers.doctors?.filter(d => !d.isApproved).length || 0}</span>
+                            <span class="stat">Pending: ${allUsers.doctors?.filter(d => !d.isApproved || d.approvalStatus === 'pending').length || 0}</span>
                         </div>
                     </div>
                     <div class="overview-card" onclick="loadNurses()">
@@ -7199,7 +7203,7 @@ function showDashboardOverview() {
                         <p>Manage nurse registrations</p>
                         <div class="card-stats">
                             <span class="stat">Total: ${allUsers.nurses?.length || 0}</span>
-                            <span class="stat">Pending: ${allUsers.nurses?.filter(n => !n.isApproved).length || 0}</span>
+                            <span class="stat">Pending: ${allUsers.nurses?.filter(n => !n.isApproved || n.approvalStatus === 'pending').length || 0}</span>
                         </div>
                     </div>
                     <div class="overview-card" onclick="loadLabs()">
@@ -7210,7 +7214,7 @@ function showDashboardOverview() {
                         <p>Manage lab registrations</p>
                         <div class="card-stats">
                             <span class="stat">Total: ${allUsers.labs?.length || 0}</span>
-                            <span class="stat">Pending: ${allUsers.labs?.filter(l => !l.isApproved).length || 0}</span>
+                            <span class="stat">Pending: ${allUsers.labs?.filter(l => !l.isApproved || l.approvalStatus === 'pending').length || 0}</span>
                         </div>
                     </div>
                     <div class="overview-card" onclick="loadPharmacies()">
@@ -7221,7 +7225,7 @@ function showDashboardOverview() {
                         <p>Manage pharmacy registrations</p>
                         <div class="card-stats">
                             <span class="stat">Total: ${allUsers.pharmacies?.length || 0}</span>
-                            <span class="stat">Pending: ${allUsers.pharmacies?.filter(p => !p.isApproved).length || 0}</span>
+                            <span class="stat">Pending: ${allUsers.pharmacies?.filter(p => !p.isApproved || p.approvalStatus === 'pending').length || 0}</span>
                         </div>
                     </div>
                 </div>
