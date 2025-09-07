@@ -711,6 +711,31 @@ body {
     left: 100%;
 }
 
+/* Refresh Button */
+.refresh-btn {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    margin-left: 15px;
+}
+
+.refresh-btn:hover {
+    background: #5a67d8;
+    transform: rotate(180deg);
+}
+
+.refresh-btn i {
+    font-size: 16px;
+}
+
 .service-provider-content {
     background: white;
     border-radius: 12px;

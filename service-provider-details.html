@@ -661,7 +661,7 @@
             });
             
             if (response.ok) {
-                showSuccessMessage('Provider approved successfully! Email notification sent.');
+                showSuccessMessage('✅ Provider approved successfully! Email notification sent. You can now login to the platform.');
                 // Refresh the page to show updated status
                 setTimeout(() => {
                     loadProviderDetails(currentProvider.uid, currentProviderType);
@@ -689,7 +689,7 @@
             });
             
             if (response.ok) {
-                showSuccessMessage('Provider rejected successfully! Email notification sent with feedback.');
+                showSuccessMessage('❌ Provider rejected successfully! Email notification sent with feedback. Please register again after 24-48 hours with the requested changes.');
                 // Refresh the page to show updated status
                 setTimeout(() => {
                     loadProviderDetails(currentProvider.uid, currentProviderType);

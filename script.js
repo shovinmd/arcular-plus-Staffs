@@ -1666,6 +1666,9 @@ function loadHospitals() {
                             <span class="stat-label">Pending</span>
                         </div>
                     </div>
+                    <button class="refresh-btn" onclick="loadHospitals()" title="Refresh Hospitals">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
                 </div>
             </div>
             
@@ -1782,6 +1785,9 @@ function loadDoctors() {
                             <span class="stat-label">Pending</span>
                         </div>
                     </div>
+                    <button class="refresh-btn" onclick="loadDoctors()" title="Refresh Doctors">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
                 </div>
             </div>
             
@@ -1858,180 +1864,360 @@ function loadDoctors() {
 }
 
 function loadNurses() {
+    console.log('👩‍⚕️ Loading nurses...');
     const contentArea = document.getElementById('serviceProviderContent');
-    const nurses = allUsers.nurses;
-    
+    console.log('👩‍⚕️ Found content area:', contentArea);
+
     if (!contentArea) {
         console.error('❌ Service provider content area not found!');
         return;
     }
-    
-    if (nurses.length === 0) {
-        contentArea.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-user-nurse fa-3x text-muted mb-3"></i>
-                <h3>No Nurses Found</h3>
-                <p class="text-muted">No nurse registrations have been submitted yet.</p>
-            </div>
-        `;
-        return;
-    }
-    
+
+    const nurses = allUsers.nurses || [];
+    console.log('👩‍⚕️ Nurses data:', nurses);
+
+    // Create a full-screen nurse management view
     contentArea.innerHTML = `
-        <div class="provider-list">
-            <div class="provider-header">
-                <h2><i class="fas fa-user-nurse"></i> Nurses (${nurses.length})</h2>
-            </div>
-            <div class="provider-grid">
-                ${nurses.map(nurse => `
-                    <div class="provider-card" data-status="${nurse.isApproved ? 'approved' : 'pending'}">
-                        <div class="provider-header">
-                            <div class="provider-avatar">
-                                <i class="fas fa-user-nurse"></i>
-                            </div>
-                            <div class="provider-info">
-                                <h4>${nurse.name}</h4>
-                                <p class="provider-email">${nurse.email}</p>
-                            </div>
-                            <div class="provider-status">
-                                <span class="status-badge ${nurse.isApproved ? 'approved' : 'pending'}">
-                                    ${nurse.isApproved ? 'Approved' : 'Pending'}
-                                </span>
-                            </div>
+        <div class="provider-management-screen">
+            <div class="screen-header">
+                <div class="header-left">
+                    <button class="back-btn" onclick="showDashboardOverview()">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </button>
+                    <div class="screen-title">
+                        <h1><i class="fas fa-user-nurse"></i> Nurse Management</h1>
+                        <p>Manage nurse registrations and approvals</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="screen-stats">
+                        <div class="stat-item">
+                            <span class="stat-number">${nurses.length}</span>
+                            <span class="stat-label">Total</span>
                         </div>
-                        <div class="provider-details">
-                            <p><strong>License:</strong> ${nurse.licenseNumber || 'N/A'}</p>
-                            <p><strong>Department:</strong> ${nurse.department || 'N/A'}</p>
-                            <p><strong>Registered:</strong> ${new Date(nurse.createdAt).toLocaleDateString()}</p>
+                        <div class="stat-item">
+                            <span class="stat-number">${nurses.filter(n => n.isApproved).length}</span>
+                            <span class="stat-label">Approved</span>
                         </div>
-                        <div class="provider-actions">
-                                                <button class="btn btn-primary" onclick="viewProviderDetails('${nurse.uid || nurse._id}', 'nurse')">
-                                                    <i class="fas fa-eye"></i> View Details
-                                                </button>
+                        <div class="stat-item">
+                            <span class="stat-number">${nurses.filter(n => !n.isApproved).length}</span>
+                            <span class="stat-label">Pending</span>
                         </div>
                     </div>
-                `).join('')}
+                    <button class="refresh-btn" onclick="loadNurses()" title="Refresh Nurses">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="screen-content">
+                ${nurses.length === 0 ? `
+                    <div class="empty-state-screen">
+                        <div class="empty-icon">
+                            <i class="fas fa-user-nurse fa-4x"></i>
+                        </div>
+                        <h2>No Nurses Found</h2>
+                        <p>No nurse registrations have been submitted yet.</p>
+                        <button class="btn btn-primary" onclick="refreshData()">
+                            <i class="fas fa-refresh"></i> Refresh Data
+                        </button>
+                    </div>
+                ` : `
+                    <div class="provider-grid-screen">
+                        ${nurses.map(nurse => `
+                            <div class="provider-card-screen" data-status="${nurse.isApproved ? 'approved' : 'pending'}">
+                                <div class="card-header">
+                                    <div class="provider-avatar-large">
+                                        <i class="fas fa-user-nurse"></i>
+                                    </div>
+                                    <div class="provider-info-main">
+                                        <h3>${nurse.name || nurse.fullName || 'Unknown Nurse'}</h3>
+                                        <p class="provider-email">${nurse.email}</p>
+                                        <span class="status-badge-large ${nurse.isApproved ? 'approved' : 'pending'}">
+                                            ${nurse.isApproved ? 'Approved' : 'Pending Approval'}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="info-grid">
+                                        <div class="info-item">
+                                            <label>License Number:</label>
+                                            <span>${nurse.licenseNumber || 'N/A'}</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <label>Department:</label>
+                                            <span>${nurse.department || 'N/A'}</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <label>Contact:</label>
+                                            <span>${nurse.mobileNumber || nurse.contact || 'N/A'}</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <label>Registered:</label>
+                                            <span>${new Date(nurse.createdAt).toLocaleDateString()}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-actions">
+                                    <button class="btn btn-primary" onclick="viewProviderDetails('${nurse.uid || nurse._id}', 'nurse')">
+                                        <i class="fas fa-eye"></i> View Details
+                                    </button>
+                                    ${!nurse.isApproved ? `
+                                        <button class="btn btn-success" onclick="approveServiceProvider('${nurse._id}', 'nurse')">
+                                            <i class="fas fa-check"></i> Approve
+                                        </button>
+                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${nurse._id}', 'nurse')">
+                                            <i class="fas fa-times"></i> Reject
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `}
             </div>
         </div>
     `;
+
+    console.log('👩‍⚕️ Nurses screen loaded successfully');
 }
 
 function loadLabs() {
+    console.log('🧪 Loading labs...');
     const contentArea = document.getElementById('serviceProviderContent');
-    const labs = allUsers.labs;
-    
+    console.log('🧪 Found content area:', contentArea);
+
     if (!contentArea) {
         console.error('❌ Service provider content area not found!');
         return;
     }
-    
-    if (labs.length === 0) {
-        contentArea.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-flask fa-3x text-muted mb-3"></i>
-                <h3>No Labs Found</h3>
-                <p class="text-muted">No lab registrations have been submitted yet.</p>
-            </div>
-        `;
-        return;
-    }
-    
+
+    const labs = allUsers.labs || [];
+    console.log('🧪 Labs data:', labs);
+
+    // Create a full-screen lab management view
     contentArea.innerHTML = `
-        <div class="provider-list">
-            <div class="provider-header">
-                <h2><i class="fas fa-flask"></i> Labs (${labs.length})</h2>
-            </div>
-            <div class="provider-grid">
-                ${labs.map(lab => `
-                    <div class="provider-card" data-status="${lab.isApproved ? 'approved' : 'pending'}">
-                        <div class="provider-header">
-                            <div class="provider-avatar">
-                                <i class="fas fa-flask"></i>
-                            </div>
-                            <div class="provider-info">
-                                <h4>${lab.name}</h4>
-                                <p class="provider-email">${lab.email}</p>
-                            </div>
-                            <div class="provider-status">
-                                <span class="status-badge ${lab.isApproved ? 'approved' : 'pending'}">
-                                    ${lab.isApproved ? 'Approved' : 'Pending'}
-                                </span>
-                            </div>
+        <div class="provider-management-screen">
+            <div class="screen-header">
+                <div class="header-left">
+                    <button class="back-btn" onclick="showDashboardOverview()">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </button>
+                    <div class="screen-title">
+                        <h1><i class="fas fa-flask"></i> Lab Management</h1>
+                        <p>Manage lab registrations and approvals</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="screen-stats">
+                        <div class="stat-item">
+                            <span class="stat-number">${labs.length}</span>
+                            <span class="stat-label">Total</span>
                         </div>
-                        <div class="provider-details">
-                            <p><strong>License:</strong> ${lab.licenseNumber || 'N/A'}</p>
-                            <p><strong>Contact:</strong> ${lab.contact || 'N/A'}</p>
-                            <p><strong>Registered:</strong> ${new Date(lab.createdAt).toLocaleDateString()}</p>
+                        <div class="stat-item">
+                            <span class="stat-number">${labs.filter(l => l.isApproved).length}</span>
+                            <span class="stat-label">Approved</span>
                         </div>
-                        <div class="provider-actions">
-                                                <button class="btn btn-primary" onclick="viewProviderDetails('${lab.uid || lab._id}', 'lab')">
-                                                    <i class="fas fa-eye"></i> View Details
-                                                </button>
+                        <div class="stat-item">
+                            <span class="stat-number">${labs.filter(l => !l.isApproved).length}</span>
+                            <span class="stat-label">Pending</span>
                         </div>
                     </div>
-                `).join('')}
+                    <button class="refresh-btn" onclick="loadLabs()" title="Refresh Labs">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="screen-content">
+                ${labs.length === 0 ? `
+                    <div class="empty-state-screen">
+                        <div class="empty-icon">
+                            <i class="fas fa-flask fa-4x"></i>
+                        </div>
+                        <h2>No Labs Found</h2>
+                        <p>No lab registrations have been submitted yet.</p>
+                        <button class="btn btn-primary" onclick="refreshData()">
+                            <i class="fas fa-refresh"></i> Refresh Data
+                        </button>
+                    </div>
+                ` : `
+                    <div class="provider-grid-screen">
+                        ${labs.map(lab => `
+                            <div class="provider-card-screen" data-status="${lab.isApproved ? 'approved' : 'pending'}">
+                                <div class="card-header">
+                                    <div class="provider-avatar-large">
+                                        <i class="fas fa-flask"></i>
+                                    </div>
+                                    <div class="provider-info-main">
+                                        <h3>${lab.name || lab.labName || 'Unknown Lab'}</h3>
+                                        <p class="provider-email">${lab.email}</p>
+                                        <span class="status-badge-large ${lab.isApproved ? 'approved' : 'pending'}">
+                                            ${lab.isApproved ? 'Approved' : 'Pending Approval'}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="info-grid">
+                                        <div class="info-item">
+                                            <label>License Number:</label>
+                                            <span>${lab.licenseNumber || 'N/A'}</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <label>Contact:</label>
+                                            <span>${lab.mobileNumber || lab.contact || 'N/A'}</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <label>Address:</label>
+                                            <span>${lab.address || 'N/A'}</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <label>Registered:</label>
+                                            <span>${new Date(lab.createdAt).toLocaleDateString()}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-actions">
+                                    <button class="btn btn-primary" onclick="viewProviderDetails('${lab.uid || lab._id}', 'lab')">
+                                        <i class="fas fa-eye"></i> View Details
+                                    </button>
+                                    ${!lab.isApproved ? `
+                                        <button class="btn btn-success" onclick="approveServiceProvider('${lab._id}', 'lab')">
+                                            <i class="fas fa-check"></i> Approve
+                                        </button>
+                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${lab._id}', 'lab')">
+                                            <i class="fas fa-times"></i> Reject
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `}
             </div>
         </div>
     `;
+
+    console.log('🧪 Labs screen loaded successfully');
 }
 
 function loadPharmacies() {
+    console.log('💊 Loading pharmacies...');
     const contentArea = document.getElementById('serviceProviderContent');
-    const pharmacies = allUsers.pharmacies;
-    
+    console.log('💊 Found content area:', contentArea);
+
     if (!contentArea) {
         console.error('❌ Service provider content area not found!');
         return;
     }
-    
-    if (pharmacies.length === 0) {
-        contentArea.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-pills fa-3x text-muted mb-3"></i>
-                <h3>No Pharmacies Found</h3>
-                <p class="text-muted">No pharmacy registrations have been submitted yet.</p>
-            </div>
-        `;
-        return;
-    }
-    
+
+    const pharmacies = allUsers.pharmacies || [];
+    console.log('💊 Pharmacies data:', pharmacies);
+
+    // Create a full-screen pharmacy management view
     contentArea.innerHTML = `
-        <div class="provider-list">
-            <div class="provider-header">
-                <h2><i class="fas fa-pills"></i> Pharmacies (${pharmacies.length})</h2>
-            </div>
-            <div class="provider-grid">
-                ${pharmacies.map(pharmacy => `
-                    <div class="provider-card" data-status="${pharmacy.isApproved ? 'approved' : 'pending'}">
-                        <div class="provider-header">
-                            <div class="provider-avatar">
-                                <i class="fas fa-pills"></i>
-                            </div>
-                            <div class="provider-info">
-                                <h4>${pharmacy.name}</h4>
-                                <p class="provider-email">${pharmacy.email}</p>
-                            </div>
-                            <div class="provider-status">
-                                <span class="status-badge ${pharmacy.isApproved ? 'approved' : 'pending'}">
-                                    ${pharmacy.isApproved ? 'Approved' : 'Pending'}
-                                </span>
-                            </div>
+        <div class="provider-management-screen">
+            <div class="screen-header">
+                <div class="header-left">
+                    <button class="back-btn" onclick="showDashboardOverview()">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </button>
+                    <div class="screen-title">
+                        <h1><i class="fas fa-pills"></i> Pharmacy Management</h1>
+                        <p>Manage pharmacy registrations and approvals</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="screen-stats">
+                        <div class="stat-item">
+                            <span class="stat-number">${pharmacies.length}</span>
+                            <span class="stat-label">Total</span>
                         </div>
-                        <div class="provider-details">
-                            <p><strong>License:</strong> ${pharmacy.licenseNumber || 'N/A'}</p>
-                            <p><strong>Contact:</strong> ${pharmacy.contact || 'N/A'}</p>
-                            <p><strong>Registered:</strong> ${new Date(pharmacy.createdAt).toLocaleDateString()}</p>
+                        <div class="stat-item">
+                            <span class="stat-number">${pharmacies.filter(p => p.isApproved).length}</span>
+                            <span class="stat-label">Approved</span>
                         </div>
-                        <div class="provider-actions">
-                                                <button class="btn btn-primary" onclick="viewProviderDetails('${pharmacy.uid || pharmacy._id}', 'pharmacy')">
-                                                    <i class="fas fa-eye"></i> View Details
-                                                </button>
+                        <div class="stat-item">
+                            <span class="stat-number">${pharmacies.filter(p => !p.isApproved).length}</span>
+                            <span class="stat-label">Pending</span>
                         </div>
                     </div>
-                `).join('')}
+                    <button class="refresh-btn" onclick="loadPharmacies()" title="Refresh Pharmacies">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="screen-content">
+                ${pharmacies.length === 0 ? `
+                    <div class="empty-state-screen">
+                        <div class="empty-icon">
+                            <i class="fas fa-pills fa-4x"></i>
+                        </div>
+                        <h2>No Pharmacies Found</h2>
+                        <p>No pharmacy registrations have been submitted yet.</p>
+                        <button class="btn btn-primary" onclick="refreshData()">
+                            <i class="fas fa-refresh"></i> Refresh Data
+                        </button>
+                    </div>
+                ` : `
+                    <div class="provider-grid-screen">
+                        ${pharmacies.map(pharmacy => `
+                            <div class="provider-card-screen" data-status="${pharmacy.isApproved ? 'approved' : 'pending'}">
+                                <div class="card-header">
+                                    <div class="provider-avatar-large">
+                                        <i class="fas fa-pills"></i>
+                                    </div>
+                                    <div class="provider-info-main">
+                                        <h3>${pharmacy.name || pharmacy.pharmacyName || 'Unknown Pharmacy'}</h3>
+                                        <p class="provider-email">${pharmacy.email}</p>
+                                        <span class="status-badge-large ${pharmacy.isApproved ? 'approved' : 'pending'}">
+                                            ${pharmacy.isApproved ? 'Approved' : 'Pending Approval'}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="info-grid">
+                                        <div class="info-item">
+                                            <label>License Number:</label>
+                                            <span>${pharmacy.licenseNumber || 'N/A'}</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <label>Contact:</label>
+                                            <span>${pharmacy.mobileNumber || pharmacy.contact || 'N/A'}</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <label>Address:</label>
+                                            <span>${pharmacy.address || 'N/A'}</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <label>Registered:</label>
+                                            <span>${new Date(pharmacy.createdAt).toLocaleDateString()}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-actions">
+                                    <button class="btn btn-primary" onclick="viewProviderDetails('${pharmacy.uid || pharmacy._id}', 'pharmacy')">
+                                        <i class="fas fa-eye"></i> View Details
+                                    </button>
+                                    ${!pharmacy.isApproved ? `
+                                        <button class="btn btn-success" onclick="approveServiceProvider('${pharmacy._id}', 'pharmacy')">
+                                            <i class="fas fa-check"></i> Approve
+                                        </button>
+                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${pharmacy._id}', 'pharmacy')">
+                                            <i class="fas fa-times"></i> Reject
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `}
             </div>
         </div>
     `;
+
+    console.log('💊 Pharmacies screen loaded successfully');
 }
 
 async function loadAllUsers() {
