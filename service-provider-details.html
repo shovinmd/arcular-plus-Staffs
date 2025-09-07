@@ -270,6 +270,63 @@
             font-size: 0.9rem;
         }
         
+        /* Document Cards Styling */
+        .document-info {
+            flex: 1;
+        }
+        
+        .document-name {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+        
+        .document-status {
+            font-size: 0.8rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+        
+        .document-status.uploaded {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .document-status.missing {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .document-url {
+            margin-top: 4px;
+            color: #64748b;
+            font-size: 0.75rem;
+            word-break: break-all;
+        }
+        
+        .no-documents {
+            text-align: center;
+            padding: 40px 20px;
+            color: #64748b;
+        }
+        
+        .no-documents-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            color: #cbd5e1;
+        }
+        
+        .no-documents h4 {
+            margin: 0 0 8px 0;
+            color: #475569;
+        }
+        
+        .no-documents p {
+            margin: 0;
+            font-size: 0.9rem;
+        }
+        
         .provider-email {
             color: #64748b;
             font-size: 1.1rem;
@@ -656,74 +713,13 @@
                     </div>
                     
                     <div class="info-grid">
-                        <div class="info-item">
-                            <span class="info-label">Registration Number</span>
-                            <span class="info-value">${provider.registrationNumber || provider.licenseNumber || 'N/A'}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Contact Number</span>
-                            <span class="info-value">${provider.mobileNumber || provider.contact || 'N/A'}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Address</span>
-                            <span class="info-value">${provider.address || 'N/A'}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Registration Date</span>
-                            <span class="info-value">${provider.createdAt ? new Date(provider.createdAt).toLocaleDateString() : 'N/A'}</span>
-                        </div>
-                        ${type === 'doctor' ? `
-                        <div class="info-item">
-                            <span class="info-label">Specialization</span>
-                            <span class="info-value">${provider.specialization || 'N/A'}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Experience</span>
-                            <span class="info-value">${provider.experienceYears || 'N/A'} years</span>
-                        </div>
-                        ` : ''}
-                        ${type === 'nurse' ? `
-                        <div class="info-item">
-                            <span class="info-label">Department</span>
-                            <span class="info-value">${provider.department || 'N/A'}</span>
-                        </div>
-                        ` : ''}
+                        ${generateAllProviderFields(provider, type)}
                     </div>
                     
                     <div class="documents-section">
-                        <h3>Documents</h3>
+                        <h3>Documents & Files</h3>
                         <div class="documents-grid">
-                            <div class="document-card">
-                                <div class="document-icon">
-                                    <i class="fas fa-id-card"></i>
-                                </div>
-                                <div class="document-name">License Document</div>
-                                <div class="document-status ${provider.licenseDocumentUrl ? 'uploaded' : 'missing'}">
-                                    ${provider.licenseDocumentUrl ? 'Uploaded' : 'Missing'}
-                                </div>
-                                ${provider.licenseDocumentUrl ? `
-                                    <button class="btn btn-primary" onclick="viewDocument('${provider.licenseDocumentUrl}')" style="margin-top: 10px;">
-                                        <i class="fas fa-eye"></i> View Document
-                                    </button>
-                                ` : ''}
-                            </div>
-                            
-                            ${type === 'hospital' ? `
-                            <div class="document-card">
-                                <div class="document-icon">
-                                    <i class="fas fa-building"></i>
-                                </div>
-                                <div class="document-name">Registration Certificate</div>
-                                <div class="document-status ${provider.registrationCertificateUrl ? 'uploaded' : 'missing'}">
-                                    ${provider.registrationCertificateUrl ? 'Uploaded' : 'Missing'}
-                                </div>
-                                ${provider.registrationCertificateUrl ? `
-                                    <button class="btn btn-primary" onclick="viewDocument('${provider.registrationCertificateUrl}')" style="margin-top: 10px;">
-                                        <i class="fas fa-eye"></i> View Document
-                                    </button>
-                                ` : ''}
-                            </div>
-                            ` : ''}
+                            ${generateDocumentCards(provider, type)}
                         </div>
                     </div>
                     
@@ -946,9 +942,199 @@
             window.location.href = 'arcstaff-dashboard.html';
         }
         
+        // Generate all provider fields based on type
+        function generateAllProviderFields(provider, type) {
+            let fields = '';
+            
+            // Common fields for all providers
+            const commonFields = [
+                { key: 'uid', label: 'UID' },
+                { key: 'email', label: 'Email' },
+                { key: 'mobileNumber', label: 'Mobile Number' },
+                { key: 'altPhoneNumber', label: 'Alternative Phone' },
+                { key: 'address', label: 'Address' },
+                { key: 'city', label: 'City' },
+                { key: 'state', label: 'State' },
+                { key: 'pincode', label: 'Pincode' },
+                { key: 'longitude', label: 'Longitude' },
+                { key: 'latitude', label: 'Latitude' },
+                { key: 'createdAt', label: 'Registration Date', format: 'date' },
+                { key: 'updatedAt', label: 'Last Updated', format: 'date' },
+                { key: 'isApproved', label: 'Is Approved', format: 'boolean' },
+                { key: 'approvalStatus', label: 'Approval Status' },
+                { key: 'approvedBy', label: 'Approved By' },
+                { key: 'approvedAt', label: 'Approved At', format: 'date' },
+                { key: 'approvalNotes', label: 'Approval Notes' },
+                { key: 'rejectedBy', label: 'Rejected By' },
+                { key: 'rejectedAt', label: 'Rejected At', format: 'date' },
+                { key: 'rejectionReason', label: 'Rejection Reason' },
+                { key: 'arcId', label: 'ARC ID' },
+                { key: 'qrCode', label: 'QR Code' },
+                { key: 'profileImageUrl', label: 'Profile Image URL' }
+            ];
+            
+            // Type-specific fields
+            const typeSpecificFields = {
+                hospital: [
+                    { key: 'hospitalName', label: 'Hospital Name' },
+                    { key: 'fullName', label: 'Full Name' },
+                    { key: 'registrationNumber', label: 'Registration Number' },
+                    { key: 'hospitalType', label: 'Hospital Type' },
+                    { key: 'numberOfBeds', label: 'Number of Beds' },
+                    { key: 'departments', label: 'Departments', format: 'array' },
+                    { key: 'specialFacilities', label: 'Special Facilities', format: 'array' },
+                    { key: 'hasPharmacy', label: 'Has Pharmacy', format: 'boolean' },
+                    { key: 'hasLab', label: 'Has Lab', format: 'boolean' },
+                    { key: 'licenseDocumentUrl', label: 'License Document URL' }
+                ],
+                doctor: [
+                    { key: 'fullName', label: 'Full Name' },
+                    { key: 'gender', label: 'Gender' },
+                    { key: 'dateOfBirth', label: 'Date of Birth', format: 'date' },
+                    { key: 'medicalRegistrationNumber', label: 'Medical Registration Number' },
+                    { key: 'licenseNumber', label: 'License Number' },
+                    { key: 'specialization', label: 'Specialization' },
+                    { key: 'experienceYears', label: 'Experience Years' },
+                    { key: 'consultationFee', label: 'Consultation Fee' },
+                    { key: 'education', label: 'Education' },
+                    { key: 'qualification', label: 'Qualification' },
+                    { key: 'qualifications', label: 'Qualifications', format: 'array' },
+                    { key: 'bio', label: 'Bio' },
+                    { key: 'affiliatedHospitals', label: 'Affiliated Hospitals', format: 'object' },
+                    { key: 'currentHospital', label: 'Current Hospital' },
+                    { key: 'workingHours', label: 'Working Hours', format: 'object' },
+                    { key: 'licenseDocumentUrl', label: 'License Document URL' }
+                ],
+                nurse: [
+                    { key: 'fullName', label: 'Full Name' },
+                    { key: 'gender', label: 'Gender' },
+                    { key: 'dateOfBirth', label: 'Date of Birth', format: 'date' },
+                    { key: 'licenseNumber', label: 'License Number' },
+                    { key: 'department', label: 'Department' },
+                    { key: 'experienceYears', label: 'Experience Years' },
+                    { key: 'qualification', label: 'Qualification' },
+                    { key: 'qualifications', label: 'Qualifications', format: 'array' },
+                    { key: 'bio', label: 'Bio' },
+                    { key: 'licenseDocumentUrl', label: 'License Document URL' }
+                ],
+                lab: [
+                    { key: 'labName', label: 'Lab Name' },
+                    { key: 'fullName', label: 'Full Name' },
+                    { key: 'licenseNumber', label: 'License Number' },
+                    { key: 'services', label: 'Services', format: 'array' },
+                    { key: 'licenseDocumentUrl', label: 'License Document URL' }
+                ],
+                pharmacy: [
+                    { key: 'pharmacyName', label: 'Pharmacy Name' },
+                    { key: 'fullName', label: 'Full Name' },
+                    { key: 'licenseNumber', label: 'License Number' },
+                    { key: 'services', label: 'Services', format: 'array' },
+                    { key: 'licenseDocumentUrl', label: 'License Document URL' }
+                ]
+            };
+            
+            // Combine common and type-specific fields
+            const allFields = [...commonFields, ...(typeSpecificFields[type] || [])];
+            
+            // Generate HTML for each field
+            allFields.forEach(field => {
+                const value = provider[field.key];
+                if (value !== undefined && value !== null && value !== '') {
+                    let displayValue = value;
+                    
+                    // Format values based on type
+                    if (field.format === 'date' && value) {
+                        displayValue = new Date(value).toLocaleDateString();
+                    } else if (field.format === 'boolean') {
+                        displayValue = value ? 'Yes' : 'No';
+                    } else if (field.format === 'array' && Array.isArray(value)) {
+                        displayValue = value.join(', ');
+                    } else if (field.format === 'object' && typeof value === 'object') {
+                        displayValue = JSON.stringify(value, null, 2);
+                    }
+                    
+                    fields += `
+                        <div class="info-item">
+                            <span class="info-label">${field.label}</span>
+                            <span class="info-value">${displayValue}</span>
+                        </div>
+                    `;
+                }
+            });
+            
+            return fields;
+        }
+        
+        // Generate document cards for all available documents
+        function generateDocumentCards(provider, type) {
+            let cards = '';
+            
+            // Common document fields
+            const documentFields = [
+                { key: 'licenseDocumentUrl', label: 'License Document', icon: 'fas fa-id-card' },
+                { key: 'profileImageUrl', label: 'Profile Image', icon: 'fas fa-user-circle' },
+                { key: 'registrationCertificateUrl', label: 'Registration Certificate', icon: 'fas fa-certificate' },
+                { key: 'medicalRegistrationUrl', label: 'Medical Registration', icon: 'fas fa-user-md' },
+                { key: 'qualificationCertificateUrl', label: 'Qualification Certificate', icon: 'fas fa-graduation-cap' },
+                { key: 'experienceCertificateUrl', label: 'Experience Certificate', icon: 'fas fa-briefcase' },
+                { key: 'identityProofUrl', label: 'Identity Proof', icon: 'fas fa-id-badge' },
+                { key: 'addressProofUrl', label: 'Address Proof', icon: 'fas fa-map-marker-alt' },
+                { key: 'bankDetailsUrl', label: 'Bank Details', icon: 'fas fa-university' },
+                { key: 'taxCertificateUrl', label: 'Tax Certificate', icon: 'fas fa-receipt' },
+                { key: 'insuranceDocumentUrl', label: 'Insurance Document', icon: 'fas fa-shield-alt' },
+                { key: 'facilityPhotosUrl', label: 'Facility Photos', icon: 'fas fa-camera' },
+                { key: 'equipmentListUrl', label: 'Equipment List', icon: 'fas fa-tools' },
+                { key: 'staffListUrl', label: 'Staff List', icon: 'fas fa-users' },
+                { key: 'otherDocumentsUrl', label: 'Other Documents', icon: 'fas fa-file-alt' }
+            ];
+            
+            // Generate cards for each document field
+            documentFields.forEach(doc => {
+                const url = provider[doc.key];
+                if (url && url.trim() !== '') {
+                    cards += `
+                        <div class="document-card">
+                            <div class="document-icon">
+                                <i class="${doc.icon}"></i>
+                            </div>
+                            <div class="document-info">
+                                <div class="document-name">${doc.label}</div>
+                                <div class="document-status uploaded">Available</div>
+                                <div class="document-url">
+                                    <small>${url.length > 50 ? url.substring(0, 50) + '...' : url}</small>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" onclick="viewDocument('${url}')" title="View ${doc.label}">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                        </div>
+                    `;
+                }
+            });
+            
+            // If no documents found, show message
+            if (cards === '') {
+                cards = `
+                    <div class="no-documents">
+                        <div class="no-documents-icon">
+                            <i class="fas fa-file-slash"></i>
+                        </div>
+                        <h4>No Documents Available</h4>
+                        <p>No documents have been uploaded for this provider.</p>
+                    </div>
+                `;
+            }
+            
+            return cards;
+        }
+        
         // View document
         function viewDocument(url) {
-            window.open(url, '_blank');
+            if (url && url.trim() !== '') {
+                window.open(url, '_blank');
+            } else {
+                showErrorMessage('Document URL is not available');
+            }
         }
         
         
