@@ -62,10 +62,42 @@ function updateDashboardStats() {
     document.getElementById('pending-approvals-count').textContent = dashboardStats.pendingApprovals;
     document.getElementById('total-departments').textContent = dashboardStats.totalDepartments;
     
+    // Calculate and update percentages
+    const totalProviders = dashboardStats.totalProviders || 0;
+    const approvedProviders = dashboardStats.approvedProviders || 0;
+    const pendingApprovals = dashboardStats.pendingApprovals || 0;
+    
+    // Calculate approval rate percentage
+    const approvalRate = totalProviders > 0 ? Math.round((approvedProviders / totalProviders) * 100) : 0;
+    
+    // Calculate pending rate percentage
+    const pendingRate = totalProviders > 0 ? Math.round((pendingApprovals / totalProviders) * 100) : 0;
+    
+    // Calculate growth rate (simplified - you can make this more sophisticated)
+    const growthRate = totalProviders > 0 ? Math.round((totalProviders / 10) * 100) / 100 : 0;
+    
+    // Update percentage displays
+    const totalProvidersTrend = document.querySelector('#total-providers-count').parentElement.querySelector('.stat-trend span');
+    const approvedProvidersTrend = document.querySelector('#approved-providers-count').parentElement.querySelector('.stat-trend span');
+    const pendingApprovalsTrend = document.querySelector('#pending-approvals-count').parentElement.querySelector('.stat-trend span');
+    
+    if (totalProvidersTrend) {
+        totalProvidersTrend.textContent = `${growthRate}%`;
+    }
+    
+    if (approvedProvidersTrend) {
+        approvedProvidersTrend.textContent = `${approvalRate}%`;
+    }
+    
+    if (pendingApprovalsTrend) {
+        pendingApprovalsTrend.textContent = `${pendingRate}%`;
+    }
+    
     // Update sidebar counts
     updateSidebarCounts();
     
     console.log('✅ Dashboard stats updated:', dashboardStats);
+    console.log('📊 Percentages - Approval:', approvalRate, 'Pending:', pendingRate, 'Growth:', growthRate);
 }
 
 // Setup stats filtering
@@ -5983,10 +6015,29 @@ function renderAdditionalInfo(provider, providerType) {
 
 // View document
 function viewDocument(url, name) {
-    if (url) {
-        window.open(url, '_blank');
+    if (url && url.trim() !== '') {
+        try {
+            // Check if URL is valid
+            const urlObj = new URL(url);
+            console.log('📄 Opening document:', url);
+            
+            // Open in new tab
+            const newWindow = window.open(url, '_blank');
+            
+            // Check if popup was blocked
+            if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
+                showErrorMessage('Popup blocked. Please allow popups for this site and try again.');
+                // Fallback: try to redirect current window
+                setTimeout(() => {
+                    window.location.href = url;
+                }, 1000);
+            }
+        } catch (error) {
+            console.error('❌ Error opening document:', error);
+            showErrorMessage('Invalid document URL. Please check the file link.');
+        }
     } else {
-        showErrorMessage('Document not available');
+        showErrorMessage('Document URL is not available');
     }
 }
 
@@ -6839,8 +6890,30 @@ function generateDocumentsSectionImproved(provider) {
 
 // View Document with improved functionality
 function viewDocumentImproved(url, name) {
-  // Open document in new tab
-  window.open(url, '_blank');
+    if (url && url.trim() !== '') {
+        try {
+            // Check if URL is valid
+            const urlObj = new URL(url);
+            console.log('📄 Opening document (improved):', url);
+            
+            // Open in new tab
+            const newWindow = window.open(url, '_blank');
+            
+            // Check if popup was blocked
+            if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
+                showErrorMessage('Popup blocked. Please allow popups for this site and try again.');
+                // Fallback: try to redirect current window
+                setTimeout(() => {
+                    window.location.href = url;
+                }, 1000);
+            }
+        } catch (error) {
+            console.error('❌ Error opening document:', error);
+            showErrorMessage('Invalid document URL. Please check the file link.');
+        }
+    } else {
+        showErrorMessage('Document URL is not available');
+    }
 }
 
 // Approve Service Provider with improved functionality
