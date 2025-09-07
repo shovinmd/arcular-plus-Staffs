@@ -6401,7 +6401,7 @@ async function viewProviderDetailsImproved(uid, type, status) {
     console.log(`👁️ Viewing ${type} details for UID: ${uid}`);
     
     const idToken = localStorage.getItem('staff_idToken');
-    const response = await fetch(`https://arcular-plus-backend.onrender.com/api/${type}s/uid/${uid}`, {
+    const response = await fetch(`https://arcular-plus-backend.onrender.com/api/arc-staff/service-provider/${type}/${uid}`, {
       headers: {
         'Authorization': `Bearer ${idToken}`,
         'Content-Type': 'application/json'
@@ -6441,7 +6441,7 @@ function showProviderDetailsModalImproved(provider, status) {
   if (!modal || !title || !content) return;
   
   // Update modal title
-  const typeName = provider.type?.charAt(0).toUpperCase() + provider.type?.slice(1) || 'Service Provider';
+  const typeName = provider?.type?.charAt(0).toUpperCase() + provider?.type?.slice(1) || 'Service Provider';
   title.textContent = `${typeName} Details`;
   
   // Generate content with improved UI
@@ -6472,6 +6472,10 @@ function showProviderDetailsModalImproved(provider, status) {
 
 // Generate Provider Details HTML with improved UI
 function generateProviderDetailsHTMLImproved(provider, status) {
+  if (!provider) {
+    return '<div class="error-message">Provider data not available</div>';
+  }
+  
   const typeIcon = getTypeIcon(provider.type);
   const typeColor = getTypeColor(provider.type);
   
@@ -6840,7 +6844,7 @@ function viewDocumentImproved(url, name) {
 }
 
 // Approve Service Provider with improved functionality
-async function approveServiceProviderImproved(type, id, notes = '') {
+async function approveServiceProviderImproved(id, type, notes = '') {
   try {
     console.log(`✅ Approving ${type} with ID: ${id}`);
     
@@ -6879,7 +6883,7 @@ async function approveServiceProviderImproved(type, id, notes = '') {
 }
 
 // Reject Service Provider with improved functionality
-async function rejectServiceProviderImproved(type, id, reason, category, nextSteps) {
+async function rejectServiceProviderImproved(id, type, reason, category, nextSteps) {
   try {
     console.log(`❌ Rejecting ${type} with ID: ${id}`);
     
