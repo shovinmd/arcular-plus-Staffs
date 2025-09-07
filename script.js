@@ -1579,11 +1579,11 @@ async function rejectUser(userId) {
 
 function loadHospitals() {
     console.log('🏥 Loading hospitals...');
-    const tbody = document.getElementById('hospitalsTable');
-    console.log('🏥 Found hospitals table:', tbody);
+    const contentArea = document.getElementById('serviceProviderContent');
+    console.log('🏥 Found content area:', contentArea);
     
-    if (!tbody) {
-        console.error('❌ Hospitals table not found!');
+    if (!contentArea) {
+        console.error('❌ Service provider content area not found!');
         return;
     }
     
@@ -1592,43 +1592,65 @@ function loadHospitals() {
     
     if (hospitals.length === 0) {
         console.log('🏥 No hospitals found, showing empty state');
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="5" class="empty-state">
-                    <i class="fas fa-hospital"></i>
-                    <h3>No Hospitals Found</h3>
-                    <p>No hospitals have been approved yet</p>
-                </td>
-            </tr>
+        contentArea.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-hospital fa-3x text-muted mb-3"></i>
+                <h3>No Hospitals Found</h3>
+                <p class="text-muted">No hospital registrations have been submitted yet.</p>
+            </div>
         `;
         return;
     }
     
     console.log('🏥 Rendering', hospitals.length, 'hospitals');
-    tbody.innerHTML = hospitals.map(hospital => `
-        <tr>
-            <td>${hospital.name}</td>
-            <td>${hospital.registrationNumber}</td>
-            <td>${hospital.contact}</td>
-            <td><span class="status-badge approved">Approved</span></td>
-            <td>
-                <button class="action-btn view-btn" onclick="viewUserDetails('hospital', '${hospital.id}')">
-                    <i class="fas fa-eye"></i>
-                </button>
-            </td>
-        </tr>
-    `).join('');
+    contentArea.innerHTML = `
+        <div class="provider-list">
+            <div class="provider-header">
+                <h2><i class="fas fa-hospital"></i> Hospitals (${hospitals.length})</h2>
+            </div>
+            <div class="provider-grid">
+                ${hospitals.map(hospital => `
+                    <div class="provider-card" data-status="${hospital.isApproved ? 'approved' : 'pending'}">
+                        <div class="provider-header">
+                            <div class="provider-avatar">
+                                <i class="fas fa-hospital"></i>
+                            </div>
+                            <div class="provider-info">
+                                <h4>${hospital.name}</h4>
+                                <p class="provider-email">${hospital.email}</p>
+                            </div>
+                            <div class="provider-status">
+                                <span class="status-badge ${hospital.isApproved ? 'approved' : 'pending'}">
+                                    ${hospital.isApproved ? 'Approved' : 'Pending'}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="provider-details">
+                            <p><strong>Registration:</strong> ${hospital.registrationNumber || 'N/A'}</p>
+                            <p><strong>Address:</strong> ${hospital.address || 'N/A'}</p>
+                            <p><strong>Registered:</strong> ${new Date(hospital.createdAt).toLocaleDateString()}</p>
+                        </div>
+                        <div class="provider-actions">
+                            <button class="btn btn-primary" onclick="viewProviderDetails('${hospital._id}', 'hospital')">
+                                <i class="fas fa-eye"></i> View Details
+                            </button>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
     
     console.log('🏥 Hospitals loaded successfully');
 }
 
 function loadDoctors() {
     console.log('👨‍⚕️ Loading doctors...');
-    const tbody = document.getElementById('doctorsTable');
-    console.log('👨‍⚕️ Found doctors table:', tbody);
+    const contentArea = document.getElementById('serviceProviderContent');
+    console.log('👨‍⚕️ Found content area:', contentArea);
     
-    if (!tbody) {
-        console.error('❌ Doctors table not found!');
+    if (!contentArea) {
+        console.error('❌ Service provider content area not found!');
         return;
     }
     
@@ -1637,132 +1659,233 @@ function loadDoctors() {
     
     if (doctors.length === 0) {
         console.log('👨‍⚕️ No doctors found, showing empty state');
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6" class="empty-state">
-                    <i class="fas fa-user-md"></i>
-                    <h3>No Doctors Found</h3>
-                    <p>No doctors have been approved yet</p>
-                </td>
-            </tr>
+        contentArea.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-user-md fa-3x text-muted mb-3"></i>
+                <h3>No Doctors Found</h3>
+                <p class="text-muted">No doctor registrations have been submitted yet.</p>
+            </div>
         `;
         return;
     }
     
     console.log('👨‍⚕️ Rendering', doctors.length, 'doctors');
-    tbody.innerHTML = doctors.map(doctor => `
-        <tr>
-            <td>${doctor.name}</td>
-            <td>${doctor.licenseNumber}</td>
-            <td>${doctor.specialization}</td>
-            <td>${doctor.contact}</td>
-            <td><span class="status-badge approved">Approved</span></td>
-            <td>
-                <button class="action-btn view-btn" onclick="viewUserDetails('doctor', '${doctor.id}')">
-                    <i class="fas fa-eye"></i>
-                </button>
-            </td>
-        </tr>
-    `).join('');
+    contentArea.innerHTML = `
+        <div class="provider-list">
+            <div class="provider-header">
+                <h2><i class="fas fa-user-md"></i> Doctors (${doctors.length})</h2>
+            </div>
+            <div class="provider-grid">
+                ${doctors.map(doctor => `
+                    <div class="provider-card" data-status="${doctor.isApproved ? 'approved' : 'pending'}">
+                        <div class="provider-header">
+                            <div class="provider-avatar">
+                                <i class="fas fa-user-md"></i>
+                            </div>
+                            <div class="provider-info">
+                                <h4>${doctor.name}</h4>
+                                <p class="provider-email">${doctor.email}</p>
+                            </div>
+                            <div class="provider-status">
+                                <span class="status-badge ${doctor.isApproved ? 'approved' : 'pending'}">
+                                    ${doctor.isApproved ? 'Approved' : 'Pending'}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="provider-details">
+                            <p><strong>License:</strong> ${doctor.licenseNumber || 'N/A'}</p>
+                            <p><strong>Specialization:</strong> ${doctor.specialization || 'N/A'}</p>
+                            <p><strong>Registered:</strong> ${new Date(doctor.createdAt).toLocaleDateString()}</p>
+                        </div>
+                        <div class="provider-actions">
+                            <button class="btn btn-primary" onclick="viewProviderDetails('${doctor._id}', 'doctor')">
+                                <i class="fas fa-eye"></i> View Details
+                            </button>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
     
     console.log('👨‍⚕️ Doctors loaded successfully');
 }
 
 function loadNurses() {
-    const tbody = document.getElementById('nursesTable');
+    const contentArea = document.getElementById('serviceProviderContent');
     const nurses = allUsers.nurses;
     
+    if (!contentArea) {
+        console.error('❌ Service provider content area not found!');
+        return;
+    }
+    
     if (nurses.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6" class="empty-state">
-                    <i class="fas fa-user-nurse"></i>
-                    <h3>No Nurses Found</h3>
-                    <p>No nurses have been approved yet</p>
-                </td>
-            </tr>
+        contentArea.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-user-nurse fa-3x text-muted mb-3"></i>
+                <h3>No Nurses Found</h3>
+                <p class="text-muted">No nurse registrations have been submitted yet.</p>
+            </div>
         `;
         return;
     }
     
-    tbody.innerHTML = nurses.map(nurse => `
-        <tr>
-            <td>${nurse.name}</td>
-            <td>${nurse.licenseNumber}</td>
-            <td>${nurse.department}</td>
-            <td>${nurse.contact}</td>
-            <td><span class="status-badge approved">Approved</span></td>
-            <td>
-                <button class="action-btn view-btn" onclick="viewUserDetails('nurse', '${nurse.id}')">
-                    <i class="fas fa-eye"></i>
-                </button>
-            </td>
-        </tr>
-    `).join('');
+    contentArea.innerHTML = `
+        <div class="provider-list">
+            <div class="provider-header">
+                <h2><i class="fas fa-user-nurse"></i> Nurses (${nurses.length})</h2>
+            </div>
+            <div class="provider-grid">
+                ${nurses.map(nurse => `
+                    <div class="provider-card" data-status="${nurse.isApproved ? 'approved' : 'pending'}">
+                        <div class="provider-header">
+                            <div class="provider-avatar">
+                                <i class="fas fa-user-nurse"></i>
+                            </div>
+                            <div class="provider-info">
+                                <h4>${nurse.name}</h4>
+                                <p class="provider-email">${nurse.email}</p>
+                            </div>
+                            <div class="provider-status">
+                                <span class="status-badge ${nurse.isApproved ? 'approved' : 'pending'}">
+                                    ${nurse.isApproved ? 'Approved' : 'Pending'}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="provider-details">
+                            <p><strong>License:</strong> ${nurse.licenseNumber || 'N/A'}</p>
+                            <p><strong>Department:</strong> ${nurse.department || 'N/A'}</p>
+                            <p><strong>Registered:</strong> ${new Date(nurse.createdAt).toLocaleDateString()}</p>
+                        </div>
+                        <div class="provider-actions">
+                            <button class="btn btn-primary" onclick="viewProviderDetails('${nurse._id}', 'nurse')">
+                                <i class="fas fa-eye"></i> View Details
+                            </button>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
 }
 
 function loadLabs() {
-    const tbody = document.getElementById('labsTable');
+    const contentArea = document.getElementById('serviceProviderContent');
     const labs = allUsers.labs;
     
+    if (!contentArea) {
+        console.error('❌ Service provider content area not found!');
+        return;
+    }
+    
     if (labs.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="5" class="empty-state">
-                    <i class="fas fa-flask"></i>
-                    <h3>No Labs Found</h3>
-                    <p>No labs have been approved yet</p>
-                </td>
-            </tr>
+        contentArea.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-flask fa-3x text-muted mb-3"></i>
+                <h3>No Labs Found</h3>
+                <p class="text-muted">No lab registrations have been submitted yet.</p>
+            </div>
         `;
         return;
     }
     
-    tbody.innerHTML = labs.map(lab => `
-        <tr>
-            <td>${lab.name}</td>
-            <td>${lab.licenseNumber}</td>
-            <td>${lab.contact}</td>
-            <td><span class="status-badge approved">Approved</span></td>
-            <td>
-                <button class="action-btn view-btn" onclick="viewUserDetails('lab', '${lab.id}')">
-                    <i class="fas fa-eye"></i>
-                </button>
-            </td>
-        </tr>
-    `).join('');
+    contentArea.innerHTML = `
+        <div class="provider-list">
+            <div class="provider-header">
+                <h2><i class="fas fa-flask"></i> Labs (${labs.length})</h2>
+            </div>
+            <div class="provider-grid">
+                ${labs.map(lab => `
+                    <div class="provider-card" data-status="${lab.isApproved ? 'approved' : 'pending'}">
+                        <div class="provider-header">
+                            <div class="provider-avatar">
+                                <i class="fas fa-flask"></i>
+                            </div>
+                            <div class="provider-info">
+                                <h4>${lab.name}</h4>
+                                <p class="provider-email">${lab.email}</p>
+                            </div>
+                            <div class="provider-status">
+                                <span class="status-badge ${lab.isApproved ? 'approved' : 'pending'}">
+                                    ${lab.isApproved ? 'Approved' : 'Pending'}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="provider-details">
+                            <p><strong>License:</strong> ${lab.licenseNumber || 'N/A'}</p>
+                            <p><strong>Contact:</strong> ${lab.contact || 'N/A'}</p>
+                            <p><strong>Registered:</strong> ${new Date(lab.createdAt).toLocaleDateString()}</p>
+                        </div>
+                        <div class="provider-actions">
+                            <button class="btn btn-primary" onclick="viewProviderDetails('${lab._id}', 'lab')">
+                                <i class="fas fa-eye"></i> View Details
+                            </button>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
 }
 
 function loadPharmacies() {
-    const tbody = document.getElementById('pharmaciesTable');
+    const contentArea = document.getElementById('serviceProviderContent');
     const pharmacies = allUsers.pharmacies;
     
+    if (!contentArea) {
+        console.error('❌ Service provider content area not found!');
+        return;
+    }
+    
     if (pharmacies.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="5" class="empty-state">
-                    <i class="fas fa-pills"></i>
-                    <h3>No Pharmacies Found</h3>
-                    <p>No pharmacies have been approved yet</p>
-                </td>
-            </tr>
+        contentArea.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-pills fa-3x text-muted mb-3"></i>
+                <h3>No Pharmacies Found</h3>
+                <p class="text-muted">No pharmacy registrations have been submitted yet.</p>
+            </div>
         `;
         return;
     }
     
-    tbody.innerHTML = pharmacies.map(pharmacy => `
-        <tr>
-            <td>${pharmacy.name}</td>
-            <td>${pharmacy.licenseNumber}</td>
-            <td>${pharmacy.contact}</td>
-            <td><span class="status-badge approved">Approved</span></td>
-            <td>
-                <button class="action-btn view-btn" onclick="viewUserDetails('pharmacy', '${pharmacy.id}')">
-                    <i class="fas fa-eye"></i>
-                </button>
-            </td>
-        </tr>
-    `).join('');
+    contentArea.innerHTML = `
+        <div class="provider-list">
+            <div class="provider-header">
+                <h2><i class="fas fa-pills"></i> Pharmacies (${pharmacies.length})</h2>
+            </div>
+            <div class="provider-grid">
+                ${pharmacies.map(pharmacy => `
+                    <div class="provider-card" data-status="${pharmacy.isApproved ? 'approved' : 'pending'}">
+                        <div class="provider-header">
+                            <div class="provider-avatar">
+                                <i class="fas fa-pills"></i>
+                            </div>
+                            <div class="provider-info">
+                                <h4>${pharmacy.name}</h4>
+                                <p class="provider-email">${pharmacy.email}</p>
+                            </div>
+                            <div class="provider-status">
+                                <span class="status-badge ${pharmacy.isApproved ? 'approved' : 'pending'}">
+                                    ${pharmacy.isApproved ? 'Approved' : 'Pending'}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="provider-details">
+                            <p><strong>License:</strong> ${pharmacy.licenseNumber || 'N/A'}</p>
+                            <p><strong>Contact:</strong> ${pharmacy.contact || 'N/A'}</p>
+                            <p><strong>Registered:</strong> ${new Date(pharmacy.createdAt).toLocaleDateString()}</p>
+                        </div>
+                        <div class="provider-actions">
+                            <button class="btn btn-primary" onclick="viewProviderDetails('${pharmacy._id}', 'pharmacy')">
+                                <i class="fas fa-eye"></i> View Details
+                            </button>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
 }
 
 async function loadAllUsers() {
