@@ -139,41 +139,45 @@ function updateTrendIndicators(trends) {
 }
 
 function updateSidebarCounts() {
-    // Update hospital counts
-    const hospitalApproved = allUsers.hospitals.filter(user => user.isApproved).length;
-    const hospitalPending = allUsers.hospitals.filter(user => !user.isApproved).length;
-    document.getElementById('hospitalApprovedCount').textContent = hospitalApproved;
-    document.getElementById('hospitalPendingCount').textContent = hospitalPending;
+    console.log('🔄 Updating sidebar counts with data:', allUsers);
     
-    // Update doctor counts
-    const doctorApproved = allUsers.doctors.filter(user => user.isApproved).length;
-    const doctorPending = allUsers.doctors.filter(user => !user.isApproved).length;
-    document.getElementById('doctorApprovedCount').textContent = doctorApproved;
-    document.getElementById('doctorPendingCount').textContent = doctorPending;
+    // Update hospital counts - all hospitals from backend are approved
+    const hospitalCount = allUsers.hospitals ? allUsers.hospitals.length : 0;
+    document.getElementById('hospitalApprovedCount').textContent = hospitalCount;
+    document.getElementById('hospitalPendingCount').textContent = '0'; // All are approved
     
-    // Update nurse counts
-    const nurseApproved = allUsers.nurses.filter(user => user.isApproved).length;
-    const nursePending = allUsers.nurses.filter(user => !user.isApproved).length;
-    document.getElementById('nurseApprovedCount').textContent = nurseApproved;
-    document.getElementById('nursePendingCount').textContent = nursePending;
+    // Update doctor counts - all doctors from backend are approved
+    const doctorCount = allUsers.doctors ? allUsers.doctors.length : 0;
+    document.getElementById('doctorApprovedCount').textContent = doctorCount;
+    document.getElementById('doctorPendingCount').textContent = '0'; // All are approved
     
-    // Update lab counts
-    const labApproved = allUsers.labs.filter(user => user.isApproved).length;
-    const labPending = allUsers.labs.filter(user => !user.isApproved).length;
-    document.getElementById('labApprovedCount').textContent = labApproved;
-    document.getElementById('labPendingCount').textContent = labPending;
+    // Update nurse counts - all nurses from backend are approved
+    const nurseCount = allUsers.nurses ? allUsers.nurses.length : 0;
+    document.getElementById('nurseApprovedCount').textContent = nurseCount;
+    document.getElementById('nursePendingCount').textContent = '0'; // All are approved
     
-    // Update pharmacy counts
-    const pharmacyApproved = allUsers.pharmacies.filter(user => user.isApproved).length;
-    const pharmacyPending = allUsers.pharmacies.filter(user => !user.isApproved).length;
-    document.getElementById('pharmacyApprovedCount').textContent = pharmacyApproved;
-    document.getElementById('pharmacyPendingCount').textContent = pharmacyPending;
+    // Update lab counts - all labs from backend are approved
+    const labCount = allUsers.labs ? allUsers.labs.length : 0;
+    document.getElementById('labApprovedCount').textContent = labCount;
+    document.getElementById('labPendingCount').textContent = '0'; // All are approved
+    
+    // Update pharmacy counts - all pharmacies from backend are approved
+    const pharmacyCount = allUsers.pharmacies ? allUsers.pharmacies.length : 0;
+    document.getElementById('pharmacyApprovedCount').textContent = pharmacyCount;
+    document.getElementById('pharmacyPendingCount').textContent = '0'; // All are approved
+    
+    console.log('✅ Sidebar counts updated:', {
+        hospitals: hospitalCount,
+        doctors: doctorCount,
+        nurses: nurseCount,
+        labs: labCount,
+        pharmacies: pharmacyCount
+    });
     
     // Update total stats
-    dashboardStats.totalProviders = allUsers.hospitals.length + allUsers.doctors.length + 
-                                   allUsers.nurses.length + allUsers.labs.length + allUsers.pharmacies.length;
-    dashboardStats.approvedProviders = hospitalApproved + doctorApproved + nurseApproved + labApproved + pharmacyApproved;
-    dashboardStats.pendingApprovals = hospitalPending + doctorPending + nursePending + labPending + pharmacyPending;
+    dashboardStats.totalProviders = hospitalCount + doctorCount + nurseCount + labCount + pharmacyCount;
+    dashboardStats.approvedProviders = hospitalCount + doctorCount + nurseCount + labCount + pharmacyCount; // All are approved
+    dashboardStats.pendingApprovals = 0; // All are approved, pending are handled separately
 }
 
 // API Functions for real backend integration
@@ -352,20 +356,24 @@ async function fetchAllServiceProviders() {
 async function getAuthToken() {
     try {
         console.log('🔑 Getting Firebase auth token...');
+        
+        // First try to get token from localStorage
+        const storedToken = localStorage.getItem('staff_idToken');
+        if (storedToken) {
+            console.log('✅ Using stored token from localStorage');
+            return storedToken;
+        }
+        
+        // Then try Firebase current user
         const user = firebase.auth().currentUser;
         console.log('👤 Current Firebase user:', user ? user.email : 'No user');
         
         if (user) {
             const token = await user.getIdToken();
             console.log('✅ Got Firebase token:', token ? 'Token received' : 'No token');
+            // Store the token for future use
+            localStorage.setItem('staff_idToken', token);
             return token;
-        }
-        
-        // Try to get token from localStorage as fallback
-        const storedToken = localStorage.getItem('staff_idToken');
-        if (storedToken) {
-            console.log('✅ Using stored token from localStorage');
-            return storedToken;
         }
         
         throw new Error('No authenticated user or stored token');
@@ -2039,8 +2047,18 @@ async function loadAllUsers() {
             stack: error.stack
         });
         
-        // Show error message to user
-        showErrorMessage('Failed to load service provider data. Please refresh the page.');
+        // Show specific error message based on error type
+        if (error.message.includes('No authenticated user')) {
+            showErrorMessage('Authentication required. Please log in again.');
+            // Redirect to login if authentication fails
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 2000);
+        } else if (error.message.includes('HTTP error')) {
+            showErrorMessage('Server error. Please check your connection and try again.');
+        } else {
+            showErrorMessage('Failed to load service provider data. Please refresh the page.');
+        }
         
         // Hide loading states
         hideTableLoadingStates();
@@ -5808,7 +5826,7 @@ async function loadStaffProfile() {
         if (response.ok) {
             const result = await response.json();
             if (result.success) {
-                const profile = result.data;
+                const profile = result.staff; // Backend returns 'staff' not 'data'
                 
                 // Populate form fields
                 document.getElementById('staffName').value = profile.fullName || '';
@@ -5822,7 +5840,13 @@ async function loadStaffProfile() {
                 
                 // Update status information
                 updateStaffStatus(profile);
+            } else {
+                console.error('❌ Profile loading failed:', result.message);
+                showErrorMessage(result.message || 'Failed to load profile data');
             }
+        } else {
+            console.error('❌ Profile API error:', response.status, response.statusText);
+            showErrorMessage('Failed to load profile data');
         }
     } catch (error) {
         console.error('❌ Error loading staff profile:', error);
@@ -5838,15 +5862,25 @@ function loadStaffDataIntoForm() {
 // Save staff settings
 async function saveStaffSettings() {
     try {
+        // Validate required fields
+        const fullName = document.getElementById('staffName').value.trim();
+        const mobileNumber = document.getElementById('staffPhone').value.trim();
+        const department = document.getElementById('staffDepartment').value.trim();
+        
+        if (!fullName || !mobileNumber || !department) {
+            showErrorMessage('Please fill in all required fields (Full Name, Phone Number, Department)');
+            return;
+        }
+        
         const formData = {
-            fullName: document.getElementById('staffName').value,
-            mobileNumber: document.getElementById('staffPhone').value,
-            department: document.getElementById('staffDepartment').value,
-            address: document.getElementById('staffAddress').value,
-            bio: document.getElementById('staffBio').value,
-            requiresApproval: true,
-            submittedAt: new Date().toISOString()
+            fullName: fullName,
+            mobileNumber: mobileNumber,
+            department: department,
+            address: document.getElementById('staffAddress').value.trim(),
+            bio: document.getElementById('staffBio').value.trim()
         };
+        
+        console.log('📝 Submitting profile changes:', formData);
         
         const token = await getAuthToken();
         
@@ -5867,12 +5901,15 @@ async function saveStaffSettings() {
                 document.getElementById('settingsModal').style.display = 'none';
                 
                 // Don't update header display yet - wait for admin approval
-                console.log('📝 Profile changes submitted for approval:', formData);
+                console.log('✅ Profile changes submitted for approval:', formData);
             } else {
-                throw new Error(result.message || 'Failed to submit profile changes');
+                console.error('❌ Profile submission failed:', result.message);
+                showErrorMessage(result.message || 'Failed to submit profile changes');
             }
         } else {
-            throw new Error('Failed to submit profile changes');
+            const errorText = await response.text();
+            console.error('❌ Profile submission API error:', response.status, errorText);
+            showErrorMessage('Failed to submit profile changes');
         }
         
     } catch (error) {
@@ -6969,7 +7006,18 @@ function showDashboardOverview() {
 
 function refreshData() {
     console.log('🔄 Refreshing data...');
+    // Clear any existing error messages
+    clearErrorMessages();
+    // Reload all data
     loadAllUsers();
+}
+
+// Clear all error messages
+function clearErrorMessages() {
+    const errorElements = document.querySelectorAll('.error-message, .alert-danger');
+    errorElements.forEach(element => {
+        element.remove();
+    });
 }
 
 // Quick Actions Functions
