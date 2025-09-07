@@ -7814,31 +7814,172 @@ function generateMonthlyReport() {
 
 // Exports Tab Functions
 function exportStaffData() {
-    console.log('📊 Exporting staff data...');
-    showNotification('Exporting staff data...', 'info');
-    
-    setTimeout(() => {
-        showSuccessMessage('Staff data exported successfully!');
-        // Here you would typically trigger a download
-    }, 2000);
+    try {
+        console.log('📊 Exporting staff data to Excel...');
+        showNotification('Exporting staff data to Excel...', 'info');
+        
+        // Create workbook
+        const wb = XLSX.utils.book_new();
+        
+        // Get staff profile data
+        const staffData = {
+            'Staff Name': document.getElementById('userName')?.textContent || 'N/A',
+            'Email': document.getElementById('userEmail')?.textContent || 'N/A',
+            'Department': 'ARC Staff',
+            'Role': 'Staff Member',
+            'Export Date': new Date().toLocaleDateString(),
+            'Export Time': new Date().toLocaleTimeString()
+        };
+        
+        // Create worksheet
+        const wsData = [staffData];
+        const ws = XLSX.utils.json_to_sheet(wsData);
+        
+        // Add worksheet to workbook
+        XLSX.utils.book_append_sheet(wb, ws, 'Staff Data');
+        
+        // Generate filename with timestamp
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+        const filename = `Staff_Data_Export_${timestamp}.xlsx`;
+        
+        // Save file
+        XLSX.writeFile(wb, filename);
+        
+        showSuccessMessage(`Staff data exported successfully as ${filename}!`);
+        
+    } catch (error) {
+        console.error('❌ Export error:', error);
+        showErrorMessage('Failed to export staff data: ' + error.message);
+    }
 }
 
 function exportProviderData() {
-    console.log('📊 Exporting provider data...');
-    showNotification('Exporting provider data...', 'info');
-    
-    setTimeout(() => {
-        showSuccessMessage('Provider data exported successfully!');
-    }, 2000);
+    try {
+        console.log('📊 Exporting provider data to Excel...');
+        showNotification('Exporting provider data to Excel...', 'info');
+        
+        // Create workbook
+        const wb = XLSX.utils.book_new();
+        
+        // Export all provider types
+        const providerTypes = ['hospitals', 'doctors', 'nurses', 'labs', 'pharmacies'];
+        
+        providerTypes.forEach(type => {
+            const data = allUsers[type] || [];
+            if (data.length > 0) {
+                // Convert data to worksheet format
+                const wsData = data.map(provider => {
+                    const row = {};
+                    
+                    // Common fields
+                    row['UID'] = provider.uid || '';
+                    row['Email'] = provider.email || '';
+                    row['Mobile Number'] = provider.mobileNumber || '';
+                    row['Created Date'] = provider.createdAt ? new Date(provider.createdAt).toLocaleDateString() : '';
+                    row['Approval Status'] = provider.approvalStatus || 'pending';
+                    row['Is Approved'] = provider.isApproved ? 'Yes' : 'No';
+                    
+                    // Type-specific fields
+                    if (type === 'hospitals') {
+                        row['Hospital Name'] = provider.hospitalName || '';
+                        row['Registration Number'] = provider.registrationNumber || '';
+                        row['Address'] = provider.address || '';
+                    } else if (type === 'doctors') {
+                        row['Full Name'] = provider.fullName || '';
+                        row['License Number'] = provider.licenseNumber || '';
+                        row['Specialization'] = provider.specialization || '';
+                        row['Experience Years'] = provider.experienceYears || '';
+                    } else if (type === 'nurses') {
+                        row['Full Name'] = provider.fullName || '';
+                        row['License Number'] = provider.licenseNumber || '';
+                        row['Department'] = provider.department || '';
+                        row['Experience Years'] = provider.experienceYears || '';
+                    } else if (type === 'labs') {
+                        row['Lab Name'] = provider.labName || '';
+                        row['License Number'] = provider.licenseNumber || '';
+                        row['Services'] = provider.services || '';
+                    } else if (type === 'pharmacies') {
+                        row['Pharmacy Name'] = provider.pharmacyName || '';
+                        row['License Number'] = provider.licenseNumber || '';
+                        row['Services'] = provider.services || '';
+                    }
+                    
+                    return row;
+                });
+                
+                // Create worksheet
+                const ws = XLSX.utils.json_to_sheet(wsData);
+                
+                // Add worksheet to workbook
+                XLSX.utils.book_append_sheet(wb, ws, type.charAt(0).toUpperCase() + type.slice(1));
+            }
+        });
+        
+        // Generate filename with timestamp
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+        const filename = `Provider_Data_Export_${timestamp}.xlsx`;
+        
+        // Save file
+        XLSX.writeFile(wb, filename);
+        
+        showSuccessMessage(`Provider data exported successfully as ${filename}!`);
+        
+    } catch (error) {
+        console.error('❌ Export error:', error);
+        showErrorMessage('Failed to export provider data: ' + error.message);
+    }
 }
 
 function exportApprovalData() {
-    console.log('📊 Exporting approval data...');
-    showNotification('Exporting approval data...', 'info');
-    
-    setTimeout(() => {
-        showSuccessMessage('Approval data exported successfully!');
-    }, 2000);
+    try {
+        console.log('📊 Exporting approval data to Excel...');
+        showNotification('Exporting approval data to Excel...', 'info');
+        
+        // Create workbook
+        const wb = XLSX.utils.book_new();
+        
+        // Collect approval data from all providers
+        const approvalData = [];
+        const providerTypes = ['hospitals', 'doctors', 'nurses', 'labs', 'pharmacies'];
+        
+        providerTypes.forEach(type => {
+            const data = allUsers[type] || [];
+            data.forEach(provider => {
+                approvalData.push({
+                    'Provider Type': type.charAt(0).toUpperCase() + type.slice(1),
+                    'Provider Name': provider.hospitalName || provider.fullName || provider.labName || provider.pharmacyName || 'N/A',
+                    'Email': provider.email || '',
+                    'Mobile': provider.mobileNumber || '',
+                    'Approval Status': provider.approvalStatus || 'pending',
+                    'Is Approved': provider.isApproved ? 'Yes' : 'No',
+                    'Created Date': provider.createdAt ? new Date(provider.createdAt).toLocaleDateString() : '',
+                    'License Number': provider.licenseNumber || provider.registrationNumber || '',
+                    'Specialization/Department': provider.specialization || provider.department || provider.services || ''
+                });
+            });
+        });
+        
+        if (approvalData.length > 0) {
+            // Create worksheet
+            const ws = XLSX.utils.json_to_sheet(approvalData);
+            
+            // Add worksheet to workbook
+            XLSX.utils.book_append_sheet(wb, ws, 'Approval Data');
+        }
+        
+        // Generate filename with timestamp
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+        const filename = `Approval_Data_Export_${timestamp}.xlsx`;
+        
+        // Save file
+        XLSX.writeFile(wb, filename);
+        
+        showSuccessMessage(`Approval data exported successfully as ${filename}!`);
+        
+    } catch (error) {
+        console.error('❌ Export error:', error);
+        showErrorMessage('Failed to export approval data: ' + error.message);
+    }
 }
 
 function exportAuditLog() {
