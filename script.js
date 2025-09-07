@@ -314,7 +314,6 @@ async function fetchAllServiceProviders() {
         
         const allUsersData = result.data;
         console.log('📊 Extracted data:', allUsersData);
-        console.log('📊 Sample hospital from backend:', allUsersData.hospitals?.[0]); // Debug: Check backend data
         
         if (!allUsersData) {
             throw new Error('No data received from backend');
@@ -1721,9 +1720,8 @@ function loadHospitals() {
     
     const allHospitals = allUsers.hospitals || [];
     // Filter to show only pending hospitals (not approved)
-    const hospitals = allHospitals.filter(h => h.isApproved === false && h.approvalStatus === 'pending');
+    const hospitals = allHospitals.filter(h => !h.isApproved || h.approvalStatus !== 'approved');
     console.log('🏥 All hospitals:', allHospitals.length, 'Pending hospitals:', hospitals.length);
-    console.log('🏥 Sample hospital data:', hospitals[0]); // Debug: Check what data we're getting
     
     // Create a full-screen hospital management view
     contentArea.innerHTML = `
@@ -1749,7 +1747,7 @@ function loadHospitals() {
                             <span class="stat-label">Pending</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">${allHospitals.filter(h => h.isApproved === true && h.approvalStatus === 'approved').length}</span>
+                            <span class="stat-number">${allHospitals.filter(h => h.isApproved && h.approvalStatus === 'approved').length}</span>
                             <span class="stat-label">Approved</span>
                         </div>
                     </div>
@@ -1803,23 +1801,7 @@ function loadHospitals() {
                                         </div>
                                         <div class="info-item">
                                             <label>Registered:</label>
-                                            <span>${(() => {
-                                                // Try multiple date fields
-                                                const dateFields = ['createdAt', 'registrationDate', 'dateCreated', 'timestamp'];
-                                                for (const field of dateFields) {
-                                                    if (hospital[field]) {
-                                                        try {
-                                                            const date = new Date(hospital[field]);
-                                                            if (!isNaN(date.getTime())) {
-                                                                return date.toLocaleDateString();
-                                                            }
-                                                        } catch (e) {
-                                                            continue;
-                                                        }
-                                                    }
-                                                }
-                                                return 'N/A';
-                                            })()}</span>
+                                            <span>${hospital.createdAt ? new Date(hospital.createdAt).toLocaleDateString() : 'N/A'}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1831,7 +1813,7 @@ function loadHospitals() {
                                         <button class="btn btn-success" onclick="approveServiceProvider('${hospital.uid || hospital._id || hospital.id}', 'hospital')">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
-                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${hospital.uid || hospital._id || hospital.id}', 'hospital', 'Application rejected by staff', 'rejection', 'Please register again after 24-48 hours with the requested changes')">
+                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${hospital.uid || hospital._id || hospital.id}', 'hospital')">
                                             <i class="fas fa-times"></i> Reject
                                         </button>
                                     ` : ''}
@@ -1859,7 +1841,7 @@ function loadDoctors() {
     
     const allDoctors = allUsers.doctors || [];
     // Filter to show only pending doctors (not approved)
-    const doctors = allDoctors.filter(d => d.isApproved === false && d.approvalStatus === 'pending');
+    const doctors = allDoctors.filter(d => !d.isApproved || d.approvalStatus !== 'approved');
     console.log('👨‍⚕️ All doctors:', allDoctors.length, 'Pending doctors:', doctors.length);
     
     // Create a full-screen doctor management view
@@ -1886,7 +1868,7 @@ function loadDoctors() {
                             <span class="stat-label">Pending</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">${allDoctors.filter(d => d.isApproved === true && d.approvalStatus === 'approved').length}</span>
+                            <span class="stat-number">${allDoctors.filter(d => d.isApproved && d.approvalStatus === 'approved').length}</span>
                             <span class="stat-label">Approved</span>
                         </div>
                     </div>
@@ -1940,23 +1922,7 @@ function loadDoctors() {
                                         </div>
                                         <div class="info-item">
                                             <label>Registered:</label>
-                                            <span>${(() => {
-                                                // Try multiple date fields
-                                                const dateFields = ['createdAt', 'registrationDate', 'dateCreated', 'timestamp'];
-                                                for (const field of dateFields) {
-                                                    if (doctor[field]) {
-                                                        try {
-                                                            const date = new Date(doctor[field]);
-                                                            if (!isNaN(date.getTime())) {
-                                                                return date.toLocaleDateString();
-                                                            }
-                                                        } catch (e) {
-                                                            continue;
-                                                        }
-                                                    }
-                                                }
-                                                return 'N/A';
-                                            })()}</span>
+                                            <span>${doctor.createdAt ? new Date(doctor.createdAt).toLocaleDateString() : 'N/A'}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1968,7 +1934,7 @@ function loadDoctors() {
                                         <button class="btn btn-success" onclick="approveServiceProvider('${doctor.uid || doctor._id || doctor.id}', 'doctor')">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
-                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${doctor.uid || doctor._id || doctor.id}', 'doctor', 'Application rejected by staff', 'rejection', 'Please register again after 24-48 hours with the requested changes')">
+                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${doctor.uid || doctor._id || doctor.id}', 'doctor')">
                                             <i class="fas fa-times"></i> Reject
                                         </button>
                                     ` : ''}
@@ -1996,7 +1962,7 @@ function loadNurses() {
 
     const allNurses = allUsers.nurses || [];
     // Filter to show only pending nurses (not approved)
-    const nurses = allNurses.filter(n => n.isApproved === false && n.approvalStatus === 'pending');
+    const nurses = allNurses.filter(n => !n.isApproved || n.approvalStatus !== 'approved');
     console.log('👩‍⚕️ All nurses:', allNurses.length, 'Pending nurses:', nurses.length);
 
     // Create a full-screen nurse management view
@@ -2077,23 +2043,7 @@ function loadNurses() {
                                         </div>
                                         <div class="info-item">
                                             <label>Registered:</label>
-                                            <span>${(() => {
-                                                // Try multiple date fields
-                                                const dateFields = ['createdAt', 'registrationDate', 'dateCreated', 'timestamp'];
-                                                for (const field of dateFields) {
-                                                    if (nurse[field]) {
-                                                        try {
-                                                            const date = new Date(nurse[field]);
-                                                            if (!isNaN(date.getTime())) {
-                                                                return date.toLocaleDateString();
-                                                            }
-                                                        } catch (e) {
-                                                            continue;
-                                                        }
-                                                    }
-                                                }
-                                                return 'N/A';
-                                            })()}</span>
+                                            <span>${nurse.createdAt ? new Date(nurse.createdAt).toLocaleDateString() : 'N/A'}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -2105,7 +2055,7 @@ function loadNurses() {
                                         <button class="btn btn-success" onclick="approveServiceProvider('${nurse.uid || nurse._id || nurse.id}', 'nurse')">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
-                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${nurse.uid || nurse._id || nurse.id}', 'nurse', 'Application rejected by staff', 'rejection', 'Please register again after 24-48 hours with the requested changes')">
+                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${nurse.uid || nurse._id || nurse.id}', 'nurse')">
                                             <i class="fas fa-times"></i> Reject
                                         </button>
                                     ` : ''}
@@ -2133,7 +2083,7 @@ function loadLabs() {
 
     const allLabs = allUsers.labs || [];
     // Filter to show only pending labs (not approved)
-    const labs = allLabs.filter(l => l.isApproved === false && l.approvalStatus === 'pending');
+    const labs = allLabs.filter(l => !l.isApproved || l.approvalStatus !== 'approved');
     console.log('🧪 All labs:', allLabs.length, 'Pending labs:', labs.length);
 
     // Create a full-screen lab management view
@@ -2214,23 +2164,7 @@ function loadLabs() {
                                         </div>
                                         <div class="info-item">
                                             <label>Registered:</label>
-                                            <span>${(() => {
-                                                // Try multiple date fields
-                                                const dateFields = ['createdAt', 'registrationDate', 'dateCreated', 'timestamp'];
-                                                for (const field of dateFields) {
-                                                    if (lab[field]) {
-                                                        try {
-                                                            const date = new Date(lab[field]);
-                                                            if (!isNaN(date.getTime())) {
-                                                                return date.toLocaleDateString();
-                                                            }
-                                                        } catch (e) {
-                                                            continue;
-                                                        }
-                                                    }
-                                                }
-                                                return 'N/A';
-                                            })()}</span>
+                                            <span>${lab.createdAt ? new Date(lab.createdAt).toLocaleDateString() : 'N/A'}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -2242,7 +2176,7 @@ function loadLabs() {
                                         <button class="btn btn-success" onclick="approveServiceProvider('${lab.uid || lab._id || lab.id}', 'lab')">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
-                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${lab.uid || lab._id || lab.id}', 'lab', 'Application rejected by staff', 'rejection', 'Please register again after 24-48 hours with the requested changes')">
+                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${lab.uid || lab._id || lab.id}', 'lab')">
                                             <i class="fas fa-times"></i> Reject
                                         </button>
                                     ` : ''}
@@ -2270,7 +2204,7 @@ function loadPharmacies() {
 
     const allPharmacies = allUsers.pharmacies || [];
     // Filter to show only pending pharmacies (not approved)
-    const pharmacies = allPharmacies.filter(p => p.isApproved === false && p.approvalStatus === 'pending');
+    const pharmacies = allPharmacies.filter(p => !p.isApproved || p.approvalStatus !== 'approved');
     console.log('💊 All pharmacies:', allPharmacies.length, 'Pending pharmacies:', pharmacies.length);
 
     // Create a full-screen pharmacy management view
@@ -2293,11 +2227,11 @@ function loadPharmacies() {
                             <span class="stat-label">Total</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">${pharmacies.filter(p => p.isApproved === false && p.approvalStatus === 'pending').length}</span>
+                            <span class="stat-number">${pharmacies.filter(p => !p.isApproved || p.approvalStatus === 'pending').length}</span>
                             <span class="stat-label">Pending</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">${pharmacies.filter(p => p.isApproved === true && p.approvalStatus === 'approved').length}</span>
+                            <span class="stat-number">${pharmacies.filter(p => p.isApproved && p.approvalStatus === 'approved').length}</span>
                             <span class="stat-label">Approved</span>
                         </div>
                     </div>
@@ -2351,23 +2285,7 @@ function loadPharmacies() {
                                         </div>
                                         <div class="info-item">
                                             <label>Registered:</label>
-                                            <span>${(() => {
-                                                // Try multiple date fields
-                                                const dateFields = ['createdAt', 'registrationDate', 'dateCreated', 'timestamp'];
-                                                for (const field of dateFields) {
-                                                    if (pharmacy[field]) {
-                                                        try {
-                                                            const date = new Date(pharmacy[field]);
-                                                            if (!isNaN(date.getTime())) {
-                                                                return date.toLocaleDateString();
-                                                            }
-                                                        } catch (e) {
-                                                            continue;
-                                                        }
-                                                    }
-                                                }
-                                                return 'N/A';
-                                            })()}</span>
+                                            <span>${pharmacy.createdAt ? new Date(pharmacy.createdAt).toLocaleDateString() : 'N/A'}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -2379,7 +2297,7 @@ function loadPharmacies() {
                                         <button class="btn btn-success" onclick="approveServiceProvider('${pharmacy.uid || pharmacy._id || pharmacy.id}', 'pharmacy')">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
-                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${pharmacy.uid || pharmacy._id || pharmacy.id}', 'pharmacy', 'Application rejected by staff', 'rejection', 'Please register again after 24-48 hours with the requested changes')">
+                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${pharmacy.uid || pharmacy._id || pharmacy.id}', 'pharmacy')">
                                             <i class="fas fa-times"></i> Reject
                                         </button>
                                     ` : ''}
@@ -3929,7 +3847,7 @@ async function handleRejectStakeholder(id) {
     confirmBtn.disabled = true;
     
     // Call rejection API
-    const success = await rejectServiceProvider(id, 'stakeholder', reason, category, nextSteps);
+    const success = await rejectServiceProvider('stakeholder', id, reason, category, nextSteps);
     
     if (success) {
       console.log('✅ Stakeholder rejected successfully');
@@ -4808,7 +4726,7 @@ async function handleRejectStakeholder(stakeholderId) {
     confirmBtn.disabled = true;
     
     // Call rejection API
-    const success = await rejectServiceProvider(stakeholderId, 'stakeholder', reason, category, nextSteps);
+    const success = await rejectServiceProvider('stakeholder', stakeholderId, reason, category, nextSteps);
     
     if (success) {
       console.log('✅ Stakeholder rejected successfully');
@@ -5658,7 +5576,7 @@ async function confirmRejection() {
     confirmBtn.disabled = true;
     
     // Call rejection API
-    const success = await rejectServiceProvider(id, type, reason, category, nextSteps);
+    const success = await rejectServiceProvider(type, id, reason, category, nextSteps);
     
     if (success) {
       console.log(`✅ ${type} rejected successfully`);
@@ -7401,7 +7319,7 @@ function showDashboardOverview() {
                         <p>Manage hospital registrations</p>
                         <div class="card-stats">
                             <span class="stat">Total: ${allUsers.hospitals?.length || 0}</span>
-                            <span class="stat">Pending: ${allUsers.hospitals?.filter(h => h.isApproved === false && h.approvalStatus === 'pending').length || 0}</span>
+                            <span class="stat">Pending: ${allUsers.hospitals?.filter(h => !h.isApproved || h.approvalStatus === 'pending').length || 0}</span>
                         </div>
                     </div>
                     <div class="overview-card" onclick="loadDoctors()">
@@ -7412,7 +7330,7 @@ function showDashboardOverview() {
                         <p>Manage doctor registrations</p>
                         <div class="card-stats">
                             <span class="stat">Total: ${allUsers.doctors?.length || 0}</span>
-                            <span class="stat">Pending: ${allUsers.doctors?.filter(d => d.isApproved === false && d.approvalStatus === 'pending').length || 0}</span>
+                            <span class="stat">Pending: ${allUsers.doctors?.filter(d => !d.isApproved || d.approvalStatus === 'pending').length || 0}</span>
                         </div>
                     </div>
                     <div class="overview-card" onclick="loadNurses()">
@@ -7423,7 +7341,7 @@ function showDashboardOverview() {
                         <p>Manage nurse registrations</p>
                         <div class="card-stats">
                             <span class="stat">Total: ${allUsers.nurses?.length || 0}</span>
-                            <span class="stat">Pending: ${allUsers.nurses?.filter(n => n.isApproved === false && n.approvalStatus === 'pending').length || 0}</span>
+                            <span class="stat">Pending: ${allUsers.nurses?.filter(n => !n.isApproved || n.approvalStatus === 'pending').length || 0}</span>
                         </div>
                     </div>
                     <div class="overview-card" onclick="loadLabs()">
@@ -7434,7 +7352,7 @@ function showDashboardOverview() {
                         <p>Manage lab registrations</p>
                         <div class="card-stats">
                             <span class="stat">Total: ${allUsers.labs?.length || 0}</span>
-                            <span class="stat">Pending: ${allUsers.labs?.filter(l => l.isApproved === false && l.approvalStatus === 'pending').length || 0}</span>
+                            <span class="stat">Pending: ${allUsers.labs?.filter(l => !l.isApproved || l.approvalStatus === 'pending').length || 0}</span>
                         </div>
                     </div>
                     <div class="overview-card" onclick="loadPharmacies()">
@@ -7445,7 +7363,7 @@ function showDashboardOverview() {
                         <p>Manage pharmacy registrations</p>
                         <div class="card-stats">
                             <span class="stat">Total: ${allUsers.pharmacies?.length || 0}</span>
-                            <span class="stat">Pending: ${allUsers.pharmacies?.filter(p => p.isApproved === false && p.approvalStatus === 'pending').length || 0}</span>
+                            <span class="stat">Pending: ${allUsers.pharmacies?.filter(p => !p.isApproved || p.approvalStatus === 'pending').length || 0}</span>
                         </div>
                     </div>
                 </div>
