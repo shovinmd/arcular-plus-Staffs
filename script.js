@@ -314,6 +314,7 @@ async function fetchAllServiceProviders() {
         
         const allUsersData = result.data;
         console.log('📊 Extracted data:', allUsersData);
+        console.log('📊 Sample hospital from backend:', allUsersData.hospitals?.[0]); // Debug: Check backend data
         
         if (!allUsersData) {
             throw new Error('No data received from backend');
@@ -1722,6 +1723,7 @@ function loadHospitals() {
     // Filter to show only pending hospitals (not approved)
     const hospitals = allHospitals.filter(h => !h.isApproved || h.approvalStatus !== 'approved');
     console.log('🏥 All hospitals:', allHospitals.length, 'Pending hospitals:', hospitals.length);
+    console.log('🏥 Sample hospital data:', hospitals[0]); // Debug: Check what data we're getting
     
     // Create a full-screen hospital management view
     contentArea.innerHTML = `
@@ -1801,7 +1803,23 @@ function loadHospitals() {
                                         </div>
                                         <div class="info-item">
                                             <label>Registered:</label>
-                                            <span>${hospital.createdAt ? new Date(hospital.createdAt).toLocaleDateString() : 'N/A'}</span>
+                                            <span>${(() => {
+                                                // Try multiple date fields
+                                                const dateFields = ['createdAt', 'registrationDate', 'dateCreated', 'timestamp'];
+                                                for (const field of dateFields) {
+                                                    if (hospital[field]) {
+                                                        try {
+                                                            const date = new Date(hospital[field]);
+                                                            if (!isNaN(date.getTime())) {
+                                                                return date.toLocaleDateString();
+                                                            }
+                                                        } catch (e) {
+                                                            continue;
+                                                        }
+                                                    }
+                                                }
+                                                return 'N/A';
+                                            })()}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1922,7 +1940,23 @@ function loadDoctors() {
                                         </div>
                                         <div class="info-item">
                                             <label>Registered:</label>
-                                            <span>${doctor.createdAt ? new Date(doctor.createdAt).toLocaleDateString() : 'N/A'}</span>
+                                            <span>${(() => {
+                                                // Try multiple date fields
+                                                const dateFields = ['createdAt', 'registrationDate', 'dateCreated', 'timestamp'];
+                                                for (const field of dateFields) {
+                                                    if (doctor[field]) {
+                                                        try {
+                                                            const date = new Date(doctor[field]);
+                                                            if (!isNaN(date.getTime())) {
+                                                                return date.toLocaleDateString();
+                                                            }
+                                                        } catch (e) {
+                                                            continue;
+                                                        }
+                                                    }
+                                                }
+                                                return 'N/A';
+                                            })()}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -2043,7 +2077,23 @@ function loadNurses() {
                                         </div>
                                         <div class="info-item">
                                             <label>Registered:</label>
-                                            <span>${nurse.createdAt ? new Date(nurse.createdAt).toLocaleDateString() : 'N/A'}</span>
+                                            <span>${(() => {
+                                                // Try multiple date fields
+                                                const dateFields = ['createdAt', 'registrationDate', 'dateCreated', 'timestamp'];
+                                                for (const field of dateFields) {
+                                                    if (nurse[field]) {
+                                                        try {
+                                                            const date = new Date(nurse[field]);
+                                                            if (!isNaN(date.getTime())) {
+                                                                return date.toLocaleDateString();
+                                                            }
+                                                        } catch (e) {
+                                                            continue;
+                                                        }
+                                                    }
+                                                }
+                                                return 'N/A';
+                                            })()}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -2164,7 +2214,23 @@ function loadLabs() {
                                         </div>
                                         <div class="info-item">
                                             <label>Registered:</label>
-                                            <span>${lab.createdAt ? new Date(lab.createdAt).toLocaleDateString() : 'N/A'}</span>
+                                            <span>${(() => {
+                                                // Try multiple date fields
+                                                const dateFields = ['createdAt', 'registrationDate', 'dateCreated', 'timestamp'];
+                                                for (const field of dateFields) {
+                                                    if (lab[field]) {
+                                                        try {
+                                                            const date = new Date(lab[field]);
+                                                            if (!isNaN(date.getTime())) {
+                                                                return date.toLocaleDateString();
+                                                            }
+                                                        } catch (e) {
+                                                            continue;
+                                                        }
+                                                    }
+                                                }
+                                                return 'N/A';
+                                            })()}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -2285,7 +2351,23 @@ function loadPharmacies() {
                                         </div>
                                         <div class="info-item">
                                             <label>Registered:</label>
-                                            <span>${pharmacy.createdAt ? new Date(pharmacy.createdAt).toLocaleDateString() : 'N/A'}</span>
+                                            <span>${(() => {
+                                                // Try multiple date fields
+                                                const dateFields = ['createdAt', 'registrationDate', 'dateCreated', 'timestamp'];
+                                                for (const field of dateFields) {
+                                                    if (pharmacy[field]) {
+                                                        try {
+                                                            const date = new Date(pharmacy[field]);
+                                                            if (!isNaN(date.getTime())) {
+                                                                return date.toLocaleDateString();
+                                                            }
+                                                        } catch (e) {
+                                                            continue;
+                                                        }
+                                                    }
+                                                }
+                                                return 'N/A';
+                                            })()}</span>
                                         </div>
                                     </div>
                                 </div>
