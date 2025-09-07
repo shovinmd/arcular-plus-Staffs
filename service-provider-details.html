@@ -370,11 +370,51 @@
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="script.js"></script>
     <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBvQZQZQZQZQZQZQZQZQZQZQZQZQZQZQ",
+            authDomain: "arcular-plus.firebaseapp.com",
+            projectId: "arcular-plus",
+            storageBucket: "arcular-plus.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdefghijklmnop"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        console.log('✅ Firebase initialized successfully');
+
         // Service Provider Details Page Script
+        const API_BASE_URL = 'https://arcular-plus-backend.onrender.com/api';
         let currentProvider = null;
         let currentProviderType = null;
+
+        // Get authentication token
+        async function getAuthToken() {
+            try {
+                // Try localStorage first
+                const storedToken = localStorage.getItem('staff_idToken');
+                if (storedToken) {
+                    return storedToken;
+                }
+
+                // Try Firebase current user
+                const user = firebase.auth().currentUser;
+                if (user) {
+                    const idToken = await user.getIdToken();
+                    localStorage.setItem('staff_idToken', idToken);
+                    return idToken;
+                }
+
+                // No authentication found
+                console.log('❌ No authentication token found');
+                return null;
+            } catch (error) {
+                console.error('❌ Error getting auth token:', error);
+                return null;
+            }
+        }
         
         // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
@@ -456,7 +496,7 @@
                         </div>
                         <div class="info-item">
                             <span class="info-label">Registration Date</span>
-                            <span class="info-value">${new Date(provider.createdAt).toLocaleDateString()}</span>
+                            <span class="info-value">${provider.createdAt ? new Date(provider.createdAt).toLocaleDateString() : 'N/A'}</span>
                         </div>
                         ${type === 'doctor' ? `
                         <div class="info-item">
@@ -534,7 +574,7 @@
                             <div class="comment-item">
                                 <div class="comment-author">
                                     ${comment.author || 'Staff'}
-                                    <span class="comment-date">${new Date(comment.date).toLocaleDateString()}</span>
+                                    <span class="comment-date">${comment.date ? new Date(comment.date).toLocaleDateString() : 'N/A'}</span>
                                 </div>
                                 <div class="comment-text">${comment.text}</div>
                             </div>
@@ -571,6 +611,36 @@
                     </button>
                 </div>
             `;
+        }
+
+        function showErrorMessage(message) {
+            // Create a temporary error message element
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #ef4444;
+                color: white;
+                padding: 15px 20px;
+                border-radius: 8px;
+                z-index: 10000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            `;
+            errorDiv.innerHTML = `
+                <i class="fas fa-exclamation-triangle"></i>
+                ${message}
+            `;
+            
+            document.body.appendChild(errorDiv);
+            
+            // Remove after 5 seconds
+            setTimeout(() => {
+                if (errorDiv.parentNode) {
+                    errorDiv.parentNode.removeChild(errorDiv);
+                }
+            }, 5000);
         }
         
         // Go back to dashboard
