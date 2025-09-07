@@ -1596,61 +1596,110 @@ function loadHospitals() {
         return;
     }
     
-    const hospitals = allUsers.hospitals;
+    const hospitals = allUsers.hospitals || [];
     console.log('🏥 Hospitals data:', hospitals);
     
-    if (hospitals.length === 0) {
-        console.log('🏥 No hospitals found, showing empty state');
-        contentArea.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-hospital fa-3x text-muted mb-3"></i>
-                <h3>No Hospitals Found</h3>
-                <p class="text-muted">No hospital registrations have been submitted yet.</p>
-            </div>
-        `;
-        return;
-    }
-    
-    console.log('🏥 Rendering', hospitals.length, 'hospitals');
+    // Create a full-screen hospital management view
     contentArea.innerHTML = `
-        <div class="provider-list">
-            <div class="provider-header">
-                <h2><i class="fas fa-hospital"></i> Hospitals (${hospitals.length})</h2>
-            </div>
-            <div class="provider-grid">
-                ${hospitals.map(hospital => `
-                    <div class="provider-card" data-status="${hospital.isApproved ? 'approved' : 'pending'}">
-                        <div class="provider-header">
-                            <div class="provider-avatar">
-                                <i class="fas fa-hospital"></i>
-                            </div>
-                            <div class="provider-info">
-                                <h4>${hospital.name}</h4>
-                                <p class="provider-email">${hospital.email}</p>
-                            </div>
-                            <div class="provider-status">
-                                <span class="status-badge ${hospital.isApproved ? 'approved' : 'pending'}">
-                                    ${hospital.isApproved ? 'Approved' : 'Pending'}
-                                </span>
-                            </div>
+        <div class="provider-management-screen">
+            <div class="screen-header">
+                <div class="header-left">
+                    <button class="back-btn" onclick="showDashboardOverview()">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </button>
+                    <div class="screen-title">
+                        <h1><i class="fas fa-hospital"></i> Hospital Management</h1>
+                        <p>Manage hospital registrations and approvals</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="screen-stats">
+                        <div class="stat-item">
+                            <span class="stat-number">${hospitals.length}</span>
+                            <span class="stat-label">Total</span>
                         </div>
-                        <div class="provider-details">
-                            <p><strong>Registration:</strong> ${hospital.registrationNumber || 'N/A'}</p>
-                            <p><strong>Address:</strong> ${hospital.address || 'N/A'}</p>
-                            <p><strong>Registered:</strong> ${new Date(hospital.createdAt).toLocaleDateString()}</p>
+                        <div class="stat-item">
+                            <span class="stat-number">${hospitals.filter(h => h.isApproved).length}</span>
+                            <span class="stat-label">Approved</span>
                         </div>
-                        <div class="provider-actions">
-                            <button class="btn btn-primary" onclick="viewProviderDetails('${hospital._id}', 'hospital')">
-                                <i class="fas fa-eye"></i> View Details
-                            </button>
+                        <div class="stat-item">
+                            <span class="stat-number">${hospitals.filter(h => !h.isApproved).length}</span>
+                            <span class="stat-label">Pending</span>
                         </div>
                     </div>
-                `).join('')}
+                </div>
+            </div>
+            
+            <div class="screen-content">
+                ${hospitals.length === 0 ? `
+                    <div class="empty-state-screen">
+                        <div class="empty-icon">
+                            <i class="fas fa-hospital fa-4x"></i>
+                        </div>
+                        <h2>No Hospitals Found</h2>
+                        <p>No hospital registrations have been submitted yet.</p>
+                        <button class="btn btn-primary" onclick="refreshData()">
+                            <i class="fas fa-refresh"></i> Refresh Data
+                        </button>
+                    </div>
+                ` : `
+                    <div class="provider-grid-screen">
+                        ${hospitals.map(hospital => `
+                            <div class="provider-card-screen" data-status="${hospital.isApproved ? 'approved' : 'pending'}">
+                                <div class="card-header">
+                                    <div class="provider-avatar-large">
+                                        <i class="fas fa-hospital"></i>
+                                    </div>
+                                    <div class="provider-info-main">
+                                        <h3>${hospital.name || hospital.hospitalName || 'Unknown Hospital'}</h3>
+                                        <p class="provider-email">${hospital.email}</p>
+                                        <span class="status-badge-large ${hospital.isApproved ? 'approved' : 'pending'}">
+                                            ${hospital.isApproved ? 'Approved' : 'Pending Approval'}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="info-grid">
+                                        <div class="info-item">
+                                            <label>Registration Number:</label>
+                                            <span>${hospital.registrationNumber || 'N/A'}</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <label>Address:</label>
+                                            <span>${hospital.address || 'N/A'}</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <label>Contact:</label>
+                                            <span>${hospital.mobileNumber || hospital.contact || 'N/A'}</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <label>Registered:</label>
+                                            <span>${new Date(hospital.createdAt).toLocaleDateString()}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-actions">
+                                    <button class="btn btn-primary" onclick="viewProviderDetails('${hospital._id}', 'hospital')">
+                                        <i class="fas fa-eye"></i> View Details
+                                    </button>
+                                    ${!hospital.isApproved ? `
+                                        <button class="btn btn-success" onclick="approveServiceProvider('${hospital._id}', 'hospital')">
+                                            <i class="fas fa-check"></i> Approve
+                                        </button>
+                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${hospital._id}', 'hospital')">
+                                            <i class="fas fa-times"></i> Reject
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `}
             </div>
         </div>
     `;
     
-    console.log('🏥 Hospitals loaded successfully');
+    console.log('🏥 Hospitals screen loaded successfully');
 }
 
 function loadDoctors() {
@@ -1663,61 +1712,110 @@ function loadDoctors() {
         return;
     }
     
-    const doctors = allUsers.doctors;
+    const doctors = allUsers.doctors || [];
     console.log('👨‍⚕️ Doctors data:', doctors);
     
-    if (doctors.length === 0) {
-        console.log('👨‍⚕️ No doctors found, showing empty state');
-        contentArea.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-user-md fa-3x text-muted mb-3"></i>
-                <h3>No Doctors Found</h3>
-                <p class="text-muted">No doctor registrations have been submitted yet.</p>
-            </div>
-        `;
-        return;
-    }
-    
-    console.log('👨‍⚕️ Rendering', doctors.length, 'doctors');
+    // Create a full-screen doctor management view
     contentArea.innerHTML = `
-        <div class="provider-list">
-            <div class="provider-header">
-                <h2><i class="fas fa-user-md"></i> Doctors (${doctors.length})</h2>
-            </div>
-            <div class="provider-grid">
-                ${doctors.map(doctor => `
-                    <div class="provider-card" data-status="${doctor.isApproved ? 'approved' : 'pending'}">
-                        <div class="provider-header">
-                            <div class="provider-avatar">
-                                <i class="fas fa-user-md"></i>
-                            </div>
-                            <div class="provider-info">
-                                <h4>${doctor.name}</h4>
-                                <p class="provider-email">${doctor.email}</p>
-                            </div>
-                            <div class="provider-status">
-                                <span class="status-badge ${doctor.isApproved ? 'approved' : 'pending'}">
-                                    ${doctor.isApproved ? 'Approved' : 'Pending'}
-                                </span>
-                            </div>
+        <div class="provider-management-screen">
+            <div class="screen-header">
+                <div class="header-left">
+                    <button class="back-btn" onclick="showDashboardOverview()">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </button>
+                    <div class="screen-title">
+                        <h1><i class="fas fa-user-md"></i> Doctor Management</h1>
+                        <p>Manage doctor registrations and approvals</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="screen-stats">
+                        <div class="stat-item">
+                            <span class="stat-number">${doctors.length}</span>
+                            <span class="stat-label">Total</span>
                         </div>
-                        <div class="provider-details">
-                            <p><strong>License:</strong> ${doctor.licenseNumber || 'N/A'}</p>
-                            <p><strong>Specialization:</strong> ${doctor.specialization || 'N/A'}</p>
-                            <p><strong>Registered:</strong> ${new Date(doctor.createdAt).toLocaleDateString()}</p>
+                        <div class="stat-item">
+                            <span class="stat-number">${doctors.filter(d => d.isApproved).length}</span>
+                            <span class="stat-label">Approved</span>
                         </div>
-                        <div class="provider-actions">
-                            <button class="btn btn-primary" onclick="viewProviderDetails('${doctor._id}', 'doctor')">
-                                <i class="fas fa-eye"></i> View Details
-                            </button>
+                        <div class="stat-item">
+                            <span class="stat-number">${doctors.filter(d => !d.isApproved).length}</span>
+                            <span class="stat-label">Pending</span>
                         </div>
                     </div>
-                `).join('')}
+                </div>
+            </div>
+            
+            <div class="screen-content">
+                ${doctors.length === 0 ? `
+                    <div class="empty-state-screen">
+                        <div class="empty-icon">
+                            <i class="fas fa-user-md fa-4x"></i>
+                        </div>
+                        <h2>No Doctors Found</h2>
+                        <p>No doctor registrations have been submitted yet.</p>
+                        <button class="btn btn-primary" onclick="refreshData()">
+                            <i class="fas fa-refresh"></i> Refresh Data
+                        </button>
+                    </div>
+                ` : `
+                    <div class="provider-grid-screen">
+                        ${doctors.map(doctor => `
+                            <div class="provider-card-screen" data-status="${doctor.isApproved ? 'approved' : 'pending'}">
+                                <div class="card-header">
+                                    <div class="provider-avatar-large">
+                                        <i class="fas fa-user-md"></i>
+                                    </div>
+                                    <div class="provider-info-main">
+                                        <h3>${doctor.name || doctor.fullName || 'Unknown Doctor'}</h3>
+                                        <p class="provider-email">${doctor.email}</p>
+                                        <span class="status-badge-large ${doctor.isApproved ? 'approved' : 'pending'}">
+                                            ${doctor.isApproved ? 'Approved' : 'Pending Approval'}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="info-grid">
+                                        <div class="info-item">
+                                            <label>License Number:</label>
+                                            <span>${doctor.licenseNumber || 'N/A'}</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <label>Specialization:</label>
+                                            <span>${doctor.specialization || 'N/A'}</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <label>Contact:</label>
+                                            <span>${doctor.mobileNumber || doctor.contact || 'N/A'}</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <label>Registered:</label>
+                                            <span>${new Date(doctor.createdAt).toLocaleDateString()}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-actions">
+                                    <button class="btn btn-primary" onclick="viewProviderDetails('${doctor._id}', 'doctor')">
+                                        <i class="fas fa-eye"></i> View Details
+                                    </button>
+                                    ${!doctor.isApproved ? `
+                                        <button class="btn btn-success" onclick="approveServiceProvider('${doctor._id}', 'doctor')">
+                                            <i class="fas fa-check"></i> Approve
+                                        </button>
+                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${doctor._id}', 'doctor')">
+                                            <i class="fas fa-times"></i> Reject
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `}
             </div>
         </div>
     `;
     
-    console.log('👨‍⚕️ Doctors loaded successfully');
+    console.log('👨‍⚕️ Doctors screen loaded successfully');
 }
 
 function loadNurses() {
@@ -6796,6 +6894,84 @@ window.approveServiceProvider = approveServiceProviderImproved;
 window.rejectServiceProvider = rejectServiceProviderImproved;
 window.loadDashboardData = loadDashboardDataImproved;
 
+// Navigation Functions
+function showDashboardOverview() {
+    console.log('🏠 Showing dashboard overview...');
+    const contentArea = document.getElementById('serviceProviderContent');
+    if (contentArea) {
+        contentArea.innerHTML = `
+            <div class="dashboard-overview">
+                <div class="overview-header">
+                    <h2><i class="fas fa-tachometer-alt"></i> Dashboard Overview</h2>
+                    <p>Select a service provider type from the sidebar to manage applications</p>
+                </div>
+                <div class="overview-grid">
+                    <div class="overview-card" onclick="loadHospitals()">
+                        <div class="card-icon">
+                            <i class="fas fa-hospital"></i>
+                        </div>
+                        <h3>Hospitals</h3>
+                        <p>Manage hospital registrations</p>
+                        <div class="card-stats">
+                            <span class="stat">Total: ${allUsers.hospitals?.length || 0}</span>
+                            <span class="stat">Pending: ${allUsers.hospitals?.filter(h => !h.isApproved).length || 0}</span>
+                        </div>
+                    </div>
+                    <div class="overview-card" onclick="loadDoctors()">
+                        <div class="card-icon">
+                            <i class="fas fa-user-md"></i>
+                        </div>
+                        <h3>Doctors</h3>
+                        <p>Manage doctor registrations</p>
+                        <div class="card-stats">
+                            <span class="stat">Total: ${allUsers.doctors?.length || 0}</span>
+                            <span class="stat">Pending: ${allUsers.doctors?.filter(d => !d.isApproved).length || 0}</span>
+                        </div>
+                    </div>
+                    <div class="overview-card" onclick="loadNurses()">
+                        <div class="card-icon">
+                            <i class="fas fa-user-nurse"></i>
+                        </div>
+                        <h3>Nurses</h3>
+                        <p>Manage nurse registrations</p>
+                        <div class="card-stats">
+                            <span class="stat">Total: ${allUsers.nurses?.length || 0}</span>
+                            <span class="stat">Pending: ${allUsers.nurses?.filter(n => !n.isApproved).length || 0}</span>
+                        </div>
+                    </div>
+                    <div class="overview-card" onclick="loadLabs()">
+                        <div class="card-icon">
+                            <i class="fas fa-flask"></i>
+                        </div>
+                        <h3>Labs</h3>
+                        <p>Manage lab registrations</p>
+                        <div class="card-stats">
+                            <span class="stat">Total: ${allUsers.labs?.length || 0}</span>
+                            <span class="stat">Pending: ${allUsers.labs?.filter(l => !l.isApproved).length || 0}</span>
+                        </div>
+                    </div>
+                    <div class="overview-card" onclick="loadPharmacies()">
+                        <div class="card-icon">
+                            <i class="fas fa-pills"></i>
+                        </div>
+                        <h3>Pharmacies</h3>
+                        <p>Manage pharmacy registrations</p>
+                        <div class="card-stats">
+                            <span class="stat">Total: ${allUsers.pharmacies?.length || 0}</span>
+                            <span class="stat">Pending: ${allUsers.pharmacies?.filter(p => !p.isApproved).length || 0}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+}
+
+function refreshData() {
+    console.log('🔄 Refreshing data...');
+    loadAllUsers();
+}
+
 // Quick Actions Functions
 function exportStaffData() {
     console.log('📊 Exporting staff data...');
@@ -6825,5 +7001,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Also initialize improved functionality
     setTimeout(() => {
       loadDashboardDataImproved();
+      // Show dashboard overview by default
+      showDashboardOverview();
     }, 1000);
 });
