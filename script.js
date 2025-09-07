@@ -1064,8 +1064,9 @@ function setupEventListeners() {
     // Navigation
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', function() {
-            const tabName = this.getAttribute('data-tab');
-            switchTab(tabName);
+            const providerType = this.getAttribute('data-provider');
+            console.log('🔄 Navigation clicked:', providerType);
+            loadServiceProviderData(providerType);
         });
     });
     
@@ -1687,9 +1688,9 @@ function loadHospitals() {
                                     </div>
                                 </div>
                                 <div class="card-actions">
-                                    <button class="btn btn-primary" onclick="viewProviderDetails('${hospital._id}', 'hospital')">
-                                        <i class="fas fa-eye"></i> View Details
-                                    </button>
+                                                <button class="btn btn-primary" onclick="viewProviderDetails('${hospital.uid || hospital._id}', 'hospital')">
+                                                    <i class="fas fa-eye"></i> View Details
+                                                </button>
                                     ${!hospital.isApproved ? `
                                         <button class="btn btn-success" onclick="approveServiceProvider('${hospital._id}', 'hospital')">
                                             <i class="fas fa-check"></i> Approve
@@ -1803,9 +1804,9 @@ function loadDoctors() {
                                     </div>
                                 </div>
                                 <div class="card-actions">
-                                    <button class="btn btn-primary" onclick="viewProviderDetails('${doctor._id}', 'doctor')">
-                                        <i class="fas fa-eye"></i> View Details
-                                    </button>
+                                                <button class="btn btn-primary" onclick="viewProviderDetails('${doctor.uid || doctor._id}', 'doctor')">
+                                                    <i class="fas fa-eye"></i> View Details
+                                                </button>
                                     ${!doctor.isApproved ? `
                                         <button class="btn btn-success" onclick="approveServiceProvider('${doctor._id}', 'doctor')">
                                             <i class="fas fa-check"></i> Approve
@@ -1874,9 +1875,9 @@ function loadNurses() {
                             <p><strong>Registered:</strong> ${new Date(nurse.createdAt).toLocaleDateString()}</p>
                         </div>
                         <div class="provider-actions">
-                            <button class="btn btn-primary" onclick="viewProviderDetails('${nurse._id}', 'nurse')">
-                                <i class="fas fa-eye"></i> View Details
-                            </button>
+                                                <button class="btn btn-primary" onclick="viewProviderDetails('${nurse.uid || nurse._id}', 'nurse')">
+                                                    <i class="fas fa-eye"></i> View Details
+                                                </button>
                         </div>
                     </div>
                 `).join('')}
@@ -1933,9 +1934,9 @@ function loadLabs() {
                             <p><strong>Registered:</strong> ${new Date(lab.createdAt).toLocaleDateString()}</p>
                         </div>
                         <div class="provider-actions">
-                            <button class="btn btn-primary" onclick="viewProviderDetails('${lab._id}', 'lab')">
-                                <i class="fas fa-eye"></i> View Details
-                            </button>
+                                                <button class="btn btn-primary" onclick="viewProviderDetails('${lab.uid || lab._id}', 'lab')">
+                                                    <i class="fas fa-eye"></i> View Details
+                                                </button>
                         </div>
                     </div>
                 `).join('')}
@@ -1992,9 +1993,9 @@ function loadPharmacies() {
                             <p><strong>Registered:</strong> ${new Date(pharmacy.createdAt).toLocaleDateString()}</p>
                         </div>
                         <div class="provider-actions">
-                            <button class="btn btn-primary" onclick="viewProviderDetails('${pharmacy._id}', 'pharmacy')">
-                                <i class="fas fa-eye"></i> View Details
-                            </button>
+                                                <button class="btn btn-primary" onclick="viewProviderDetails('${pharmacy.uid || pharmacy._id}', 'pharmacy')">
+                                                    <i class="fas fa-eye"></i> View Details
+                                                </button>
                         </div>
                     </div>
                 `).join('')}
@@ -2706,7 +2707,7 @@ async function initializeArcStaffDashboard() {
       try {
         const idToken = localStorage.getItem('staff_idToken');
         if (idToken) {
-          const response = await fetch(`https://arcular-plus-backend.onrender.com/staff/api/staff/profile/${user.uid}`, {
+          const response = await fetch(`https://arcular-plus-backend.onrender.com/api/arc-staff/profile`, {
             headers: {
               'Authorization': `Bearer ${idToken}`,
               'Content-Type': 'application/json'
@@ -2715,7 +2716,7 @@ async function initializeArcStaffDashboard() {
           
           if (response.ok) {
             const staffProfile = await response.json();
-            const actualName = staffProfile.fullName || staffProfile.displayName || user.email.split('@')[0];
+            const actualName = staffProfile.staff?.fullName || staffProfile.fullName || staffProfile.displayName || user.email.split('@')[0];
             
             const userNameElement = document.getElementById('userName');
             const userEmailElement = document.getElementById('userEmail');
@@ -7021,12 +7022,48 @@ function refreshData() {
     loadAllUsers();
 }
 
+// Load service provider data based on type
+function loadServiceProviderData(providerType) {
+    console.log('🔄 Loading service provider data for:', providerType);
+    
+    // Update active nav item
+    updateActiveNavItem(providerType);
+    
+    // Load the appropriate provider type
+    switch(providerType) {
+        case 'hospital':
+            loadHospitals();
+            break;
+        case 'doctor':
+            loadDoctors();
+            break;
+        case 'nurse':
+            loadNurses();
+            break;
+        case 'lab':
+            loadLabs();
+            break;
+        case 'pharmacy':
+            loadPharmacies();
+            break;
+        default:
+            console.error('❌ Unknown provider type:', providerType);
+            showErrorMessage('Unknown service provider type');
+    }
+}
+
 // Clear all error messages
 function clearErrorMessages() {
     const errorElements = document.querySelectorAll('.error-message, .alert-danger');
     errorElements.forEach(element => {
         element.remove();
     });
+}
+
+// View provider details in separate page
+function viewProviderDetails(providerId, providerType) {
+    console.log('🔄 Opening provider details:', providerId, providerType);
+    window.location.href = `service-provider-details.html?id=${providerId}&type=${providerType}`;
 }
 
 // Quick Actions Functions
