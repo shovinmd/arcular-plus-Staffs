@@ -1831,7 +1831,7 @@ function loadHospitals() {
                                         <button class="btn btn-success" onclick="approveServiceProvider('${hospital.uid || hospital._id || hospital.id}', 'hospital')">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
-                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${hospital.uid || hospital._id || hospital.id}', 'hospital')">
+                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${hospital.uid || hospital._id || hospital.id}', 'hospital', 'Application rejected by staff', 'rejection', 'Please register again after 24-48 hours with the requested changes')">
                                             <i class="fas fa-times"></i> Reject
                                         </button>
                                     ` : ''}
@@ -1968,7 +1968,7 @@ function loadDoctors() {
                                         <button class="btn btn-success" onclick="approveServiceProvider('${doctor.uid || doctor._id || doctor.id}', 'doctor')">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
-                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${doctor.uid || doctor._id || doctor.id}', 'doctor')">
+                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${doctor.uid || doctor._id || doctor.id}', 'doctor', 'Application rejected by staff', 'rejection', 'Please register again after 24-48 hours with the requested changes')">
                                             <i class="fas fa-times"></i> Reject
                                         </button>
                                     ` : ''}
@@ -2105,7 +2105,7 @@ function loadNurses() {
                                         <button class="btn btn-success" onclick="approveServiceProvider('${nurse.uid || nurse._id || nurse.id}', 'nurse')">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
-                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${nurse.uid || nurse._id || nurse.id}', 'nurse')">
+                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${nurse.uid || nurse._id || nurse.id}', 'nurse', 'Application rejected by staff', 'rejection', 'Please register again after 24-48 hours with the requested changes')">
                                             <i class="fas fa-times"></i> Reject
                                         </button>
                                     ` : ''}
@@ -2242,7 +2242,7 @@ function loadLabs() {
                                         <button class="btn btn-success" onclick="approveServiceProvider('${lab.uid || lab._id || lab.id}', 'lab')">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
-                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${lab.uid || lab._id || lab.id}', 'lab')">
+                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${lab.uid || lab._id || lab.id}', 'lab', 'Application rejected by staff', 'rejection', 'Please register again after 24-48 hours with the requested changes')">
                                             <i class="fas fa-times"></i> Reject
                                         </button>
                                     ` : ''}
@@ -2379,7 +2379,7 @@ function loadPharmacies() {
                                         <button class="btn btn-success" onclick="approveServiceProvider('${pharmacy.uid || pharmacy._id || pharmacy.id}', 'pharmacy')">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
-                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${pharmacy.uid || pharmacy._id || pharmacy.id}', 'pharmacy')">
+                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${pharmacy.uid || pharmacy._id || pharmacy.id}', 'pharmacy', 'Application rejected by staff', 'rejection', 'Please register again after 24-48 hours with the requested changes')">
                                             <i class="fas fa-times"></i> Reject
                                         </button>
                                     ` : ''}
@@ -3929,7 +3929,7 @@ async function handleRejectStakeholder(id) {
     confirmBtn.disabled = true;
     
     // Call rejection API
-    const success = await rejectServiceProvider('stakeholder', id, reason, category, nextSteps);
+    const success = await rejectServiceProvider(id, 'stakeholder', reason, category, nextSteps);
     
     if (success) {
       console.log('✅ Stakeholder rejected successfully');
@@ -4808,7 +4808,7 @@ async function handleRejectStakeholder(stakeholderId) {
     confirmBtn.disabled = true;
     
     // Call rejection API
-    const success = await rejectServiceProvider('stakeholder', stakeholderId, reason, category, nextSteps);
+    const success = await rejectServiceProvider(stakeholderId, 'stakeholder', reason, category, nextSteps);
     
     if (success) {
       console.log('✅ Stakeholder rejected successfully');
@@ -5658,7 +5658,7 @@ async function confirmRejection() {
     confirmBtn.disabled = true;
     
     // Call rejection API
-    const success = await rejectServiceProvider(type, id, reason, category, nextSteps);
+    const success = await rejectServiceProvider(id, type, reason, category, nextSteps);
     
     if (success) {
       console.log(`✅ ${type} rejected successfully`);
