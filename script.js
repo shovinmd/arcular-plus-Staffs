@@ -7153,7 +7153,8 @@ function showMessage(message, type) {
 
 // Override existing functions to use improved functionality
 window.loadServiceProviderData = loadServiceProviderDataImproved;
-window.viewProviderDetails = viewProviderDetailsImproved;
+// Keep the original viewProviderDetails function for redirecting to details page
+// window.viewProviderDetails = viewProviderDetailsImproved;
 window.approveServiceProvider = approveServiceProviderImproved;
 window.rejectServiceProvider = rejectServiceProviderImproved;
 window.loadDashboardData = loadDashboardDataImproved;
