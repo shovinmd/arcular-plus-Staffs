@@ -5689,7 +5689,6 @@ function closeProviderDetailsModal() {
 
 // Global variables for improved functionality
 let currentApproval = null;
-let pendingApprovals = [];
 
 // Load Service Provider Data with improved functionality
 async function loadServiceProviderDataImproved(providerType) {
