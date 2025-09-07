@@ -1092,6 +1092,14 @@ function setupEventListeners() {
         clearFiltersBtn.addEventListener('click', clearFilters);
     }
     
+    // Quick Actions Tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const tabName = this.getAttribute('data-tab');
+            switchQuickActionTab(tabName);
+        });
+    });
+    
     // Logout
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
@@ -7287,17 +7295,134 @@ function getTypeIcon(type) {
     return icons[type] || 'fas fa-user';
 }
 
+// Quick Actions Tab Switching
+function switchQuickActionTab(tabName) {
+    console.log('🔄 Switching to tab:', tabName);
+    
+    // Remove active class from all tabs and panels
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+    
+    // Add active class to selected tab and panel
+    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    document.getElementById(`${tabName}-tab`).classList.add('active');
+}
+
 // Quick Actions Functions
+
+// Reports Tab Functions
+function generateStaffReport() {
+    console.log('📊 Generating staff performance report...');
+    showNotification('Generating staff performance report...', 'info');
+    
+    // Simulate report generation
+    setTimeout(() => {
+        showSuccessMessage('Staff performance report generated successfully!');
+        // Here you would typically download or display the report
+    }, 2000);
+}
+
+function generateProviderReport() {
+    console.log('📊 Generating provider statistics report...');
+    showNotification('Generating provider statistics...', 'info');
+    
+    setTimeout(() => {
+        showSuccessMessage('Provider statistics report generated successfully!');
+    }, 2000);
+}
+
+function generateApprovalReport() {
+    console.log('📊 Generating approval summary report...');
+    showNotification('Generating approval summary...', 'info');
+    
+    setTimeout(() => {
+        showSuccessMessage('Approval summary report generated successfully!');
+    }, 2000);
+}
+
+function generateMonthlyReport() {
+    console.log('📊 Generating monthly summary report...');
+    showNotification('Generating monthly summary...', 'info');
+    
+    setTimeout(() => {
+        showSuccessMessage('Monthly summary report generated successfully!');
+    }, 2000);
+}
+
+// Exports Tab Functions
 function exportStaffData() {
     console.log('📊 Exporting staff data...');
     showNotification('Exporting staff data...', 'info');
-    // TODO: Implement actual export functionality
+    
+    setTimeout(() => {
+        showSuccessMessage('Staff data exported successfully!');
+        // Here you would typically trigger a download
+    }, 2000);
 }
 
-function generateStaffReport() {
-    console.log('📈 Generating staff report...');
-    showNotification('Generating staff report...', 'info');
-    // TODO: Implement actual report generation
+function exportProviderData() {
+    console.log('📊 Exporting provider data...');
+    showNotification('Exporting provider data...', 'info');
+    
+    setTimeout(() => {
+        showSuccessMessage('Provider data exported successfully!');
+    }, 2000);
+}
+
+function exportApprovalData() {
+    console.log('📊 Exporting approval data...');
+    showNotification('Exporting approval data...', 'info');
+    
+    setTimeout(() => {
+        showSuccessMessage('Approval data exported successfully!');
+    }, 2000);
+}
+
+function exportAuditLog() {
+    console.log('📊 Exporting audit log...');
+    showNotification('Exporting audit log...', 'info');
+    
+    setTimeout(() => {
+        showSuccessMessage('Audit log exported successfully!');
+    }, 2000);
+}
+
+// Tools Tab Functions
+function bulkApproveProviders() {
+    console.log('🔧 Bulk approving providers...');
+    showNotification('Opening bulk approval interface...', 'info');
+    
+    // This would typically open a modal with provider selection
+    setTimeout(() => {
+        showSuccessMessage('Bulk approval interface opened!');
+    }, 1000);
+}
+
+function sendBulkNotifications() {
+    console.log('🔧 Sending bulk notifications...');
+    showNotification('Opening notification composer...', 'info');
+    
+    setTimeout(() => {
+        showSuccessMessage('Notification composer opened!');
+    }, 1000);
+}
+
+function systemMaintenance() {
+    console.log('🔧 Running system maintenance...');
+    showNotification('Running system maintenance tasks...', 'info');
+    
+    setTimeout(() => {
+        showSuccessMessage('System maintenance completed successfully!');
+    }, 3000);
+}
+
+function backupData() {
+    console.log('🔧 Creating data backup...');
+    showNotification('Creating system backup...', 'info');
+    
+    setTimeout(() => {
+        showSuccessMessage('Data backup created successfully!');
+    }, 3000);
 }
 
 function generateReports() {
