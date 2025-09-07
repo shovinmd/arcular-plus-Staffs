@@ -1720,19 +1720,19 @@ function loadHospitals() {
                                         </div>
                                         <div class="info-item">
                                             <label>Registered:</label>
-                                            <span>${new Date(hospital.createdAt).toLocaleDateString()}</span>
+                                            <span>${hospital.createdAt ? new Date(hospital.createdAt).toLocaleDateString() : 'N/A'}</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="card-actions">
-                                                <button class="btn btn-primary" onclick="viewProviderDetails('${hospital.uid || hospital._id}', 'hospital')">
+                                                <button class="btn btn-primary" onclick="viewProviderDetails('${hospital.uid || hospital._id || hospital.id}', 'hospital')">
                                                     <i class="fas fa-eye"></i> View Details
                                                 </button>
                                     ${!(hospital.isApproved && hospital.approvalStatus === 'approved') ? `
-                                        <button class="btn btn-success" onclick="approveServiceProvider('${hospital.uid || hospital._id}', 'hospital')">
+                                        <button class="btn btn-success" onclick="approveServiceProvider('${hospital.uid || hospital._id || hospital.id}', 'hospital')">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
-                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${hospital.uid || hospital._id}', 'hospital')">
+                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${hospital.uid || hospital._id || hospital.id}', 'hospital')">
                                             <i class="fas fa-times"></i> Reject
                                         </button>
                                     ` : ''}
@@ -1839,19 +1839,19 @@ function loadDoctors() {
                                         </div>
                                         <div class="info-item">
                                             <label>Registered:</label>
-                                            <span>${new Date(doctor.createdAt).toLocaleDateString()}</span>
+                                            <span>${doctor.createdAt ? new Date(doctor.createdAt).toLocaleDateString() : 'N/A'}</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="card-actions">
-                                                <button class="btn btn-primary" onclick="viewProviderDetails('${doctor.uid || doctor._id}', 'doctor')">
+                                                <button class="btn btn-primary" onclick="viewProviderDetails('${doctor.uid || doctor._id || doctor.id}', 'doctor')">
                                                     <i class="fas fa-eye"></i> View Details
                                                 </button>
-                                    ${!doctor.isApproved ? `
-                                        <button class="btn btn-success" onclick="approveServiceProvider('${doctor.uid || doctor._id}', 'doctor')">
+                                    ${!(doctor.isApproved && doctor.approvalStatus === 'approved') ? `
+                                        <button class="btn btn-success" onclick="approveServiceProvider('${doctor.uid || doctor._id || doctor.id}', 'doctor')">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
-                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${doctor.uid || doctor._id}', 'doctor')">
+                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${doctor.uid || doctor._id || doctor.id}', 'doctor')">
                                             <i class="fas fa-times"></i> Reject
                                         </button>
                                     ` : ''}
@@ -1958,19 +1958,19 @@ function loadNurses() {
                                         </div>
                                         <div class="info-item">
                                             <label>Registered:</label>
-                                            <span>${new Date(nurse.createdAt).toLocaleDateString()}</span>
+                                            <span>${nurse.createdAt ? new Date(nurse.createdAt).toLocaleDateString() : 'N/A'}</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="card-actions">
-                                    <button class="btn btn-primary" onclick="viewProviderDetails('${nurse.uid || nurse._id}', 'nurse')">
+                                    <button class="btn btn-primary" onclick="viewProviderDetails('${nurse.uid || nurse._id || nurse.id}', 'nurse')">
                                         <i class="fas fa-eye"></i> View Details
                                     </button>
-                                    ${!nurse.isApproved ? `
-                                        <button class="btn btn-success" onclick="approveServiceProvider('${nurse.uid || nurse._id}', 'nurse')">
+                                    ${!(nurse.isApproved && nurse.approvalStatus === 'approved') ? `
+                                        <button class="btn btn-success" onclick="approveServiceProvider('${nurse.uid || nurse._id || nurse.id}', 'nurse')">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
-                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${nurse.uid || nurse._id}', 'nurse')">
+                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${nurse.uid || nurse._id || nurse.id}', 'nurse')">
                                             <i class="fas fa-times"></i> Reject
                                         </button>
                                     ` : ''}
@@ -2077,19 +2077,19 @@ function loadLabs() {
                                         </div>
                                         <div class="info-item">
                                             <label>Registered:</label>
-                                            <span>${new Date(lab.createdAt).toLocaleDateString()}</span>
+                                            <span>${lab.createdAt ? new Date(lab.createdAt).toLocaleDateString() : 'N/A'}</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="card-actions">
-                                    <button class="btn btn-primary" onclick="viewProviderDetails('${lab.uid || lab._id}', 'lab')">
+                                    <button class="btn btn-primary" onclick="viewProviderDetails('${lab.uid || lab._id || lab.id}', 'lab')">
                                         <i class="fas fa-eye"></i> View Details
                                     </button>
-                                    ${!lab.isApproved ? `
-                                        <button class="btn btn-success" onclick="approveServiceProvider('${lab._id}', 'lab')">
+                                    ${!(lab.isApproved && lab.approvalStatus === 'approved') ? `
+                                        <button class="btn btn-success" onclick="approveServiceProvider('${lab.uid || lab._id || lab.id}', 'lab')">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
-                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${lab._id}', 'lab')">
+                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${lab.uid || lab._id || lab.id}', 'lab')">
                                             <i class="fas fa-times"></i> Reject
                                         </button>
                                     ` : ''}
@@ -2196,19 +2196,19 @@ function loadPharmacies() {
                                         </div>
                                         <div class="info-item">
                                             <label>Registered:</label>
-                                            <span>${new Date(pharmacy.createdAt).toLocaleDateString()}</span>
+                                            <span>${pharmacy.createdAt ? new Date(pharmacy.createdAt).toLocaleDateString() : 'N/A'}</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="card-actions">
-                                    <button class="btn btn-primary" onclick="viewProviderDetails('${pharmacy.uid || pharmacy._id}', 'pharmacy')">
+                                    <button class="btn btn-primary" onclick="viewProviderDetails('${pharmacy.uid || pharmacy._id || pharmacy.id}', 'pharmacy')">
                                         <i class="fas fa-eye"></i> View Details
                                     </button>
                                     ${!(pharmacy.isApproved && pharmacy.approvalStatus === 'approved') ? `
-                                        <button class="btn btn-success" onclick="approveServiceProvider('${pharmacy.uid || pharmacy._id}', 'pharmacy')">
+                                        <button class="btn btn-success" onclick="approveServiceProvider('${pharmacy.uid || pharmacy._id || pharmacy.id}', 'pharmacy')">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
-                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${pharmacy.uid || pharmacy._id}', 'pharmacy')">
+                                        <button class="btn btn-danger" onclick="rejectServiceProvider('${pharmacy.uid || pharmacy._id || pharmacy.id}', 'pharmacy')">
                                             <i class="fas fa-times"></i> Reject
                                         </button>
                                     ` : ''}
