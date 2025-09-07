@@ -425,8 +425,8 @@
             const content = document.getElementById('providerDetailsContent');
             
             const typeIcon = getTypeIcon(type);
-            const statusClass = provider.isApproved ? 'approved' : 'pending';
-            const statusText = provider.isApproved ? 'Approved' : 'Pending Approval';
+            const statusClass = provider.isApproved && provider.approvalStatus === 'approved' ? 'approved' : 'pending';
+            const statusText = provider.isApproved && provider.approvalStatus === 'approved' ? 'Approved' : 'Pending Approval';
             
             content.innerHTML = `
                 <div class="provider-info-card">
@@ -513,7 +513,7 @@
                         </div>
                     </div>
                     
-                    ${!provider.isApproved ? `
+                    ${!(provider.isApproved && provider.approvalStatus === 'approved') ? `
                     <div class="action-buttons">
                         <button class="btn btn-success" onclick="openApprovalModal()">
                             <i class="fas fa-check"></i> Approve Application
@@ -655,7 +655,7 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    approvedBy: 'staff',
+                    userType: currentProviderType,
                     notes: 'Approved by ARC Staff'
                 })
             });
@@ -681,19 +681,17 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    rejectedBy: 'staff',
-                    reason: reason,
-                    comments: comments,
-                    nextSteps: 'Please review the feedback and resubmit your application with the requested changes within 24-48 hours.'
+                    userType: currentProviderType,
+                    reason: reason
                 })
             });
             
             if (response.ok) {
                 showSuccessMessage('❌ Provider rejected successfully! Email notification sent with feedback. Please register again after 24-48 hours with the requested changes.');
-                // Refresh the page to show updated status
+                // Redirect back to dashboard since the provider data is deleted
                 setTimeout(() => {
-                    loadProviderDetails(currentProvider.uid, currentProviderType);
-                }, 1000);
+                    window.location.href = 'arcstaff-dashboard.html';
+                }, 2000);
             } else {
                 throw new Error('Failed to reject provider');
             }
