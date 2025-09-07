@@ -7490,6 +7490,138 @@ function getTypeIcon(type) {
     return icons[type] || 'fas fa-user';
 }
 
+// Provider Management Tab Switching
+function switchProviderTab(tabName) {
+    console.log('🔄 Switching provider tab:', tabName);
+    
+    // Remove active class from all provider tabs
+    document.querySelectorAll('.provider-management-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
+    
+    // Add active class to selected tab
+    document.querySelector(`[onclick="switchProviderTab('${tabName}')"]`).classList.add('active');
+    
+    // Load content based on tab
+    if (tabName === 'pending') {
+        showDashboardOverview();
+    } else if (tabName === 'approved') {
+        loadApprovedProviders();
+    }
+}
+
+// Load approved providers for the main dashboard
+async function loadApprovedProviders() {
+    try {
+        const content = document.getElementById('serviceProviderContent');
+        content.innerHTML = `
+            <div class="loading-state">
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin"></i>
+                </div>
+                <p>Loading approved providers...</p>
+            </div>
+        `;
+        
+        const token = await getAuthToken();
+        const response = await fetch(`${API_BASE_URL}/arc-staff/approved-service-providers`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            renderApprovedProviders(result.data);
+        } else {
+            throw new Error('Failed to load approved providers');
+        }
+    } catch (error) {
+        console.error('Error loading approved providers:', error);
+        const content = document.getElementById('serviceProviderContent');
+        content.innerHTML = `
+            <div class="error-state">
+                <div class="error-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <p>Failed to load approved providers</p>
+                <button class="btn btn-primary" onclick="loadApprovedProviders()">
+                    <i class="fas fa-refresh"></i> Try Again
+                </button>
+            </div>
+        `;
+    }
+}
+
+// Render approved providers in main dashboard
+function renderApprovedProviders(data) {
+    const content = document.getElementById('serviceProviderContent');
+    
+    if (!data || Object.keys(data).length === 0) {
+        content.innerHTML = `
+            <div class="empty-state-screen">
+                <div class="empty-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h3>No Approved Providers</h3>
+                <p>There are no approved service providers yet.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '<div class="approved-providers-overview">';
+    
+    // Render each provider type
+    Object.keys(data).forEach(type => {
+        const providers = data[type];
+        if (providers && providers.length > 0) {
+            html += `
+                <div class="provider-type-section">
+                    <h3 class="provider-type-title">
+                        <i class="${getTypeIcon(type)}"></i>
+                        ${type.charAt(0).toUpperCase() + type.slice(1)}s (${providers.length})
+                    </h3>
+                    <div class="providers-grid">
+                        ${providers.map(provider => `
+                            <div class="provider-card approved">
+                                <div class="provider-card-header">
+                                    <div class="provider-avatar">
+                                        <i class="${getTypeIcon(type)}"></i>
+                                    </div>
+                                    <div class="provider-info">
+                                        <h4>${provider.name || provider.fullName || provider.hospitalName || provider.labName || provider.pharmacyName || 'Unknown'}</h4>
+                                        <p class="provider-email">${provider.email}</p>
+                                        <span class="status-badge approved">Approved</span>
+                                    </div>
+                                </div>
+                                <div class="provider-card-body">
+                                    <div class="provider-details">
+                                        <div class="detail-item">
+                                            <span class="detail-label">Registration:</span>
+                                            <span class="detail-value">${provider.registrationNumber || provider.licenseNumber || 'N/A'}</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <span class="detail-label">Contact:</span>
+                                            <span class="detail-value">${provider.mobileNumber || 'N/A'}</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <span class="detail-label">Registered:</span>
+                                            <span class="detail-value">${provider.createdAt ? new Date(provider.createdAt).toLocaleDateString() : 'N/A'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+    });
+    
+    html += '</div>';
+    content.innerHTML = html;
+}
+
 // Quick Actions Tab Switching
 function switchQuickActionTab(tabName) {
     console.log('🔄 Switching to tab:', tabName);
