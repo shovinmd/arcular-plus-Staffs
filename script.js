@@ -62,6 +62,59 @@ function updateDashboardStats() {
     document.getElementById('pending-approvals-count').textContent = dashboardStats.pendingApprovals;
     document.getElementById('total-departments').textContent = dashboardStats.totalDepartments;
     
+    // Calculate and update percentages
+    const totalProviders = dashboardStats.totalProviders || 0;
+    const approvedProviders = dashboardStats.approvedProviders || 0;
+    const pendingApprovals = dashboardStats.pendingApprovals || 0;
+    
+    // Calculate approval rate percentage
+    const approvalRate = totalProviders > 0 ? Math.round((approvedProviders / totalProviders) * 100) : 0;
+    
+    // Calculate pending rate percentage
+    const pendingRate = totalProviders > 0 ? Math.round((pendingApprovals / totalProviders) * 100) : 0;
+    
+    // Update percentage displays
+    const approvalTrend = document.querySelector('#approved-providers-count').parentElement.querySelector('.stat-trend span');
+    const pendingTrend = document.querySelector('#pending-approvals-count').parentElement.querySelector('.stat-trend span');
+    const totalTrend = document.querySelector('#total-providers-count').parentElement.querySelector('.stat-trend span');
+    
+    if (approvalTrend) {
+        approvalTrend.textContent = `${approvalRate}%`;
+        const trendElement = approvalTrend.parentElement;
+        if (approvalRate > 0) {
+            trendElement.className = 'stat-trend positive';
+            trendElement.querySelector('i').className = 'fas fa-arrow-up';
+        } else {
+            trendElement.className = 'stat-trend neutral';
+            trendElement.querySelector('i').className = 'fas fa-minus';
+        }
+    }
+    
+    if (pendingTrend) {
+        pendingTrend.textContent = `${pendingRate}%`;
+        const trendElement = pendingTrend.parentElement;
+        if (pendingRate > 0) {
+            trendElement.className = 'stat-trend warning';
+            trendElement.querySelector('i').className = 'fas fa-arrow-up';
+        } else {
+            trendElement.className = 'stat-trend neutral';
+            trendElement.querySelector('i').className = 'fas fa-minus';
+        }
+    }
+    
+    if (totalTrend) {
+        const growthRate = totalProviders > 0 ? Math.round((totalProviders / 100) * 10) : 0; // Mock growth rate
+        totalTrend.textContent = `${growthRate}%`;
+        const trendElement = totalTrend.parentElement;
+        if (growthRate > 0) {
+            trendElement.className = 'stat-trend positive';
+            trendElement.querySelector('i').className = 'fas fa-arrow-up';
+        } else {
+            trendElement.className = 'stat-trend neutral';
+            trendElement.querySelector('i').className = 'fas fa-minus';
+        }
+    }
+    
     // Update sidebar counts
     updateSidebarCounts();
     
