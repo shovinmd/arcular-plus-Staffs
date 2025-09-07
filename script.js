@@ -1718,8 +1718,10 @@ function loadHospitals() {
         return;
     }
     
-    const hospitals = allUsers.hospitals || [];
-    console.log('🏥 Hospitals data:', hospitals);
+    const allHospitals = allUsers.hospitals || [];
+    // Filter to show only pending hospitals (not approved)
+    const hospitals = allHospitals.filter(h => !h.isApproved || h.approvalStatus !== 'approved');
+    console.log('🏥 All hospitals:', allHospitals.length, 'Pending hospitals:', hospitals.length);
     
     // Create a full-screen hospital management view
     contentArea.innerHTML = `
@@ -1737,15 +1739,15 @@ function loadHospitals() {
                 <div class="header-right">
                     <div class="screen-stats">
                         <div class="stat-item">
-                            <span class="stat-number">${hospitals.length}</span>
+                            <span class="stat-number">${allHospitals.length}</span>
                             <span class="stat-label">Total</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">${hospitals.filter(h => !h.isApproved || h.approvalStatus === 'pending').length}</span>
+                            <span class="stat-number">${hospitals.length}</span>
                             <span class="stat-label">Pending</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">${hospitals.filter(h => h.isApproved && h.approvalStatus === 'approved').length}</span>
+                            <span class="stat-number">${allHospitals.filter(h => h.isApproved && h.approvalStatus === 'approved').length}</span>
                             <span class="stat-label">Approved</span>
                         </div>
                     </div>
@@ -1837,8 +1839,10 @@ function loadDoctors() {
         return;
     }
     
-    const doctors = allUsers.doctors || [];
-    console.log('👨‍⚕️ Doctors data:', doctors);
+    const allDoctors = allUsers.doctors || [];
+    // Filter to show only pending doctors (not approved)
+    const doctors = allDoctors.filter(d => !d.isApproved || d.approvalStatus !== 'approved');
+    console.log('👨‍⚕️ All doctors:', allDoctors.length, 'Pending doctors:', doctors.length);
     
     // Create a full-screen doctor management view
     contentArea.innerHTML = `
@@ -1856,16 +1860,16 @@ function loadDoctors() {
                 <div class="header-right">
                     <div class="screen-stats">
                         <div class="stat-item">
-                            <span class="stat-number">${doctors.length}</span>
+                            <span class="stat-number">${allDoctors.length}</span>
                             <span class="stat-label">Total</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">${doctors.filter(d => d.isApproved).length}</span>
-                            <span class="stat-label">Approved</span>
+                            <span class="stat-number">${doctors.length}</span>
+                            <span class="stat-label">Pending</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">${doctors.filter(d => !d.isApproved).length}</span>
-                            <span class="stat-label">Pending</span>
+                            <span class="stat-number">${allDoctors.filter(d => d.isApproved && d.approvalStatus === 'approved').length}</span>
+                            <span class="stat-label">Approved</span>
                         </div>
                     </div>
                     <button class="refresh-btn" onclick="loadDoctors()" title="Refresh Doctors">
@@ -1956,8 +1960,10 @@ function loadNurses() {
         return;
     }
 
-    const nurses = allUsers.nurses || [];
-    console.log('👩‍⚕️ Nurses data:', nurses);
+    const allNurses = allUsers.nurses || [];
+    // Filter to show only pending nurses (not approved)
+    const nurses = allNurses.filter(n => !n.isApproved || n.approvalStatus !== 'approved');
+    console.log('👩‍⚕️ All nurses:', allNurses.length, 'Pending nurses:', nurses.length);
 
     // Create a full-screen nurse management view
     contentArea.innerHTML = `
@@ -2075,8 +2081,10 @@ function loadLabs() {
         return;
     }
 
-    const labs = allUsers.labs || [];
-    console.log('🧪 Labs data:', labs);
+    const allLabs = allUsers.labs || [];
+    // Filter to show only pending labs (not approved)
+    const labs = allLabs.filter(l => !l.isApproved || l.approvalStatus !== 'approved');
+    console.log('🧪 All labs:', allLabs.length, 'Pending labs:', labs.length);
 
     // Create a full-screen lab management view
     contentArea.innerHTML = `
@@ -2194,8 +2202,10 @@ function loadPharmacies() {
         return;
     }
 
-    const pharmacies = allUsers.pharmacies || [];
-    console.log('💊 Pharmacies data:', pharmacies);
+    const allPharmacies = allUsers.pharmacies || [];
+    // Filter to show only pending pharmacies (not approved)
+    const pharmacies = allPharmacies.filter(p => !p.isApproved || p.approvalStatus !== 'approved');
+    console.log('💊 All pharmacies:', allPharmacies.length, 'Pending pharmacies:', pharmacies.length);
 
     // Create a full-screen pharmacy management view
     contentArea.innerHTML = `
@@ -7648,7 +7658,7 @@ async function loadApprovedProviders() {
         `;
         
         const token = await getAuthToken();
-        const response = await fetch(`${API_BASE_URL}/arc-staff/approved-service-providers`, {
+        const response = await fetch(`${API_BASE_URL}/arc-staff/approved-providers-only`, {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
