@@ -1061,14 +1061,36 @@ async function loadDashboardData() {
 }
 
 function setupEventListeners() {
-    // Navigation
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.addEventListener('click', function() {
-            const providerType = this.getAttribute('data-provider');
-            console.log('🔄 Navigation clicked:', providerType);
-            loadServiceProviderData(providerType);
+    // Search functionality
+    const searchInput = document.getElementById('providerSearchInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const providerTypeFilter = document.getElementById('providerTypeFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+    
+    if (searchBtn) {
+        searchBtn.addEventListener('click', performSearch);
+    }
+    
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
         });
-    });
+    }
+    
+    if (providerTypeFilter) {
+        providerTypeFilter.addEventListener('change', performSearch);
+    }
+    
+    if (statusFilter) {
+        statusFilter.addEventListener('change', performSearch);
+    }
+    
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', clearFilters);
+    }
     
     // Logout
     const logoutBtn = document.getElementById('logoutBtn');
@@ -7064,6 +7086,205 @@ function clearErrorMessages() {
 function viewProviderDetails(providerId, providerType) {
     console.log('🔄 Opening provider details:', providerId, providerType);
     window.location.href = `service-provider-details.html?id=${providerId}&type=${providerType}`;
+}
+
+// Search functionality
+function performSearch() {
+    const searchTerm = document.getElementById('providerSearchInput').value.toLowerCase().trim();
+    const providerType = document.getElementById('providerTypeFilter').value;
+    const status = document.getElementById('statusFilter').value;
+    
+    console.log('🔍 Performing search:', { searchTerm, providerType, status });
+    
+    // Get all providers from allUsers
+    let allProviders = [];
+    
+    if (allUsers) {
+        if (allUsers.hospitals) allProviders = allProviders.concat(allUsers.hospitals.map(h => ({...h, type: 'hospital'})));
+        if (allUsers.doctors) allProviders = allProviders.concat(allUsers.doctors.map(d => ({...d, type: 'doctor'})));
+        if (allUsers.nurses) allProviders = allProviders.concat(allUsers.nurses.map(n => ({...n, type: 'nurse'})));
+        if (allUsers.labs) allProviders = allProviders.concat(allUsers.labs.map(l => ({...l, type: 'lab'})));
+        if (allUsers.pharmacies) allProviders = allProviders.concat(allUsers.pharmacies.map(p => ({...p, type: 'pharmacy'})));
+    }
+    
+    // Filter providers
+    let filteredProviders = allProviders;
+    
+    // Search term filter
+    if (searchTerm) {
+        filteredProviders = filteredProviders.filter(provider => {
+            const name = (provider.name || provider.fullName || provider.hospitalName || provider.labName || provider.pharmacyName || '').toLowerCase();
+            const email = (provider.email || '').toLowerCase();
+            const type = provider.type.toLowerCase();
+            
+            return name.includes(searchTerm) || email.includes(searchTerm) || type.includes(searchTerm);
+        });
+    }
+    
+    // Provider type filter
+    if (providerType) {
+        filteredProviders = filteredProviders.filter(provider => provider.type === providerType);
+    }
+    
+    // Status filter
+    if (status) {
+        filteredProviders = filteredProviders.filter(provider => {
+            if (status === 'approved') return provider.isApproved === true;
+            if (status === 'pending') return provider.isApproved === false;
+            if (status === 'rejected') return provider.isApproved === false && provider.rejected === true;
+            return true;
+        });
+    }
+    
+    // Display search results
+    displaySearchResults(filteredProviders, searchTerm, providerType, status);
+}
+
+// Display search results
+function displaySearchResults(providers, searchTerm, providerType, status) {
+    const contentArea = document.getElementById('serviceProviderContent');
+    
+    if (!contentArea) {
+        console.error('❌ Service provider content area not found!');
+        return;
+    }
+    
+    // Create search results header
+    let headerText = 'Search Results';
+    if (searchTerm) headerText += ` for "${searchTerm}"`;
+    if (providerType) headerText += ` (${providerType.charAt(0).toUpperCase() + providerType.slice(1)})`;
+    if (status) headerText += ` (${status.charAt(0).toUpperCase() + status.slice(1)})`;
+    
+    if (providers.length === 0) {
+        contentArea.innerHTML = `
+            <div class="search-results-screen">
+                <div class="screen-header">
+                    <div class="header-left">
+                        <div class="screen-title">
+                            <h1><i class="fas fa-search"></i> ${headerText}</h1>
+                            <p>No service providers found matching your criteria</p>
+                        </div>
+                    </div>
+                    <div class="header-right">
+                        <button class="btn btn-primary" onclick="showDashboardOverview()">
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
+                        </button>
+                    </div>
+                </div>
+                <div class="empty-state-screen">
+                    <div class="empty-icon">
+                        <i class="fas fa-search fa-4x"></i>
+                    </div>
+                    <h2>No Results Found</h2>
+                    <p>Try adjusting your search criteria or filters</p>
+                    <button class="btn btn-primary" onclick="clearFilters()">
+                        <i class="fas fa-times"></i> Clear Filters
+                    </button>
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    // Group providers by type
+    const groupedProviders = providers.reduce((acc, provider) => {
+        if (!acc[provider.type]) acc[provider.type] = [];
+        acc[provider.type].push(provider);
+        return acc;
+    }, {});
+    
+    // Create search results content
+    contentArea.innerHTML = `
+        <div class="search-results-screen">
+            <div class="screen-header">
+                <div class="header-left">
+                    <div class="screen-title">
+                        <h1><i class="fas fa-search"></i> ${headerText}</h1>
+                        <p>Found ${providers.length} service provider${providers.length !== 1 ? 's' : ''}</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-primary" onclick="showDashboardOverview()">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </button>
+                </div>
+            </div>
+            
+            <div class="screen-content">
+                <div class="provider-grid-screen">
+                    ${Object.entries(groupedProviders).map(([type, typeProviders]) => `
+                        <div class="provider-type-section">
+                            <h3 class="provider-type-title">
+                                <i class="${getTypeIcon(type)}"></i>
+                                ${type.charAt(0).toUpperCase() + type.slice(1)}s (${typeProviders.length})
+                            </h3>
+                            <div class="provider-cards-grid">
+                                ${typeProviders.map(provider => `
+                                    <div class="provider-card-screen" data-status="${provider.isApproved ? 'approved' : 'pending'}">
+                                        <div class="card-header">
+                                            <div class="provider-avatar-large">
+                                                <i class="${getTypeIcon(type)}"></i>
+                                            </div>
+                                            <div class="provider-info-main">
+                                                <h3>${provider.name || provider.fullName || provider.hospitalName || provider.labName || provider.pharmacyName || 'Unknown'}</h3>
+                                                <p class="provider-email">${provider.email}</p>
+                                                <span class="status-badge-large ${provider.isApproved ? 'approved' : 'pending'}">
+                                                    ${provider.isApproved ? 'Approved' : 'Pending Approval'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="info-grid">
+                                                <div class="info-item">
+                                                    <label>Registration Number:</label>
+                                                    <span>${provider.registrationNumber || provider.licenseNumber || 'N/A'}</span>
+                                                </div>
+                                                <div class="info-item">
+                                                    <label>Contact:</label>
+                                                    <span>${provider.mobileNumber || provider.contact || 'N/A'}</span>
+                                                </div>
+                                                <div class="info-item">
+                                                    <label>Registered:</label>
+                                                    <span>${new Date(provider.createdAt).toLocaleDateString()}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="card-actions">
+                                            <button class="btn btn-primary" onclick="viewProviderDetails('${provider.uid || provider._id}', '${type}')">
+                                                <i class="fas fa-eye"></i> View Details
+                                            </button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Clear filters
+function clearFilters() {
+    document.getElementById('providerSearchInput').value = '';
+    document.getElementById('providerTypeFilter').value = '';
+    document.getElementById('statusFilter').value = '';
+    
+    // Show dashboard overview
+    showDashboardOverview();
+}
+
+// Get type icon
+function getTypeIcon(type) {
+    const icons = {
+        'hospital': 'fas fa-hospital',
+        'doctor': 'fas fa-user-md',
+        'nurse': 'fas fa-user-nurse',
+        'lab': 'fas fa-flask',
+        'pharmacy': 'fas fa-pills'
+    };
+    return icons[type] || 'fas fa-user';
 }
 
 // Quick Actions Functions

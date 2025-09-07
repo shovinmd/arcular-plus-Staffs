@@ -124,62 +124,40 @@
 
         <!-- Main Dashboard Layout -->
         <div class="dashboard-layout">
-            <!-- Left Sidebar - Service Providers -->
-            <aside class="sidebar">
-                <div class="sidebar-header">
-                    <h3>Service Providers</h3>
-                </div>
-                
-                <nav class="service-provider-nav">
-                    <div class="nav-item" data-provider="hospital">
-                        <i class="fas fa-hospital"></i>
-                        <span>Hospitals</span>
-                        <div class="status-badges">
-                            <span class="badge approved" id="hospitalApprovedCount">0</span>
-                            <span class="badge pending" id="hospitalPendingCount">0</span>
-                        </div>
-                    </div>
-                    
-                    <div class="nav-item" data-provider="doctor">
-                        <i class="fas fa-user-md"></i>
-                        <span>Doctors</span>
-                        <div class="status-badges">
-                            <span class="badge approved" id="doctorApprovedCount">0</span>
-                            <span class="badge pending" id="doctorPendingCount">0</span>
-                        </div>
-                    </div>
-                    
-                    <div class="nav-item" data-provider="nurse">
-                        <i class="fas fa-user-nurse"></i>
-                        <span>Nurses</span>
-                        <div class="status-badges">
-                            <span class="badge approved" id="nurseApprovedCount">0</span>
-                            <span class="badge pending" id="nursePendingCount">0</span>
-                        </div>
-                    </div>
-                    
-                    <div class="nav-item" data-provider="lab">
-                        <i class="fas fa-flask"></i>
-                        <span>Labs</span>
-                        <div class="status-badges">
-                            <span class="badge approved" id="labApprovedCount">0</span>
-                            <span class="badge pending" id="labPendingCount">0</span>
-                        </div>
-                    </div>
-                    
-                    <div class="nav-item" data-provider="pharmacy">
-                        <i class="fas fa-pills"></i>
-                        <span>Pharmacies</span>
-                        <div class="status-badges">
-                            <span class="badge approved" id="pharmacyApprovedCount">0</span>
-                            <span class="badge pending" id="pharmacyPendingCount">0</span>
-                        </div>
-                    </div>
-                </nav>
-            </aside>
-
             <!-- Main Content Area -->
-            <main class="main-content">
+            <main class="main-content-full">
+                <!-- Search Section -->
+                <div class="search-section">
+                    <div class="search-container">
+                        <div class="search-input-group">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" id="providerSearchInput" placeholder="Search service providers by name, email, or type..." class="search-input">
+                            <button id="searchBtn" class="search-btn">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                        </div>
+                        <div class="search-filters">
+                            <select id="providerTypeFilter" class="filter-select">
+                                <option value="">All Types</option>
+                                <option value="hospital">Hospitals</option>
+                                <option value="doctor">Doctors</option>
+                                <option value="nurse">Nurses</option>
+                                <option value="lab">Labs</option>
+                                <option value="pharmacy">Pharmacies</option>
+                            </select>
+                            <select id="statusFilter" class="filter-select">
+                                <option value="">All Status</option>
+                                <option value="approved">Approved</option>
+                                <option value="pending">Pending</option>
+                                <option value="rejected">Rejected</option>
+                            </select>
+                            <button id="clearFiltersBtn" class="clear-filters-btn">
+                                <i class="fas fa-times"></i> Clear Filters
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Service Provider Lists -->
                 <div id="serviceProviderContent" class="service-provider-content">
                     <!-- Content will be dynamically loaded here -->
