@@ -1722,7 +1722,10 @@ function loadHospitals() {
                     </div>
                 ` : `
                     <div class="provider-grid-screen">
-                        ${hospitals.map(hospital => `
+                        ${hospitals.map(hospital => {
+                            console.log('🏥 Hospital data:', hospital);
+                            console.log('📅 Hospital createdAt:', hospital.createdAt);
+                            return `
                             <div class="provider-card-screen" data-status="${hospital.isApproved ? 'approved' : 'pending'}">
                                 <div class="card-header">
                                     <div class="provider-avatar-large">
@@ -5965,8 +5968,8 @@ function renderDocumentSection(provider, providerType) {
                 <i class="fas fa-${doc.type === 'image' ? 'image' : 'file-alt'}"></i>
                 <span>${doc.name}</span>
             </div>
-            <button class="btn btn-sm btn-secondary" onclick="viewDocument('${doc.url}', '${doc.name}')">
-                <i class="fas fa-eye"></i> View
+            <button class="btn btn-sm btn-secondary" onclick="downloadDocument('${doc.url}', '${doc.name}')">
+                <i class="fas fa-download"></i> Download
             </button>
         </div>
     `).join('');
@@ -6013,7 +6016,34 @@ function renderAdditionalInfo(provider, providerType) {
     `).join('');
 }
 
-// View document
+// Download document
+function downloadDocument(url, filename) {
+    if (url && url.trim() !== '') {
+        try {
+            console.log('📥 Downloading document:', url);
+            
+            // Create a temporary anchor element to trigger download
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename || 'document';
+            link.target = '_blank';
+            
+            // Add to DOM, click, and remove
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showSuccessMessage(`Downloading ${filename || 'document'}...`);
+        } catch (error) {
+            console.error('❌ Error downloading document:', error);
+            showErrorMessage('Failed to download document. Please try again.');
+        }
+    } else {
+        showErrorMessage('Document URL is not available');
+    }
+}
+
+// View document (fallback)
 function viewDocument(url, name) {
     if (url && url.trim() !== '') {
         try {
