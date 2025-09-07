@@ -2023,17 +2023,10 @@ async function loadAllUsers() {
         
         console.log('✅ Global allUsers object updated:', allUsers);
         
-        // Now load the UI for each type
-        console.log('🔄 Loading hospitals UI...');
-        loadHospitals();
-        console.log('🔄 Loading doctors UI...');
-        loadDoctors();
-        console.log('🔄 Loading nurses UI...');
-        loadNurses();
-        console.log('🔄 Loading labs UI...');
-        loadLabs();
-        console.log('🔄 Loading pharmacies UI...');
-        loadPharmacies();
+        // Don't automatically load individual provider screens
+        // Only show dashboard overview by default
+        console.log('🔄 Showing dashboard overview...');
+        showDashboardOverview();
         
         console.log('✅ All UI components loaded');
         
@@ -2063,12 +2056,8 @@ async function loadAllUsers() {
         // Hide loading states
         hideTableLoadingStates();
         
-        // Load empty states
-        loadHospitals();
-        loadDoctors();
-        loadNurses();
-        loadLabs();
-        loadPharmacies();
+        // Show dashboard overview even on error
+        showDashboardOverview();
     }
 }
 
@@ -6952,8 +6941,15 @@ function showDashboardOverview() {
         contentArea.innerHTML = `
             <div class="dashboard-overview">
                 <div class="overview-header">
-                    <h2><i class="fas fa-tachometer-alt"></i> Dashboard Overview</h2>
-                    <p>Select a service provider type from the sidebar to manage applications</p>
+                    <div class="header-left">
+                        <h2><i class="fas fa-tachometer-alt"></i> Dashboard Overview</h2>
+                        <p>Select a service provider type from the sidebar to manage applications</p>
+                    </div>
+                    <div class="header-right">
+                        <button class="btn btn-primary" onclick="refreshData()">
+                            <i class="fas fa-refresh"></i> Refresh Data
+                        </button>
+                    </div>
                 </div>
                 <div class="overview-grid">
                     <div class="overview-card" onclick="loadHospitals()">
