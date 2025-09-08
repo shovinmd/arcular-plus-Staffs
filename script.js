@@ -7680,120 +7680,22 @@ function showPendingProviders() {
 }
 
 // Load approved providers for the main dashboard
-async function loadApprovedProviders() {
+// Load pending providers data
+async function loadPendingProvidersData() {
     try {
-        const content = document.getElementById('serviceProviderContent');
-        content.innerHTML = `
-            <div class="loading-state">
-                <div class="loading-spinner">
-                    <i class="fas fa-spinner fa-spin"></i>
-                </div>
-                <p>Loading approved providers...</p>
-            </div>
-        `;
-        
-        const token = await getAuthToken();
-        const response = await fetch(`${API_BASE_URL}/arc-staff/approved-providers-only`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (response.ok) {
-            const result = await response.json();
-            console.log('✅ Approved providers loaded:', result);
-            renderApprovedProviders(result.data);
-        } else {
-            const errorText = await response.text();
-            console.error('❌ API Error:', response.status, errorText);
-            throw new Error(`Failed to load approved providers: ${response.status} ${errorText}`);
-        }
+        console.log('📋 Loading pending providers data...');
+        await loadAllUsers();
+        showDashboardOverview();
     } catch (error) {
-        console.error('Error loading approved providers:', error);
-        const content = document.getElementById('serviceProviderContent');
-        content.innerHTML = `
-            <div class="error-state">
-                <div class="error-icon">
-                    <i class="fas fa-exclamation-triangle"></i>
-                </div>
-                <p>Failed to load approved providers</p>
-                <button class="btn btn-primary" onclick="loadApprovedProviders()">
-                    <i class="fas fa-refresh"></i> Try Again
-                </button>
-            </div>
-        `;
+        console.error('❌ Error loading pending providers:', error);
+        showErrorMessage('Failed to load pending providers data');
     }
 }
 
-// Render approved providers in main dashboard
-function renderApprovedProviders(data) {
-    const content = document.getElementById('serviceProviderContent');
-    
-    if (!data || Object.keys(data).length === 0) {
-        content.innerHTML = `
-            <div class="empty-state-screen">
-                <div class="empty-icon">
-                    <i class="fas fa-check-circle"></i>
-                </div>
-                <h3>No Approved Providers</h3>
-                <p>There are no approved service providers yet.</p>
-            </div>
-        `;
-        return;
-    }
-    
-    let html = '<div class="approved-providers-overview">';
-    
-    // Render each provider type
-    Object.keys(data).forEach(type => {
-        const providers = data[type];
-        if (providers && providers.length > 0) {
-            html += `
-                <div class="provider-type-section">
-                    <h3 class="provider-type-title">
-                        <i class="${getTypeIcon(type)}"></i>
-                        ${type.charAt(0).toUpperCase() + type.slice(1)}s (${providers.length})
-                    </h3>
-                    <div class="providers-grid">
-                        ${providers.map(provider => `
-                            <div class="provider-card approved">
-                                <div class="provider-card-header">
-                                    <div class="provider-avatar">
-                                        <i class="${getTypeIcon(type)}"></i>
-                                    </div>
-                                    <div class="provider-info">
-                                        <h4>${provider.name || provider.fullName || provider.hospitalName || provider.labName || provider.pharmacyName || 'Unknown'}</h4>
-                                        <p class="provider-email">${provider.email}</p>
-                                        <span class="status-badge approved">Approved</span>
-                                    </div>
-                                </div>
-                                <div class="provider-card-body">
-                                    <div class="provider-details">
-                                        <div class="detail-item">
-                                            <span class="detail-label">Registration:</span>
-                                            <span class="detail-value">${provider.registrationNumber || provider.licenseNumber || 'N/A'}</span>
-                                        </div>
-                                        <div class="detail-item">
-                                            <span class="detail-label">Contact:</span>
-                                            <span class="detail-value">${provider.mobileNumber || 'N/A'}</span>
-                                        </div>
-                                        <div class="detail-item">
-                                            <span class="detail-label">Registered:</span>
-                                            <span class="detail-value">${provider.createdAt ? new Date(provider.createdAt).toLocaleDateString() : 'N/A'}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-        }
-    });
-    
-    html += '</div>';
-    content.innerHTML = html;
+// Load and display pending providers overview
+function loadPendingProvidersOverview() {
+    console.log('📋 Loading pending providers overview...');
+    showDashboardOverview();
 }
 
 // Quick Actions Tab Switching
@@ -8339,6 +8241,7 @@ async function refreshDashboard() {
         
         // Refresh all data
         await loadAllUsers();
+        showDashboardOverview();
         
         // Reset button state
         if (refreshBtn) {
@@ -8411,7 +8314,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Also initialize improved functionality
     setTimeout(() => {
       loadDashboardDataImproved();
-      // Show dashboard overview by default
-      showDashboardOverview();
+      // Load pending providers data and show dashboard overview
+      loadPendingProvidersData();
     }, 1000);
 });
