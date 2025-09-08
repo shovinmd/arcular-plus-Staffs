@@ -6446,6 +6446,29 @@ function initializeSettings() {
     cancelBtn.addEventListener('click', () => {
         settingsModal.style.display = 'none';
     });
+
+    // Ensure the modal X button closes the modal reliably
+    const xBtn = document.querySelector('#settingsModal .close');
+    if (xBtn) {
+        xBtn.addEventListener('click', () => {
+            settingsModal.style.display = 'none';
+        });
+    }
+
+    // Also close on Escape key
+    settingsModal.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Escape') {
+            settingsModal.style.display = 'none';
+        }
+    });
+
+    // Wire up an explicit Submit-for-Admin-Review button if present
+    const submitForAdminBtn = document.getElementById('submitForAdminReviewBtn');
+    if (submitForAdminBtn) {
+        submitForAdminBtn.addEventListener('click', async () => {
+            await saveStaffSettings();
+        });
+    }
     
     // Close modal when clicking outside
     window.addEventListener('click', (event) => {
