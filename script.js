@@ -2227,7 +2227,7 @@ function loadLabs() {
                                     <button class="btn btn-primary" onclick="viewProviderDetails('${lab.uid || lab._id || lab.id}', 'lab')">
                                         <i class="fas fa-eye"></i> View Details
                                     </button>
-                                    ${!(lab.isApproved && lab.approvalStatus === 'approved') ? `
+                                    ${lab.isApproved !== true ? `
                                         <button class="btn btn-success" onclick="approveServiceProvider('${lab.uid || lab._id || lab.id}', 'lab')">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
@@ -2348,7 +2348,7 @@ function loadPharmacies() {
                                     <button class="btn btn-primary" onclick="viewProviderDetails('${pharmacy.uid || pharmacy._id || pharmacy.id}', 'pharmacy')">
                                         <i class="fas fa-eye"></i> View Details
                                     </button>
-                                    ${!(pharmacy.isApproved && pharmacy.approvalStatus === 'approved') ? `
+                                    ${pharmacy.isApproved !== true ? `
                                         <button class="btn btn-success" onclick="approveServiceProvider('${pharmacy.uid || pharmacy._id || pharmacy.id}', 'pharmacy')">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
