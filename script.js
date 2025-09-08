@@ -30,6 +30,11 @@ let currentProviderData = {
 // Backend API configuration
 const API_BASE_URL = 'https://arcular-plus-backend.onrender.com/api';
 
+// Normalize booleans coming from backend ('true', 1, etc.)
+function isApprovedTrue(value) {
+    return value === true || value === 'true' || value === 1 || value === '1';
+}
+
 // Firebase configuration for Arcular+ project
 const firebaseConfig = {
     apiKey: "AIzaSyBzK4SQ44cv6k8EiNF9B2agNASArWQrstk",
@@ -1787,7 +1792,7 @@ function loadHospitals() {
     
     const allHospitals = allUsers.hospitals || [];
     // Filter to show only pending hospitals (not approved)
-    const hospitals = allHospitals.filter(h => h.isApproved !== true);
+    const hospitals = allHospitals.filter(h => !isApprovedTrue(h.isApproved));
     console.log('🏥 All hospitals:', allHospitals.length, 'Pending hospitals:', hospitals.length);
     
     // Create a full-screen hospital management view
@@ -3225,20 +3230,20 @@ function updateDashboardStatsFromData() {
     const totalProviders = totalHospitals + totalDoctors + totalNurses + totalLabs + totalPharmacies;
     
     // Calculate approved providers (isApproved: true)
-    const approvedHospitals = allUsers.hospitals?.filter(h => h.isApproved === true).length || 0;
-    const approvedDoctors = allUsers.doctors?.filter(d => d.isApproved === true).length || 0;
-    const approvedNurses = allUsers.nurses?.filter(n => n.isApproved === true).length || 0;
-    const approvedLabs = allUsers.labs?.filter(l => l.isApproved === true).length || 0;
-    const approvedPharmacies = allUsers.pharmacies?.filter(p => p.isApproved === true).length || 0;
+    const approvedHospitals = allUsers.hospitals?.filter(h => isApprovedTrue(h.isApproved)).length || 0;
+    const approvedDoctors = allUsers.doctors?.filter(d => isApprovedTrue(d.isApproved)).length || 0;
+    const approvedNurses = allUsers.nurses?.filter(n => isApprovedTrue(n.isApproved)).length || 0;
+    const approvedLabs = allUsers.labs?.filter(l => isApprovedTrue(l.isApproved)).length || 0;
+    const approvedPharmacies = allUsers.pharmacies?.filter(p => isApprovedTrue(p.isApproved)).length || 0;
     
     const approvedProviders = approvedHospitals + approvedDoctors + approvedNurses + approvedLabs + approvedPharmacies;
     
     // Calculate pending providers (isApproved !== true)
-    const pendingHospitals = allUsers.hospitals?.filter(h => h.isApproved !== true).length || 0;
-    const pendingDoctors = allUsers.doctors?.filter(d => d.isApproved !== true).length || 0;
-    const pendingNurses = allUsers.nurses?.filter(n => n.isApproved !== true).length || 0;
-    const pendingLabs = allUsers.labs?.filter(l => l.isApproved !== true).length || 0;
-    const pendingPharmacies = allUsers.pharmacies?.filter(p => p.isApproved !== true).length || 0;
+    const pendingHospitals = allUsers.hospitals?.filter(h => !isApprovedTrue(h.isApproved)).length || 0;
+    const pendingDoctors = allUsers.doctors?.filter(d => !isApprovedTrue(d.isApproved)).length || 0;
+    const pendingNurses = allUsers.nurses?.filter(n => !isApprovedTrue(n.isApproved)).length || 0;
+    const pendingLabs = allUsers.labs?.filter(l => !isApprovedTrue(l.isApproved)).length || 0;
+    const pendingPharmacies = allUsers.pharmacies?.filter(p => !isApprovedTrue(p.isApproved)).length || 0;
     
     const pendingApprovals = pendingHospitals + pendingDoctors + pendingNurses + pendingLabs + pendingPharmacies;
     
