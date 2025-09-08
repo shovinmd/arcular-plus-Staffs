@@ -35,6 +35,24 @@ function isApprovedTrue(value) {
     return value === true || value === 'true' || value === 1 || value === '1';
 }
 
+function normalizeProviderRecord(record) {
+    if (!record || typeof record !== 'object') return record;
+    const approved = isApprovedTrue(record.isApproved) || (record.approvalStatus === 'approved');
+    record.isApproved = approved;
+    record.approvalStatus = approved ? 'approved' : 'pending';
+    return record;
+}
+
+function normalizeAllUsersData(data) {
+    return {
+        hospitals: (data.hospitals || []).map(normalizeProviderRecord),
+        doctors: (data.doctors || []).map(normalizeProviderRecord),
+        nurses: (data.nurses || []).map(normalizeProviderRecord),
+        labs: (data.labs || []).map(normalizeProviderRecord),
+        pharmacies: (data.pharmacies || []).map(normalizeProviderRecord)
+    };
+}
+
 // Firebase configuration for Arcular+ project
 const firebaseConfig = {
     apiKey: "AIzaSyBzK4SQ44cv6k8EiNF9B2agNASArWQrstk",
@@ -2396,12 +2414,13 @@ async function loadAllUsers() {
         const allUsersData = await fetchAllServiceProviders();
         console.log('📊 Received data from backend:', allUsersData);
         
-        // Update the global allUsers object
-        allUsers.hospitals = allUsersData.hospitals || [];
-        allUsers.doctors = allUsersData.doctors || [];
-        allUsers.nurses = allUsersData.nurses || [];
-        allUsers.labs = allUsersData.labs || [];
-        allUsers.pharmacies = allUsersData.pharmacies || [];
+        // Normalize and update the global allUsers object
+        const normalized = normalizeAllUsersData(allUsersData);
+        allUsers.hospitals = normalized.hospitals;
+        allUsers.doctors = normalized.doctors;
+        allUsers.nurses = normalized.nurses;
+        allUsers.labs = normalized.labs;
+        allUsers.pharmacies = normalized.pharmacies;
         
         console.log('✅ Global allUsers object updated:', allUsers);
         
