@@ -7924,16 +7924,53 @@ function viewProviderDetails(providerId, providerType) {
 }
 
 // Search functionality
-function performSearch() {
+async function performSearch() {
     const searchTerm = document.getElementById('providerSearchInput').value.toLowerCase().trim();
     const providerType = document.getElementById('providerTypeFilter').value;
-    const status = document.getElementById('statusFilter').value;
-    
-    console.log('🔍 Performing search:', { searchTerm, providerType, status });
-    
-    // Get all providers from allUsers
+    const status = document.getElementById('statusFilter').value; // '', approved, pending
+    console.log('🔍 Performing realtime search:', { searchTerm, providerType, status });
+
+    // Try realtime backend search first
+    try {
+        const token = await getAuthToken();
+        const params = new URLSearchParams();
+        if (searchTerm) params.append('q', searchTerm);
+        if (providerType) params.append('providerType', providerType);
+        if (status) params.append('status', status);
+        // Include arcId/uid search support by passing as q as well
+        params.append('includeUid', 'true');
+        const url = `${API_BASE_URL}/arc-staff/search-approved-providers?${params.toString()}`;
+        const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+        if (res.ok) {
+            const data = await res.json();
+            // Expect result format: { providers: [...] } or grouped per type
+            let providers = [];
+            if (Array.isArray(data.providers)) {
+                providers = data.providers;
+            } else if (data.results) {
+                // flatten grouped results
+                Object.keys(data.results).forEach(t => {
+                    providers = providers.concat((data.results[t] || []).map(p => ({ ...p, type: t })));
+                });
+            }
+            // Fallback: if empty and we searched by UID, also search locally by uid
+            if ((!providers || providers.length === 0) && searchTerm) {
+                providers = localProviderSearch(searchTerm, providerType, status);
+            }
+            return displaySearchResults(providers, searchTerm, providerType, status);
+        }
+        console.warn('Realtime search failed, falling back to local filter');
+    } catch (e) {
+        console.warn('Realtime search error, fallback to local:', e.message);
+    }
+
+    // Local fallback using current allUsers snapshot
+    const local = localProviderSearch(searchTerm, providerType, status);
+    displaySearchResults(local, searchTerm, providerType, status);
+}
+
+function localProviderSearch(searchTerm, providerType, status) {
     let allProviders = [];
-    
     if (allUsers) {
         if (allUsers.hospitals) allProviders = allProviders.concat(allUsers.hospitals.map(h => ({...h, type: 'hospital'})));
         if (allUsers.doctors) allProviders = allProviders.concat(allUsers.doctors.map(d => ({...d, type: 'doctor'})));
@@ -7941,38 +7978,25 @@ function performSearch() {
         if (allUsers.labs) allProviders = allProviders.concat(allUsers.labs.map(l => ({...l, type: 'lab'})));
         if (allUsers.pharmacies) allProviders = allProviders.concat(allUsers.pharmacies.map(p => ({...p, type: 'pharmacy'})));
     }
-    
-    // Filter providers
-    let filteredProviders = allProviders;
-    
-    // Search term filter
+    let filtered = allProviders;
     if (searchTerm) {
-        filteredProviders = filteredProviders.filter(provider => {
-            const name = (provider.name || provider.fullName || provider.hospitalName || provider.labName || provider.pharmacyName || '').toLowerCase();
-            const email = (provider.email || '').toLowerCase();
-            const type = provider.type.toLowerCase();
-            
-            return name.includes(searchTerm) || email.includes(searchTerm) || type.includes(searchTerm);
+        filtered = filtered.filter(p => {
+            const name = (p.name || p.fullName || p.hospitalName || p.labName || p.pharmacyName || '').toLowerCase();
+            const email = (p.email || '').toLowerCase();
+            const type = (p.type || '').toLowerCase();
+            const uid = (p.uid || p.id || p._id || '').toString().toLowerCase();
+            return name.includes(searchTerm) || email.includes(searchTerm) || type.includes(searchTerm) || uid.includes(searchTerm);
         });
     }
-    
-    // Provider type filter
-    if (providerType) {
-        filteredProviders = filteredProviders.filter(provider => provider.type === providerType);
-    }
-    
-    // Status filter
+    if (providerType) filtered = filtered.filter(p => p.type === providerType);
     if (status) {
-        filteredProviders = filteredProviders.filter(provider => {
-            if (status === 'approved') return provider.isApproved === true;
-            if (status === 'pending') return provider.isApproved === false;
-            if (status === 'rejected') return provider.isApproved === false && provider.rejected === true;
+        filtered = filtered.filter(p => {
+            if (status === 'approved') return isApprovedTrue(p.isApproved);
+            if (status === 'pending') return !isApprovedTrue(p.isApproved);
             return true;
         });
     }
-    
-    // Display search results
-    displaySearchResults(filteredProviders, searchTerm, providerType, status);
+    return filtered;
 }
 
 // Display search results
