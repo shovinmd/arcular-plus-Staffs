@@ -898,13 +898,17 @@ body {
 
 .modal-content {
     background-color: white;
-    margin: 8% auto;
+    margin: 5% auto;
     padding: 0;
     border-radius: 12px;
     width: 85%;
     max-width: 500px;
+    max-height: 90vh;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     animation: modalSlideIn 0.3s ease-out;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 @keyframes modalSlideIn {
@@ -1400,7 +1404,7 @@ body {
 }
 
 .platform-settings-btn {
-    background: #3182ce;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
     padding: 12px 24px;
@@ -1412,13 +1416,13 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    box-shadow: 0 2px 8px rgba(49, 130, 206, 0.3);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
 .platform-settings-btn:hover {
-    background: #2c5aa0;
+    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(49, 130, 206, 0.4);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 .platform-settings-btn i {
