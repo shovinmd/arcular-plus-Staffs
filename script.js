@@ -7452,6 +7452,159 @@ function getTypeColor(type) {
   return colors[type] || 'default';
 }
 
+// ===== Quick Actions (Three Cards) =====
+function qaExportProvidersXlsx() {
+    try {
+        const wb = XLSX.utils.book_new();
+        const addSheet = (name, rows) => {
+            const ws = XLSX.utils.json_to_sheet(rows || []);
+            XLSX.utils.book_append_sheet(wb, ws, name);
+        };
+        addSheet('Hospitals', (allUsers.hospitals || []).map(h => ({
+            uid: h.uid || h.id || h._id,
+            name: h.hospitalName || h.name,
+            email: h.email,
+            phone: h.mobileNumber,
+            isApproved: h.isApproved
+        })));
+        addSheet('Doctors', (allUsers.doctors || []).map(d => ({
+            uid: d.uid || d.id || d._id,
+            name: d.fullName || d.name,
+            email: d.email,
+            phone: d.mobileNumber,
+            specialization: d.specialization,
+            isApproved: d.isApproved
+        })));
+        addSheet('Nurses', (allUsers.nurses || []).map(n => ({
+            uid: n.uid || n.id || n._id,
+            name: n.fullName || n.name,
+            email: n.email,
+            phone: n.mobileNumber,
+            department: n.department,
+            isApproved: n.isApproved
+        })));
+        addSheet('Labs', (allUsers.labs || []).map(l => ({
+            uid: l.uid || l.id || l._id,
+            name: l.labName || l.name,
+            email: l.email,
+            phone: l.mobileNumber,
+            isApproved: l.isApproved
+        })));
+        addSheet('Pharmacies', (allUsers.pharmacies || []).map(p => ({
+            uid: p.uid || p.id || p._id,
+            name: p.pharmacyName || p.name,
+            email: p.email,
+            phone: p.mobileNumber,
+            isApproved: p.isApproved
+        })));
+        XLSX.writeFile(wb, 'service_providers.xlsx');
+        showSuccessMessage('Providers exported to XLSX');
+    } catch (e) {
+        console.error('Export XLSX failed', e);
+        showErrorMessage('Failed to export XLSX');
+    }
+}
+
+function qaGenerateSummaryReport() {
+    const counts = {
+        hospitals: {
+            approved: (allUsers.hospitals||[]).filter(h=>isApprovedTrue(h.isApproved)).length,
+            pending: (allUsers.hospitals||[]).filter(h=>!isApprovedTrue(h.isApproved)).length
+        },
+        doctors: {
+            approved: (allUsers.doctors||[]).filter(d=>isApprovedTrue(d.isApproved)).length,
+            pending: (allUsers.doctors||[]).filter(d=>!isApprovedTrue(d.isApproved)).length
+        },
+        nurses: {
+            approved: (allUsers.nurses||[]).filter(n=>isApprovedTrue(n.isApproved)).length,
+            pending: (allUsers.nurses||[]).filter(n=>!isApprovedTrue(n.isApproved)).length
+        },
+        labs: {
+            approved: (allUsers.labs||[]).filter(l=>isApprovedTrue(l.isApproved)).length,
+            pending: (allUsers.labs||[]).filter(l=>!isApprovedTrue(l.isApproved)).length
+        },
+        pharmacies: {
+            approved: (allUsers.pharmacies||[]).filter(p=>isApprovedTrue(p.isApproved)).length,
+            pending: (allUsers.pharmacies||[]).filter(p=>!isApprovedTrue(p.isApproved)).length
+        }
+    };
+    const totalApproved = counts.hospitals.approved + counts.doctors.approved + counts.nurses.approved + counts.labs.approved + counts.pharmacies.approved;
+    const totalPending = counts.hospitals.pending + counts.doctors.pending + counts.nurses.pending + counts.labs.pending + counts.pharmacies.pending;
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([
+        ['Section','Approved','Pending'],
+        ['Hospitals', counts.hospitals.approved, counts.hospitals.pending],
+        ['Doctors', counts.doctors.approved, counts.doctors.pending],
+        ['Nurses', counts.nurses.approved, counts.nurses.pending],
+        ['Labs', counts.labs.approved, counts.labs.pending],
+        ['Pharmacies', counts.pharmacies.approved, counts.pharmacies.pending],
+        ['TOTAL', totalApproved, totalPending]
+    ]);
+    XLSX.utils.book_append_sheet(wb, ws, 'Summary');
+    XLSX.writeFile(wb, 'platform_summary.xlsx');
+    showSuccessMessage('Summary report generated');
+}
+
+function qaExportCsvXls() {
+    const flatten = (rows) => rows.map(r => ({
+        uid: r.uid || r.id || r._id,
+        name: r.fullName || r.hospitalName || r.labName || r.pharmacyName || r.name,
+        email: r.email,
+        phone: r.mobileNumber,
+        type: r.type || r.userType
+    }));
+    const wb = XLSX.utils.book_new();
+    const sheets = [
+        ['Hospitals', flatten(allUsers.hospitals||[])],
+        ['Doctors', flatten(allUsers.doctors||[])],
+        ['Nurses', flatten(allUsers.nurses||[])],
+        ['Labs', flatten(allUsers.labs||[])],
+        ['Pharmacies', flatten(allUsers.pharmacies||[])]
+    ];
+    sheets.forEach(([name, data]) => XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), name));
+    XLSX.writeFile(wb, 'export_snapshot.xlsx');
+    showSuccessMessage('Exported snapshot as XLSX');
+}
+
+// After nurse approval, avoid calling failing stats endpoints; use local update
+async function approveServiceProviderImproved(id, type, notes = '') {
+  try {
+    console.log(`✅ Approving ${type} with ID: ${id}`);
+    const idToken = localStorage.getItem('staff_idToken');
+    const response = await fetch(`https://arcular-plus-backend.onrender.com/api/arc-staff/approve/${id}`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${idToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userType: type, notes })
+    });
+    if (response.ok) {
+      const result = await response.json();
+      console.log('✅ Approval successful:', result.message);
+      showSuccessMessage(`${type.charAt(0).toUpperCase() + type.slice(1)} approved successfully!`);
+      // Local update only (prevents 500 stats endpoints from blocking UI)
+      const map = { hospital:'hospitals', doctor:'doctors', nurse:'nurses', lab:'labs', pharmacy:'pharmacies' };
+      const key = map[type];
+      if (key && allUsers[key]) {
+        const idx = allUsers[key].findIndex(x => (x.uid||x._id||x.id) === id);
+        if (idx !== -1) allUsers[key][idx].isApproved = true;
+      }
+      if (typeof updateDashboardStatsFromData === 'function') updateDashboardStatsFromData();
+      if (type === 'nurse' && typeof loadNurses === 'function') loadNurses();
+      else if (type === 'hospital' && typeof loadHospitals === 'function') loadHospitals();
+      else if (type === 'doctor' && typeof loadDoctors === 'function') loadDoctors();
+      else if (type === 'lab' && typeof loadLabs === 'function') loadLabs();
+      else if (type === 'pharmacy' && typeof loadPharmacies === 'function') loadPharmacies();
+      return;
+    } else {
+      const error = await response.json();
+      console.error('❌ Approval failed:', error.message);
+      showErrorMessage(`Failed to approve ${type}: ${error.message}`);
+    }
+  } catch (error) {
+    console.error('❌ Approval error:', error);
+    showErrorMessage(`Failed to approve ${type}. Please try again.`);
+  }
+}
+
 function updateActiveNavItem(providerType) {
   // Remove active class from all nav items
   document.querySelectorAll('.nav-item').forEach(item => {
