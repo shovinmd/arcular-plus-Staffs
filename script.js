@@ -584,6 +584,29 @@ async function rejectServiceProvider(id, type, reason, category, nextSteps) {
         const data = await response.json();
         if (data.success) {
             showSuccessMessage(`❌ ${type.charAt(0).toUpperCase() + type.slice(1)} rejected successfully! Email notification sent with feedback. Please register again after 24-48 hours with the requested changes.`);
+
+            // Remove from local cache so UI updates immediately
+            const listKeyMap = { hospital: 'hospitals', doctor: 'doctors', nurse: 'nurses', lab: 'labs', pharmacy: 'pharmacies' };
+            const listKey = listKeyMap[type];
+            if (listKey && allUsers && Array.isArray(allUsers[listKey])) {
+                const arr = allUsers[listKey];
+                const idx = arr.findIndex(x => (x.uid || x._id || x.id) === id);
+                if (idx !== -1) arr.splice(idx, 1);
+            }
+
+            // Recompute dashboard stats and refresh current view
+            if (typeof updateDashboardStatsFromData === 'function') {
+                updateDashboardStatsFromData();
+            } else if (typeof updatePlatformStats === 'function') {
+                updatePlatformStats();
+            }
+
+            if (type === 'hospital' && typeof loadHospitals === 'function') loadHospitals();
+            else if (type === 'doctor' && typeof loadDoctors === 'function') loadDoctors();
+            else if (type === 'nurse' && typeof loadNurses === 'function') loadNurses();
+            else if (type === 'lab' && typeof loadLabs === 'function') loadLabs();
+            else if (type === 'pharmacy' && typeof loadPharmacies === 'function') loadPharmacies();
+            else if (typeof showDashboardOverview === 'function') showDashboardOverview();
         }
         return data.success;
     } catch (error) {
@@ -6510,6 +6533,17 @@ function renderServiceProviderListImproved(providerType, approvedProviders, pend
   const typeIcon = getTypeIcon(providerType);
   const typeColor = getTypeColor(providerType);
   const typeName = providerType.charAt(0).toUpperCase() + providerType.slice(1);
+  
+  // Enforce status using local allUsers data when available
+  const listKeyMap = { hospital: 'hospitals', doctor: 'doctors', nurse: 'nurses', lab: 'labs', pharmacy: 'pharmacies' };
+  const listKey = listKeyMap[providerType];
+  if (allUsers && listKey && Array.isArray(allUsers[listKey])) {
+    const list = allUsers[listKey];
+    const strictApproved = list.filter(item => item.isApproved === true).map(item => ({ ...item, type: providerType }));
+    const strictPending = list.filter(item => item.isApproved !== true).map(item => ({ ...item, type: providerType }));
+    approvedProviders = strictApproved;
+    pendingProviders = strictPending;
+  }
   
   let html = `
     <div class="provider-section">
