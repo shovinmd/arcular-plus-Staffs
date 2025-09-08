@@ -1973,9 +1973,9 @@ function loadDoctors() {
     }
     
     const allDoctors = allUsers.doctors || [];
-    // Filter to show only pending doctors (not approved)
-    const doctors = allDoctors.filter(d => d.isApproved !== true);
-    console.log('👨‍⚕️ All doctors:', allDoctors.length, 'Pending doctors:', doctors.length);
+    const pendingDoctors = allDoctors.filter(d => !isApprovedTrue(d.isApproved));
+    const approvedDoctors = allDoctors.filter(d => isApprovedTrue(d.isApproved));
+    console.log('👨‍⚕️ All doctors:', allDoctors.length, 'Pending:', pendingDoctors.length, 'Approved:', approvedDoctors.length);
     
     // Create a full-screen doctor management view
     contentArea.innerHTML = `
@@ -1997,11 +1997,11 @@ function loadDoctors() {
                             <span class="stat-label">Total</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">${doctors.length}</span>
+                            <span class="stat-number">${pendingDoctors.length}</span>
                             <span class="stat-label">Pending</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">${allDoctors.filter(d => d.isApproved && d.approvalStatus === 'approved').length}</span>
+                            <span class="stat-number">${approvedDoctors.length}</span>
                             <span class="stat-label">Approved</span>
                         </div>
                     </div>
@@ -2012,7 +2012,7 @@ function loadDoctors() {
             </div>
             
             <div class="screen-content">
-                ${doctors.length === 0 ? `
+                ${allDoctors.length === 0 ? `
                     <div class="empty-state-screen">
                         <div class="empty-icon">
                             <i class="fas fa-user-md fa-4x"></i>
@@ -2024,8 +2024,9 @@ function loadDoctors() {
                         </button>
                     </div>
                 ` : `
+                    <h3>Pending (${pendingDoctors.length})</h3>
                     <div class="provider-grid-screen">
-                        ${doctors.map(doctor => `
+                        ${pendingDoctors.map(doctor => `
                             <div class="provider-card-screen" data-status="${doctor.isApproved ? 'approved' : 'pending'}">
                                 <div class="card-header">
                                     <div class="provider-avatar-large">
@@ -2063,7 +2064,7 @@ function loadDoctors() {
                                                 <button class="btn btn-primary" onclick="viewProviderDetails('${doctor.uid || doctor._id || doctor.id}', 'doctor')">
                                                     <i class="fas fa-eye"></i> View Details
                                                 </button>
-                                    ${doctor.isApproved !== true ? `
+                                    ${!isApprovedTrue(doctor.isApproved) ? `
                                         <button class="btn btn-success" onclick="approveServiceProvider('${doctor.uid || doctor._id || doctor.id}', 'doctor')">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
@@ -2071,6 +2072,26 @@ function loadDoctors() {
                                             <i class="fas fa-times"></i> Reject
                                         </button>
                                     ` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <h3 style=\"margin-top:24px;\">Approved (${approvedDoctors.length})</h3>
+                    <div class=\"provider-grid-screen\">
+                        ${approvedDoctors.map(doctor => `
+                            <div class=\"provider-card-screen\" data-status=\"approved\">
+                                <div class=\"card-header\">
+                                    <div class=\"provider-avatar-large\">
+                                        <i class=\"fas fa-user-md\"></i>
+                                    </div>
+                                    <div class=\"provider-info-main\">
+                                        <h3>${doctor.name || doctor.fullName || 'Unknown Doctor'}</h3>
+                                        <p class=\"provider-email\">${doctor.email}</p>
+                                        <span class=\"status-badge-large approved\">Approved</span>
+                                    </div>
+                                </div>
+                                <div class=\"card-actions\">
+                                    <button class=\"btn btn-primary\" onclick=\"viewProviderDetails('${doctor.uid || doctor._id || doctor.id}', 'doctor')\">\n                                        <i class=\"fas fa-eye\"></i> View Details\n                                    </button>
                                 </div>
                             </div>
                         `).join('')}
@@ -2239,9 +2260,9 @@ function loadLabs() {
     }
 
     const allLabs = allUsers.labs || [];
-    // Filter to show only pending labs (not approved)
-    const labs = allLabs.filter(l => l.isApproved !== true);
-    console.log('🧪 All labs:', allLabs.length, 'Pending labs:', labs.length);
+    const pendingLabs = allLabs.filter(l => !isApprovedTrue(l.isApproved));
+    const approvedLabs = allLabs.filter(l => isApprovedTrue(l.isApproved));
+    console.log('🧪 All labs:', allLabs.length, 'Pending:', pendingLabs.length, 'Approved:', approvedLabs.length);
 
     // Create a full-screen lab management view
     contentArea.innerHTML = `
@@ -2259,15 +2280,15 @@ function loadLabs() {
                 <div class="header-right">
                     <div class="screen-stats">
                         <div class="stat-item">
-                            <span class="stat-number">${labs.length}</span>
+                            <span class="stat-number">${allLabs.length}</span>
                             <span class="stat-label">Total</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">${labs.filter(l => l.isApproved).length}</span>
+                            <span class="stat-number">${approvedLabs.length}</span>
                             <span class="stat-label">Approved</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">${labs.filter(l => !l.isApproved).length}</span>
+                            <span class="stat-number">${pendingLabs.length}</span>
                             <span class="stat-label">Pending</span>
                         </div>
                     </div>
@@ -2278,7 +2299,7 @@ function loadLabs() {
             </div>
             
             <div class="screen-content">
-                ${labs.length === 0 ? `
+                ${allLabs.length === 0 ? `
                     <div class="empty-state-screen">
                         <div class="empty-icon">
                             <i class="fas fa-flask fa-4x"></i>
@@ -2290,8 +2311,9 @@ function loadLabs() {
                         </button>
                     </div>
                 ` : `
+                    <h3>Pending (${pendingLabs.length})</h3>
                     <div class="provider-grid-screen">
-                        ${labs.map(lab => `
+                        ${pendingLabs.map(lab => `
                             <div class="provider-card-screen" data-status="${lab.isApproved ? 'approved' : 'pending'}">
                                 <div class="card-header">
                                     <div class="provider-avatar-large">
@@ -2329,7 +2351,7 @@ function loadLabs() {
                                     <button class="btn btn-primary" onclick="viewProviderDetails('${lab.uid || lab._id || lab.id}', 'lab')">
                                         <i class="fas fa-eye"></i> View Details
                                     </button>
-                                    ${lab.isApproved !== true ? `
+                                    ${!isApprovedTrue(lab.isApproved) ? `
                                         <button class="btn btn-success" onclick="approveServiceProvider('${lab.uid || lab._id || lab.id}', 'lab')">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
@@ -2337,6 +2359,26 @@ function loadLabs() {
                                             <i class="fas fa-times"></i> Reject
                                         </button>
                                     ` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <h3 style=\"margin-top:24px;\">Approved (${approvedLabs.length})</h3>
+                    <div class=\"provider-grid-screen\">
+                        ${approvedLabs.map(lab => `
+                            <div class=\"provider-card-screen\" data-status=\"approved\">
+                                <div class=\"card-header\">
+                                    <div class=\"provider-avatar-large\">
+                                        <i class=\"fas fa-flask\"></i>
+                                    </div>
+                                    <div class=\"provider-info-main\">
+                                        <h3>${lab.name || lab.labName || 'Unknown Lab'}</h3>
+                                        <p class=\"provider-email\">${lab.email}</p>
+                                        <span class=\"status-badge-large approved\">Approved</span>
+                                    </div>
+                                </div>
+                                <div class=\"card-actions\">
+                                    <button class=\"btn btn-primary\" onclick=\"viewProviderDetails('${lab.uid || lab._id || lab.id}', 'lab')\">\n                                        <i class=\"fas fa-eye\"></i> View Details\n                                    </button>
                                 </div>
                             </div>
                         `).join('')}
