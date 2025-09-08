@@ -7457,8 +7457,8 @@ function showDashboardOverview() {
                         <h3>Pharmacies</h3>
                         <p>Manage pharmacy registrations</p>
                         <div class="card-stats">
-                            <span class="stat">Total: ${allUsers.pharmacies?.length || 0}</span>
                             <span class="stat">Pending: ${allUsers.pharmacies?.filter(p => p.isApproved === false || p.approvalStatus === 'pending').length || 0}</span>
+                            <span class="stat">Approved: ${allUsers.pharmacies?.filter(p => p.isApproved === true && p.approvalStatus === 'approved').length || 0}</span>
                         </div>
                     </div>
                 </div>
