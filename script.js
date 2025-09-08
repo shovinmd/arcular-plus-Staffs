@@ -550,6 +550,12 @@ async function approveServiceProvider(id, type, notes = '') {
             else if (type === 'lab' && typeof loadLabs === 'function') loadLabs();
             else if (type === 'pharmacy' && typeof loadPharmacies === 'function') loadPharmacies();
             else if (typeof showDashboardOverview === 'function') showDashboardOverview();
+
+            // Close details modal if open
+            const modal = document.getElementById('providerDetailsModal');
+            if (modal && modal.style.display === 'block') {
+                modal.style.display = 'none';
+            }
         }
         return data.success;
     } catch (error) {
@@ -607,6 +613,12 @@ async function rejectServiceProvider(id, type, reason, category, nextSteps) {
             else if (type === 'lab' && typeof loadLabs === 'function') loadLabs();
             else if (type === 'pharmacy' && typeof loadPharmacies === 'function') loadPharmacies();
             else if (typeof showDashboardOverview === 'function') showDashboardOverview();
+
+            // Close details modal if open
+            const modal = document.getElementById('providerDetailsModal');
+            if (modal && modal.style.display === 'block') {
+                modal.style.display = 'none';
+            }
         }
         return data.success;
     } catch (error) {
@@ -1835,8 +1847,8 @@ function loadHospitals() {
                                     <div class="provider-info-main">
                                         <h3>${hospital.name || hospital.hospitalName || 'Unknown Hospital'}</h3>
                                         <p class="provider-email">${hospital.email}</p>
-                                        <span class="status-badge-large ${hospital.isApproved && hospital.approvalStatus === 'approved' ? 'approved' : 'pending'}">
-                                            ${hospital.isApproved && hospital.approvalStatus === 'approved' ? 'Approved' : 'Pending Approval'}
+                                        <span class="status-badge-large ${hospital.isApproved === true ? 'approved' : 'pending'}">
+                                            ${hospital.isApproved === true ? 'Approved' : 'Pending Approval'}
                                         </span>
                                     </div>
                                 </div>
@@ -2311,7 +2323,7 @@ function loadPharmacies() {
                 ` : `
                     <div class="provider-grid-screen">
                         ${pharmacies.map(pharmacy => `
-                            <div class="provider-card-screen" data-status="${pharmacy.isApproved && pharmacy.approvalStatus === 'approved' ? 'approved' : 'pending'}">
+                            <div class="provider-card-screen" data-status="${pharmacy.isApproved === true ? 'approved' : 'pending'}">
                                 <div class="card-header">
                                     <div class="provider-avatar-large">
                                         <i class="fas fa-pills"></i>
@@ -2319,8 +2331,8 @@ function loadPharmacies() {
                                     <div class="provider-info-main">
                                         <h3>${pharmacy.name || pharmacy.pharmacyName || 'Unknown Pharmacy'}</h3>
                                         <p class="provider-email">${pharmacy.email}</p>
-                                        <span class="status-badge-large ${pharmacy.isApproved && pharmacy.approvalStatus === 'approved' ? 'approved' : 'pending'}">
-                                            ${pharmacy.isApproved && pharmacy.approvalStatus === 'approved' ? 'Approved' : 'Pending Approval'}
+                                        <span class="status-badge-large ${pharmacy.isApproved === true ? 'approved' : 'pending'}">
+                                            ${pharmacy.isApproved === true ? 'Approved' : 'Pending Approval'}
                                         </span>
                                     </div>
                                 </div>
