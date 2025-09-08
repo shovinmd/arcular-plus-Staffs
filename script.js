@@ -524,6 +524,32 @@ async function approveServiceProvider(id, type, notes = '') {
         const data = await response.json();
         if (data.success) {
             showSuccessMessage(`✅ ${type.charAt(0).toUpperCase() + type.slice(1)} approved successfully! Email notification sent. You can now login to the platform.`);
+
+            // Update local cache so UI moves item from pending -> approved immediately
+            const listKeyMap = { hospital: 'hospitals', doctor: 'doctors', nurse: 'nurses', lab: 'labs', pharmacy: 'pharmacies' };
+            const listKey = listKeyMap[type];
+            if (listKey && allUsers && Array.isArray(allUsers[listKey])) {
+                const arr = allUsers[listKey];
+                const idx = arr.findIndex(x => (x.uid || x._id || x.id) === id);
+                if (idx !== -1) {
+                    arr[idx].isApproved = true;
+                }
+            }
+
+            // Recompute dashboard stats and refresh current view
+            if (typeof updateDashboardStatsFromData === 'function') {
+                updateDashboardStatsFromData();
+            } else if (typeof updatePlatformStats === 'function') {
+                updatePlatformStats();
+            }
+
+            // Try to re-render the active provider view
+            if (type === 'hospital' && typeof loadHospitals === 'function') loadHospitals();
+            else if (type === 'doctor' && typeof loadDoctors === 'function') loadDoctors();
+            else if (type === 'nurse' && typeof loadNurses === 'function') loadNurses();
+            else if (type === 'lab' && typeof loadLabs === 'function') loadLabs();
+            else if (type === 'pharmacy' && typeof loadPharmacies === 'function') loadPharmacies();
+            else if (typeof showDashboardOverview === 'function') showDashboardOverview();
         }
         return data.success;
     } catch (error) {
@@ -1815,7 +1841,7 @@ function loadHospitals() {
                                                 <button class="btn btn-primary" onclick="viewProviderDetails('${hospital.uid || hospital._id || hospital.id}', 'hospital')">
                                                     <i class="fas fa-eye"></i> View Details
                                                 </button>
-                                    ${!(hospital.isApproved && hospital.approvalStatus === 'approved') ? `
+                                    ${hospital.isApproved !== true ? `
                                         <button class="btn btn-success" onclick="approveServiceProvider('${hospital.uid || hospital._id || hospital.id}', 'hospital')">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
@@ -1936,7 +1962,7 @@ function loadDoctors() {
                                                 <button class="btn btn-primary" onclick="viewProviderDetails('${doctor.uid || doctor._id || doctor.id}', 'doctor')">
                                                     <i class="fas fa-eye"></i> View Details
                                                 </button>
-                                    ${!(doctor.isApproved && doctor.approvalStatus === 'approved') ? `
+                                    ${doctor.isApproved !== true ? `
                                         <button class="btn btn-success" onclick="approveServiceProvider('${doctor.uid || doctor._id || doctor.id}', 'doctor')">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
@@ -2057,7 +2083,7 @@ function loadNurses() {
                                     <button class="btn btn-primary" onclick="viewProviderDetails('${nurse.uid || nurse._id || nurse.id}', 'nurse')">
                                         <i class="fas fa-eye"></i> View Details
                                     </button>
-                                    ${!(nurse.isApproved && nurse.approvalStatus === 'approved') ? `
+                                    ${nurse.isApproved !== true ? `
                                         <button class="btn btn-success" onclick="approveServiceProvider('${nurse.uid || nurse._id || nurse.id}', 'nurse')">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
