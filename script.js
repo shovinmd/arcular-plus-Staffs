@@ -2071,9 +2071,10 @@ function loadNurses() {
     }
 
     const allNurses = allUsers.nurses || [];
-    // Filter to show only pending nurses (not approved)
-    const nurses = allNurses.filter(n => n.isApproved !== true);
-    console.log('👩‍⚕️ All nurses:', allNurses.length, 'Pending nurses:', nurses.length);
+    const nurses = allNurses; // use full list
+    const pendingNurses = allNurses.filter(n => !isApprovedTrue(n.isApproved));
+    const approvedNurses = allNurses.filter(n => isApprovedTrue(n.isApproved));
+    console.log('👩‍⚕️ All nurses:', allNurses.length, 'Pending:', pendingNurses.length, 'Approved:', approvedNurses.length);
 
     // Create a full-screen nurse management view
     contentArea.innerHTML = `
@@ -2091,15 +2092,15 @@ function loadNurses() {
                 <div class="header-right">
                     <div class="screen-stats">
                         <div class="stat-item">
-                            <span class="stat-number">${nurses.length}</span>
+                            <span class="stat-number">${allNurses.length}</span>
                             <span class="stat-label">Total</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">${nurses.filter(n => n.isApproved).length}</span>
+                            <span class="stat-number">${approvedNurses.length}</span>
                             <span class="stat-label">Approved</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">${nurses.filter(n => !n.isApproved).length}</span>
+                            <span class="stat-number">${pendingNurses.length}</span>
                             <span class="stat-label">Pending</span>
                         </div>
                     </div>
@@ -2110,7 +2111,7 @@ function loadNurses() {
             </div>
             
             <div class="screen-content">
-                ${nurses.length === 0 ? `
+                ${allNurses.length === 0 ? `
                     <div class="empty-state-screen">
                         <div class="empty-icon">
                             <i class="fas fa-user-nurse fa-4x"></i>
@@ -2122,8 +2123,9 @@ function loadNurses() {
                         </button>
                     </div>
                 ` : `
+                    <h3>Pending (${pendingNurses.length})</h3>
                     <div class="provider-grid-screen">
-                        ${nurses.map(nurse => `
+                        ${pendingNurses.map(nurse => `
                             <div class="provider-card-screen" data-status="${nurse.isApproved ? 'approved' : 'pending'}">
                                 <div class="card-header">
                                     <div class="provider-avatar-large">
@@ -2161,7 +2163,7 @@ function loadNurses() {
                                     <button class="btn btn-primary" onclick="viewProviderDetails('${nurse.uid || nurse._id || nurse.id}', 'nurse')">
                                         <i class="fas fa-eye"></i> View Details
                                     </button>
-                                    ${nurse.isApproved !== true ? `
+                                    ${!isApprovedTrue(nurse.isApproved) ? `
                                         <button class="btn btn-success" onclick="approveServiceProvider('${nurse.uid || nurse._id || nurse.id}', 'nurse')">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
@@ -2169,6 +2171,28 @@ function loadNurses() {
                                             <i class="fas fa-times"></i> Reject
                                         </button>
                                     ` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <h3 style="margin-top:24px;">Approved (${approvedNurses.length})</h3>
+                    <div class="provider-grid-screen">
+                        ${approvedNurses.map(nurse => `
+                            <div class="provider-card-screen" data-status="approved">
+                                <div class="card-header">
+                                    <div class="provider-avatar-large">
+                                        <i class="fas fa-user-nurse"></i>
+                                    </div>
+                                    <div class="provider-info-main">
+                                        <h3>${nurse.name || nurse.fullName || 'Unknown Nurse'}</h3>
+                                        <p class="provider-email">${nurse.email}</p>
+                                        <span class="status-badge-large approved">Approved</span>
+                                    </div>
+                                </div>
+                                <div class="card-actions">
+                                    <button class="btn btn-primary" onclick="viewProviderDetails('${nurse.uid || nurse._id || nurse.id}', 'nurse')">
+                                        <i class="fas fa-eye"></i> View Details
+                                    </button>
                                 </div>
                             </div>
                         `).join('')}
