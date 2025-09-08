@@ -53,8 +53,8 @@ if (typeof firebase !== 'undefined') {
 }
 
 // Stats Functions
-function updateDashboardStats() {
-    console.log('📊 Updating dashboard stats...');
+function updatePlatformStats() {
+    console.log('📊 Updating platform stats...');
     
     // Update stats display
     document.getElementById('total-providers-count').textContent = dashboardStats.totalProviders;
@@ -153,7 +153,7 @@ async function loadFilteredStats(period) {
                 dashboardStats.totalDepartments = stats.totalDepartments || 5;
                 
                 // Update display
-                updateDashboardStats();
+                updatePlatformStats();
                 
                 // Update trend indicators
                 updateTrendIndicators(stats.trends || {});
@@ -164,7 +164,7 @@ async function loadFilteredStats(period) {
     } catch (error) {
         console.error('❌ Error loading filtered stats:', error);
         // Fallback to current stats if API fails
-        updateDashboardStats();
+        updatePlatformStats();
     }
 }
 
@@ -3137,7 +3137,7 @@ async function fetchPendingStakeholders() {
       showErrorMessage('Failed to load pending approvals. Please try again.');
       
       // Show empty state
-      updateDashboardStats([]);
+      updatePlatformStats();
       renderPendingApprovals([]);
     }
   } catch (error) {
@@ -3145,7 +3145,7 @@ async function fetchPendingStakeholders() {
     showErrorMessage('Network error loading dashboard data. Please check your connection.');
     
     // Show empty state
-    updateDashboardStats([]);
+    updatePlatformStats();
     renderPendingApprovals([]);
   }
 }
@@ -3190,11 +3190,11 @@ function updateDashboardStatsFromData() {
     console.log('📊 Updated dashboard stats:', dashboardStats);
     
     // Update the display
-    updateDashboardStats();
+    updatePlatformStats();
 }
 
 // Update dashboard statistics
-function updateDashboardStats(stakeholders) {
+function updateDashboardStats(stakeholders = []) {
   const stats = {
     hospital: 0,
     doctor: 0,
@@ -3203,13 +3203,15 @@ function updateDashboardStats(stakeholders) {
     pharmacy: 0
   };
   
-  stakeholders.forEach(stakeholder => {
-    // Handle both 'type' and 'userType' fields from backend
-    const userType = stakeholder.userType || stakeholder.type;
-    if (userType && stats.hasOwnProperty(userType)) {
-      stats[userType]++;
-    }
-  });
+  if (stakeholders && Array.isArray(stakeholders)) {
+    stakeholders.forEach(stakeholder => {
+      // Handle both 'type' and 'userType' fields from backend
+      const userType = stakeholder.userType || stakeholder.type;
+      if (userType && stats.hasOwnProperty(userType)) {
+        stats[userType]++;
+      }
+    });
+  }
   
   // Update individual counts
   document.getElementById('hospitalCount').textContent = stats.hospital;
