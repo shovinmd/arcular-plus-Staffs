@@ -1829,9 +1829,9 @@ function loadHospitals() {
     }
     
     const allHospitals = allUsers.hospitals || [];
-    // Filter to show only pending hospitals (not approved)
-    const hospitals = allHospitals.filter(h => !isApprovedTrue(h.isApproved));
-    console.log('🏥 All hospitals:', allHospitals.length, 'Pending hospitals:', hospitals.length);
+    const pendingHospitals = allHospitals.filter(h => !isApprovedTrue(h.isApproved));
+    const approvedHospitals = allHospitals.filter(h => isApprovedTrue(h.isApproved));
+    console.log('🏥 All hospitals:', allHospitals.length, 'Pending:', pendingHospitals.length, 'Approved:', approvedHospitals.length);
     
     // Create a full-screen hospital management view
     contentArea.innerHTML = `
@@ -1853,11 +1853,11 @@ function loadHospitals() {
                             <span class="stat-label">Total</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">${hospitals.length}</span>
+                            <span class="stat-number">${pendingHospitals.length}</span>
                             <span class="stat-label">Pending</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">${allHospitals.filter(h => h.isApproved && h.approvalStatus === 'approved').length}</span>
+                            <span class="stat-number">${approvedHospitals.length}</span>
                             <span class="stat-label">Approved</span>
                         </div>
                     </div>
@@ -1868,7 +1868,7 @@ function loadHospitals() {
             </div>
             
             <div class="screen-content">
-                ${hospitals.length === 0 ? `
+                ${allHospitals.length === 0 ? `
                     <div class="empty-state-screen">
                         <div class="empty-icon">
                             <i class="fas fa-hospital fa-4x"></i>
@@ -1880,8 +1880,9 @@ function loadHospitals() {
                         </button>
                     </div>
                 ` : `
+                    <h3>Pending (${pendingHospitals.length})</h3>
                     <div class="provider-grid-screen">
-                        ${hospitals.map(hospital => `
+                        ${pendingHospitals.map(hospital => `
                             <div class="provider-card-screen" data-status="${hospital.isApproved ? 'approved' : 'pending'}">
                                 <div class="card-header">
                                     <div class="provider-avatar-large">
@@ -1919,7 +1920,7 @@ function loadHospitals() {
                                                 <button class="btn btn-primary" onclick="viewProviderDetails('${hospital.uid || hospital._id || hospital.id}', 'hospital')">
                                                     <i class="fas fa-eye"></i> View Details
                                                 </button>
-                                    ${hospital.isApproved !== true ? `
+                                    ${!isApprovedTrue(hospital.isApproved) ? `
                                         <button class="btn btn-success" onclick="approveServiceProvider('${hospital.uid || hospital._id || hospital.id}', 'hospital')">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
@@ -1927,6 +1928,28 @@ function loadHospitals() {
                                             <i class="fas fa-times"></i> Reject
                                         </button>
                                     ` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <h3 style="margin-top:24px;">Approved (${approvedHospitals.length})</h3>
+                    <div class="provider-grid-screen">
+                        ${approvedHospitals.map(hospital => `
+                            <div class="provider-card-screen" data-status="approved">
+                                <div class="card-header">
+                                    <div class="provider-avatar-large">
+                                        <i class="fas fa-hospital"></i>
+                                    </div>
+                                    <div class="provider-info-main">
+                                        <h3>${hospital.name || hospital.hospitalName || 'Unknown Hospital'}</h3>
+                                        <p class="provider-email">${hospital.email}</p>
+                                        <span class="status-badge-large approved">Approved</span>
+                                    </div>
+                                </div>
+                                <div class="card-actions">
+                                    <button class="btn btn-primary" onclick="viewProviderDetails('${hospital.uid || hospital._id || hospital.id}', 'hospital')">
+                                        <i class="fas fa-eye"></i> View Details
+                                    </button>
                                 </div>
                             </div>
                         `).join('')}
