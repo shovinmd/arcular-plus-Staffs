@@ -2402,9 +2402,9 @@ function loadPharmacies() {
     }
 
     const allPharmacies = allUsers.pharmacies || [];
-    // Filter to show only pending pharmacies (not approved)
-    const pharmacies = allPharmacies.filter(p => p.isApproved !== true);
-    console.log('💊 All pharmacies:', allPharmacies.length, 'Pending pharmacies:', pharmacies.length);
+    const pendingPharmacies = allPharmacies.filter(p => !isApprovedTrue(p.isApproved));
+    const approvedPharmacies = allPharmacies.filter(p => isApprovedTrue(p.isApproved));
+    console.log('💊 All pharmacies:', allPharmacies.length, 'Pending:', pendingPharmacies.length, 'Approved:', approvedPharmacies.length);
 
     // Create a full-screen pharmacy management view
     contentArea.innerHTML = `
@@ -2422,15 +2422,15 @@ function loadPharmacies() {
                 <div class="header-right">
                     <div class="screen-stats">
                         <div class="stat-item">
-                            <span class="stat-number">${pharmacies.length}</span>
+                            <span class="stat-number">${allPharmacies.length}</span>
                             <span class="stat-label">Total</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">${pharmacies.filter(p => p.isApproved === false || p.approvalStatus === 'pending').length}</span>
+                            <span class="stat-number">${pendingPharmacies.length}</span>
                             <span class="stat-label">Pending</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">${pharmacies.filter(p => p.isApproved && p.approvalStatus === 'approved').length}</span>
+                            <span class="stat-number">${approvedPharmacies.length}</span>
                             <span class="stat-label">Approved</span>
                         </div>
                     </div>
@@ -2441,7 +2441,7 @@ function loadPharmacies() {
             </div>
             
             <div class="screen-content">
-                ${pharmacies.length === 0 ? `
+                ${allPharmacies.length === 0 ? `
                     <div class="empty-state-screen">
                         <div class="empty-icon">
                             <i class="fas fa-pills fa-4x"></i>
@@ -2453,8 +2453,9 @@ function loadPharmacies() {
                         </button>
                     </div>
                 ` : `
+                    <h3>Pending (${pendingPharmacies.length})</h3>
                     <div class="provider-grid-screen">
-                        ${pharmacies.map(pharmacy => `
+                        ${pendingPharmacies.map(pharmacy => `
                             <div class="provider-card-screen" data-status="${pharmacy.isApproved === true ? 'approved' : 'pending'}">
                                 <div class="card-header">
                                     <div class="provider-avatar-large">
@@ -2492,7 +2493,7 @@ function loadPharmacies() {
                                     <button class="btn btn-primary" onclick="viewProviderDetails('${pharmacy.uid || pharmacy._id || pharmacy.id}', 'pharmacy')">
                                         <i class="fas fa-eye"></i> View Details
                                     </button>
-                                    ${pharmacy.isApproved !== true ? `
+                                    ${!isApprovedTrue(pharmacy.isApproved) ? `
                                         <button class="btn btn-success" onclick="approveServiceProvider('${pharmacy.uid || pharmacy._id || pharmacy.id}', 'pharmacy')">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
@@ -2500,6 +2501,26 @@ function loadPharmacies() {
                                             <i class="fas fa-times"></i> Reject
                                         </button>
                                     ` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <h3 style=\"margin-top:24px;\">Approved (${approvedPharmacies.length})</h3>
+                    <div class=\"provider-grid-screen\">
+                        ${approvedPharmacies.map(pharmacy => `
+                            <div class=\"provider-card-screen\" data-status=\"approved\">
+                                <div class=\"card-header\">
+                                    <div class=\"provider-avatar-large\">
+                                        <i class=\"fas fa-pills\"></i>
+                                    </div>
+                                    <div class=\"provider-info-main\">
+                                        <h3>${pharmacy.name || pharmacy.pharmacyName || 'Unknown Pharmacy'}</h3>
+                                        <p class=\"provider-email\">${pharmacy.email}</p>
+                                        <span class=\"status-badge-large approved\">Approved</span>
+                                    </div>
+                                </div>
+                                <div class=\"card-actions\">
+                                    <button class=\"btn btn-primary\" onclick=\"viewProviderDetails('${pharmacy.uid || pharmacy._id || pharmacy.id}', 'pharmacy')\">\n                                        <i class=\"fas fa-eye\"></i> View Details\n                                    </button>
                                 </div>
                             </div>
                         `).join('')}
