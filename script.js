@@ -1725,8 +1725,14 @@ function loadHospitals() {
     }
     
     const allHospitals = allUsers.hospitals || [];
+    console.log('🔍 Sample hospital for filtering:', allHospitals[0]);
+    
     // Filter to show only pending hospitals (not approved)
-    const hospitals = allHospitals.filter(h => h.isApproved === false || h.approvalStatus === 'pending');
+    const hospitals = allHospitals.filter(h => {
+        const isPending = h.isApproved === false || h.approvalStatus === 'pending' || !h.isApproved || h.approvalStatus !== 'approved';
+        console.log(`🏥 Hospital ${h.hospitalName}: isApproved=${h.isApproved}, approvalStatus=${h.approvalStatus}, isPending=${isPending}`);
+        return isPending;
+    });
     console.log('🏥 All hospitals:', allHospitals.length, 'Pending hospitals:', hospitals.length);
     
     // Create a full-screen hospital management view
@@ -3172,12 +3178,40 @@ function updateDashboardStatsFromData() {
     
     const approvedProviders = approvedHospitals + approvedDoctors + approvedNurses + approvedLabs + approvedPharmacies;
     
+    // Debug: Check what the actual data looks like
+    console.log('🔍 Sample hospital data:', allUsers.hospitals?.[0]);
+    console.log('🔍 Sample doctor data:', allUsers.doctors?.[0]);
+    
     // Calculate pending providers (isApproved === false OR approvalStatus === 'pending')
-    const pendingHospitals = allUsers.hospitals?.filter(h => h.isApproved === false || h.approvalStatus === 'pending').length || 0;
-    const pendingDoctors = allUsers.doctors?.filter(d => d.isApproved === false || d.approvalStatus === 'pending').length || 0;
-    const pendingNurses = allUsers.nurses?.filter(n => n.isApproved === false || n.approvalStatus === 'pending').length || 0;
-    const pendingLabs = allUsers.labs?.filter(l => l.isApproved === false || l.approvalStatus === 'pending').length || 0;
-    const pendingPharmacies = allUsers.pharmacies?.filter(p => p.isApproved === false || p.approvalStatus === 'pending').length || 0;
+    const pendingHospitals = allUsers.hospitals?.filter(h => {
+        const isPending = h.isApproved === false || h.approvalStatus === 'pending' || !h.isApproved || h.approvalStatus !== 'approved';
+        if (isPending) console.log('🏥 Pending hospital:', h.hospitalName, { isApproved: h.isApproved, approvalStatus: h.approvalStatus });
+        return isPending;
+    }).length || 0;
+    
+    const pendingDoctors = allUsers.doctors?.filter(d => {
+        const isPending = d.isApproved === false || d.approvalStatus === 'pending' || !d.isApproved || d.approvalStatus !== 'approved';
+        if (isPending) console.log('👨‍⚕️ Pending doctor:', d.fullName, { isApproved: d.isApproved, approvalStatus: d.approvalStatus });
+        return isPending;
+    }).length || 0;
+    
+    const pendingNurses = allUsers.nurses?.filter(n => {
+        const isPending = n.isApproved === false || n.approvalStatus === 'pending' || !n.isApproved || n.approvalStatus !== 'approved';
+        if (isPending) console.log('👩‍⚕️ Pending nurse:', n.fullName, { isApproved: n.isApproved, approvalStatus: n.approvalStatus });
+        return isPending;
+    }).length || 0;
+    
+    const pendingLabs = allUsers.labs?.filter(l => {
+        const isPending = l.isApproved === false || l.approvalStatus === 'pending' || !l.isApproved || l.approvalStatus !== 'approved';
+        if (isPending) console.log('🧪 Pending lab:', l.labName, { isApproved: l.isApproved, approvalStatus: l.approvalStatus });
+        return isPending;
+    }).length || 0;
+    
+    const pendingPharmacies = allUsers.pharmacies?.filter(p => {
+        const isPending = p.isApproved === false || p.approvalStatus === 'pending' || !p.isApproved || p.approvalStatus !== 'approved';
+        if (isPending) console.log('💊 Pending pharmacy:', p.pharmacyName, { isApproved: p.isApproved, approvalStatus: p.approvalStatus });
+        return isPending;
+    }).length || 0;
     
     const pendingApprovals = pendingHospitals + pendingDoctors + pendingNurses + pendingLabs + pendingPharmacies;
     
