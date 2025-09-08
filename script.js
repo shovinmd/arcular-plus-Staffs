@@ -344,53 +344,73 @@ async function fetchAllServiceProviders() {
         
         // Transform data to match expected format
         const transformedData = {
-            hospitals: (allUsersData.hospitals || []).map(h => ({
-                id: h.uid || h._id,
-                name: h.hospitalName || h.fullName || 'Unknown',
-                registrationNumber: h.registrationNumber || h.licenseNumber || 'N/A',
-                contact: h.mobileNumber || h.phoneNumber || 'N/A',
-                email: h.email || 'N/A',
-                address: h.address || 'N/A',
-                status: h.approvalStatus || 'approved'
-            })),
-            doctors: (allUsersData.doctors || []).map(d => ({
-                id: d.uid || d._id,
-                name: d.fullName || 'Unknown',
-                licenseNumber: d.licenseNumber || d.medicalRegistrationNumber || 'N/A',
-                specialization: d.specialization || 'N/A',
-                contact: d.mobileNumber || d.phoneNumber || 'N/A',
-                email: d.email || 'N/A',
-                experience: d.experienceYears || 'N/A',
-                status: d.approvalStatus || 'approved'
-            })),
-            nurses: (allUsersData.nurses || []).map(n => ({
-                id: n.uid || n._id,
-                name: n.fullName || 'Unknown',
-                licenseNumber: n.licenseNumber || n.registrationNumber || 'N/A',
-                department: n.department || n.specialization || 'N/A',
-                contact: n.mobileNumber || n.phoneNumber || 'N/A',
-                email: n.email || 'N/A',
-                experience: n.experienceYears || 'N/A',
-                status: n.approvalStatus || 'approved'
-            })),
-            labs: (allUsersData.labs || []).map(l => ({
-                id: l.uid || l._id,
-                name: l.labName || l.fullName || 'Unknown',
-                licenseNumber: l.licenseNumber || l.registrationNumber || 'N/A',
-                contact: l.mobileNumber || l.phoneNumber || 'N/A',
-                email: l.email || 'N/A',
-                services: l.services || 'N/A',
-                status: l.approvalStatus || 'approved'
-            })),
-            pharmacies: (allUsersData.pharmacies || []).map(p => ({
-                id: p.uid || p._id,
-                name: p.pharmacyName || p.fullName || 'Unknown',
-                licenseNumber: p.licenseNumber || p.registrationNumber || 'N/A',
-                contact: p.mobileNumber || p.phoneNumber || 'N/A',
-                email: p.email || 'N/A',
-                services: p.services || 'N/A',
-                status: p.approvalStatus || 'approved'
-            }))
+            hospitals: (allUsersData.hospitals || []).map(h => {
+                const approved = isApprovedTrue(h.isApproved) || h.approvalStatus === 'approved';
+                return {
+                    id: h.uid || h._id,
+                    name: h.hospitalName || h.fullName || 'Unknown',
+                    registrationNumber: h.registrationNumber || h.licenseNumber || 'N/A',
+                    contact: h.mobileNumber || h.phoneNumber || 'N/A',
+                    email: h.email || 'N/A',
+                    address: h.address || 'N/A',
+                    isApproved: approved,
+                    approvalStatus: approved ? 'approved' : 'pending'
+                };
+            }),
+            doctors: (allUsersData.doctors || []).map(d => {
+                const approved = isApprovedTrue(d.isApproved) || d.approvalStatus === 'approved';
+                return {
+                    id: d.uid || d._id,
+                    name: d.fullName || 'Unknown',
+                    licenseNumber: d.licenseNumber || d.medicalRegistrationNumber || 'N/A',
+                    specialization: d.specialization || 'N/A',
+                    contact: d.mobileNumber || d.phoneNumber || 'N/A',
+                    email: d.email || 'N/A',
+                    experience: d.experienceYears || 'N/A',
+                    isApproved: approved,
+                    approvalStatus: approved ? 'approved' : 'pending'
+                };
+            }),
+            nurses: (allUsersData.nurses || []).map(n => {
+                const approved = isApprovedTrue(n.isApproved) || n.approvalStatus === 'approved';
+                return {
+                    id: n.uid || n._id,
+                    name: n.fullName || 'Unknown',
+                    licenseNumber: n.licenseNumber || n.registrationNumber || 'N/A',
+                    department: n.department || n.specialization || 'N/A',
+                    contact: n.mobileNumber || n.phoneNumber || 'N/A',
+                    email: n.email || 'N/A',
+                    experience: n.experienceYears || 'N/A',
+                    isApproved: approved,
+                    approvalStatus: approved ? 'approved' : 'pending'
+                };
+            }),
+            labs: (allUsersData.labs || []).map(l => {
+                const approved = isApprovedTrue(l.isApproved) || l.approvalStatus === 'approved';
+                return {
+                    id: l.uid || l._id,
+                    name: l.labName || l.fullName || 'Unknown',
+                    licenseNumber: l.licenseNumber || l.registrationNumber || 'N/A',
+                    contact: l.mobileNumber || l.phoneNumber || 'N/A',
+                    email: l.email || 'N/A',
+                    services: l.services || 'N/A',
+                    isApproved: approved,
+                    approvalStatus: approved ? 'approved' : 'pending'
+                };
+            }),
+            pharmacies: (allUsersData.pharmacies || []).map(p => {
+                const approved = isApprovedTrue(p.isApproved) || p.approvalStatus === 'approved';
+                return {
+                    id: p.uid || p._id,
+                    name: p.pharmacyName || p.fullName || 'Unknown',
+                    licenseNumber: p.licenseNumber || p.registrationNumber || 'N/A',
+                    contact: p.mobileNumber || p.phoneNumber || 'N/A',
+                    email: p.email || 'N/A',
+                    services: p.services || 'N/A',
+                    isApproved: approved,
+                    approvalStatus: approved ? 'approved' : 'pending'
+                };
+            })
         };
         
         console.log('✅ Fetched all service providers:', {
