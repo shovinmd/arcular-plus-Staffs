@@ -1725,14 +1725,8 @@ function loadHospitals() {
     }
     
     const allHospitals = allUsers.hospitals || [];
-    console.log('🔍 Sample hospital for filtering:', allHospitals[0]);
-    
     // Filter to show only pending hospitals (not approved)
-    const hospitals = allHospitals.filter(h => {
-        const isPending = h.isApproved === false || h.approvalStatus === 'pending' || !h.isApproved || h.approvalStatus !== 'approved';
-        console.log(`🏥 Hospital ${h.hospitalName}: isApproved=${h.isApproved}, approvalStatus=${h.approvalStatus}, isPending=${isPending}`);
-        return isPending;
-    });
+    const hospitals = allHospitals.filter(h => h.isApproved !== true);
     console.log('🏥 All hospitals:', allHospitals.length, 'Pending hospitals:', hospitals.length);
     
     // Create a full-screen hospital management view
@@ -1853,7 +1847,7 @@ function loadDoctors() {
     
     const allDoctors = allUsers.doctors || [];
     // Filter to show only pending doctors (not approved)
-    const doctors = allDoctors.filter(d => d.isApproved === false || d.approvalStatus === 'pending');
+    const doctors = allDoctors.filter(d => d.isApproved !== true);
     console.log('👨‍⚕️ All doctors:', allDoctors.length, 'Pending doctors:', doctors.length);
     
     // Create a full-screen doctor management view
@@ -1974,7 +1968,7 @@ function loadNurses() {
 
     const allNurses = allUsers.nurses || [];
     // Filter to show only pending nurses (not approved)
-    const nurses = allNurses.filter(n => n.isApproved === false || n.approvalStatus === 'pending');
+    const nurses = allNurses.filter(n => n.isApproved !== true);
     console.log('👩‍⚕️ All nurses:', allNurses.length, 'Pending nurses:', nurses.length);
 
     // Create a full-screen nurse management view
@@ -2095,7 +2089,7 @@ function loadLabs() {
 
     const allLabs = allUsers.labs || [];
     // Filter to show only pending labs (not approved)
-    const labs = allLabs.filter(l => l.isApproved === false || l.approvalStatus === 'pending');
+    const labs = allLabs.filter(l => l.isApproved !== true);
     console.log('🧪 All labs:', allLabs.length, 'Pending labs:', labs.length);
 
     // Create a full-screen lab management view
@@ -2216,7 +2210,7 @@ function loadPharmacies() {
 
     const allPharmacies = allUsers.pharmacies || [];
     // Filter to show only pending pharmacies (not approved)
-    const pharmacies = allPharmacies.filter(p => p.isApproved === false || p.approvalStatus === 'pending');
+    const pharmacies = allPharmacies.filter(p => p.isApproved !== true);
     console.log('💊 All pharmacies:', allPharmacies.length, 'Pending pharmacies:', pharmacies.length);
 
     // Create a full-screen pharmacy management view
@@ -3169,49 +3163,21 @@ function updateDashboardStatsFromData() {
     
     const totalProviders = totalHospitals + totalDoctors + totalNurses + totalLabs + totalPharmacies;
     
-    // Calculate approved providers (isApproved: true AND approvalStatus: 'approved')
-    const approvedHospitals = allUsers.hospitals?.filter(h => h.isApproved === true && h.approvalStatus === 'approved').length || 0;
-    const approvedDoctors = allUsers.doctors?.filter(d => d.isApproved === true && d.approvalStatus === 'approved').length || 0;
-    const approvedNurses = allUsers.nurses?.filter(n => n.isApproved === true && n.approvalStatus === 'approved').length || 0;
-    const approvedLabs = allUsers.labs?.filter(l => l.isApproved === true && l.approvalStatus === 'approved').length || 0;
-    const approvedPharmacies = allUsers.pharmacies?.filter(p => p.isApproved === true && p.approvalStatus === 'approved').length || 0;
+    // Calculate approved providers (isApproved: true)
+    const approvedHospitals = allUsers.hospitals?.filter(h => h.isApproved === true).length || 0;
+    const approvedDoctors = allUsers.doctors?.filter(d => d.isApproved === true).length || 0;
+    const approvedNurses = allUsers.nurses?.filter(n => n.isApproved === true).length || 0;
+    const approvedLabs = allUsers.labs?.filter(l => l.isApproved === true).length || 0;
+    const approvedPharmacies = allUsers.pharmacies?.filter(p => p.isApproved === true).length || 0;
     
     const approvedProviders = approvedHospitals + approvedDoctors + approvedNurses + approvedLabs + approvedPharmacies;
     
-    // Debug: Check what the actual data looks like
-    console.log('🔍 Sample hospital data:', allUsers.hospitals?.[0]);
-    console.log('🔍 Sample doctor data:', allUsers.doctors?.[0]);
-    
-    // Calculate pending providers (isApproved === false OR approvalStatus === 'pending')
-    const pendingHospitals = allUsers.hospitals?.filter(h => {
-        const isPending = h.isApproved === false || h.approvalStatus === 'pending' || !h.isApproved || h.approvalStatus !== 'approved';
-        if (isPending) console.log('🏥 Pending hospital:', h.hospitalName, { isApproved: h.isApproved, approvalStatus: h.approvalStatus });
-        return isPending;
-    }).length || 0;
-    
-    const pendingDoctors = allUsers.doctors?.filter(d => {
-        const isPending = d.isApproved === false || d.approvalStatus === 'pending' || !d.isApproved || d.approvalStatus !== 'approved';
-        if (isPending) console.log('👨‍⚕️ Pending doctor:', d.fullName, { isApproved: d.isApproved, approvalStatus: d.approvalStatus });
-        return isPending;
-    }).length || 0;
-    
-    const pendingNurses = allUsers.nurses?.filter(n => {
-        const isPending = n.isApproved === false || n.approvalStatus === 'pending' || !n.isApproved || n.approvalStatus !== 'approved';
-        if (isPending) console.log('👩‍⚕️ Pending nurse:', n.fullName, { isApproved: n.isApproved, approvalStatus: n.approvalStatus });
-        return isPending;
-    }).length || 0;
-    
-    const pendingLabs = allUsers.labs?.filter(l => {
-        const isPending = l.isApproved === false || l.approvalStatus === 'pending' || !l.isApproved || l.approvalStatus !== 'approved';
-        if (isPending) console.log('🧪 Pending lab:', l.labName, { isApproved: l.isApproved, approvalStatus: l.approvalStatus });
-        return isPending;
-    }).length || 0;
-    
-    const pendingPharmacies = allUsers.pharmacies?.filter(p => {
-        const isPending = p.isApproved === false || p.approvalStatus === 'pending' || !p.isApproved || p.approvalStatus !== 'approved';
-        if (isPending) console.log('💊 Pending pharmacy:', p.pharmacyName, { isApproved: p.isApproved, approvalStatus: p.approvalStatus });
-        return isPending;
-    }).length || 0;
+    // Calculate pending providers (isApproved !== true)
+    const pendingHospitals = allUsers.hospitals?.filter(h => h.isApproved !== true).length || 0;
+    const pendingDoctors = allUsers.doctors?.filter(d => d.isApproved !== true).length || 0;
+    const pendingNurses = allUsers.nurses?.filter(n => n.isApproved !== true).length || 0;
+    const pendingLabs = allUsers.labs?.filter(l => l.isApproved !== true).length || 0;
+    const pendingPharmacies = allUsers.pharmacies?.filter(p => p.isApproved !== true).length || 0;
     
     const pendingApprovals = pendingHospitals + pendingDoctors + pendingNurses + pendingLabs + pendingPharmacies;
     
@@ -7449,8 +7415,8 @@ function showDashboardOverview() {
                         <h3>Hospitals</h3>
                         <p>Manage hospital registrations</p>
                         <div class="card-stats">
-                            <span class="stat">Pending: ${allUsers.hospitals?.filter(h => h.isApproved === false || h.approvalStatus === 'pending').length || 0}</span>
-                            <span class="stat">Approved: ${allUsers.hospitals?.filter(h => h.isApproved === true && h.approvalStatus === 'approved').length || 0}</span>
+                            <span class="stat">Pending: ${allUsers.hospitals?.filter(h => h.isApproved !== true).length || 0}</span>
+                            <span class="stat">Approved: ${allUsers.hospitals?.filter(h => h.isApproved === true).length || 0}</span>
                         </div>
                     </div>
                     <div class="overview-card" onclick="loadDoctors()">
@@ -7460,8 +7426,8 @@ function showDashboardOverview() {
                         <h3>Doctors</h3>
                         <p>Manage doctor registrations</p>
                         <div class="card-stats">
-                            <span class="stat">Pending: ${allUsers.doctors?.filter(d => d.isApproved === false || d.approvalStatus === 'pending').length || 0}</span>
-                            <span class="stat">Approved: ${allUsers.doctors?.filter(d => d.isApproved === true && d.approvalStatus === 'approved').length || 0}</span>
+                            <span class="stat">Pending: ${allUsers.doctors?.filter(d => d.isApproved !== true).length || 0}</span>
+                            <span class="stat">Approved: ${allUsers.doctors?.filter(d => d.isApproved === true).length || 0}</span>
                         </div>
                     </div>
                     <div class="overview-card" onclick="loadNurses()">
@@ -7471,8 +7437,8 @@ function showDashboardOverview() {
                         <h3>Nurses</h3>
                         <p>Manage nurse registrations</p>
                         <div class="card-stats">
-                            <span class="stat">Pending: ${allUsers.nurses?.filter(n => n.isApproved === false || n.approvalStatus === 'pending').length || 0}</span>
-                            <span class="stat">Approved: ${allUsers.nurses?.filter(n => n.isApproved === true && n.approvalStatus === 'approved').length || 0}</span>
+                            <span class="stat">Pending: ${allUsers.nurses?.filter(n => n.isApproved !== true).length || 0}</span>
+                            <span class="stat">Approved: ${allUsers.nurses?.filter(n => n.isApproved === true).length || 0}</span>
                         </div>
                     </div>
                     <div class="overview-card" onclick="loadLabs()">
@@ -7482,8 +7448,8 @@ function showDashboardOverview() {
                         <h3>Labs</h3>
                         <p>Manage lab registrations</p>
                         <div class="card-stats">
-                            <span class="stat">Pending: ${allUsers.labs?.filter(l => l.isApproved === false || l.approvalStatus === 'pending').length || 0}</span>
-                            <span class="stat">Approved: ${allUsers.labs?.filter(l => l.isApproved === true && l.approvalStatus === 'approved').length || 0}</span>
+                            <span class="stat">Pending: ${allUsers.labs?.filter(l => l.isApproved !== true).length || 0}</span>
+                            <span class="stat">Approved: ${allUsers.labs?.filter(l => l.isApproved === true).length || 0}</span>
                         </div>
                     </div>
                     <div class="overview-card" onclick="loadPharmacies()">
@@ -7493,8 +7459,8 @@ function showDashboardOverview() {
                         <h3>Pharmacies</h3>
                         <p>Manage pharmacy registrations</p>
                         <div class="card-stats">
-                            <span class="stat">Pending: ${allUsers.pharmacies?.filter(p => p.isApproved === false || p.approvalStatus === 'pending').length || 0}</span>
-                            <span class="stat">Approved: ${allUsers.pharmacies?.filter(p => p.isApproved === true && p.approvalStatus === 'approved').length || 0}</span>
+                            <span class="stat">Pending: ${allUsers.pharmacies?.filter(p => p.isApproved !== true).length || 0}</span>
+                            <span class="stat">Approved: ${allUsers.pharmacies?.filter(p => p.isApproved === true).length || 0}</span>
                         </div>
                     </div>
                 </div>
