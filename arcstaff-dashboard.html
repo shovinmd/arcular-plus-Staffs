@@ -173,46 +173,11 @@
                     </div>
                 </div>
 
-                <!-- Service Provider Management Tabs -->
-                <div class="provider-management-tabs">
-                    <div class="tabs">
-                        <button class="tab-btn active" onclick="switchProviderTab('pending')">
-                            <i class="fas fa-clock"></i>
-                            <span>Pending Providers</span>
-                        </button>
-                        <button class="tab-btn" onclick="switchProviderTab('approved')">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Approved Providers</span>
-                        </button>
-                    </div>
-                    
-                    <!-- Approved Providers Filters -->
-                    <div id="approvedFilters" class="approved-filters" style="display: none;">
-                        <div class="filters-container">
-                            <div class="filter-group">
-                                <label for="approvedProviderTypeFilter">Provider Type:</label>
-                                <select id="approvedProviderTypeFilter" class="filter-select">
-                                    <option value="">All Types</option>
-                                    <option value="hospital">Hospitals</option>
-                                    <option value="doctor">Doctors</option>
-                                    <option value="nurse">Nurses</option>
-                                    <option value="lab">Labs</option>
-                                    <option value="pharmacy">Pharmacies</option>
-                                </select>
-                            </div>
-                            <div class="filter-group">
-                                <label for="approvedSearchInput">Search by Name:</label>
-                                <input type="text" id="approvedSearchInput" class="search-input" placeholder="Search approved providers...">
-                            </div>
-                            <div class="filter-group">
-                                <button id="searchApprovedBtn" class="btn btn-primary">
-                                    <i class="fas fa-search"></i> Search
-                                </button>
-                                <button id="clearApprovedFiltersBtn" class="btn btn-secondary">
-                                    <i class="fas fa-times"></i> Clear
-                                </button>
-                            </div>
-                        </div>
+                <!-- Service Provider Management Section -->
+                <div class="provider-management-section">
+                    <div class="section-header">
+                        <h3>Pending Service Providers</h3>
+                        <p>Manage and approve service provider registrations</p>
                     </div>
                 </div>
 

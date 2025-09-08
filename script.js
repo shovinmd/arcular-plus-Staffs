@@ -7673,24 +7673,10 @@ function getTypeIcon(type) {
 }
 
 // Provider Management Tab Switching
-function switchProviderTab(tabName) {
-    console.log('🔄 Switching provider tab:', tabName);
-    
-    // Remove active class from all provider tabs
-    document.querySelectorAll('.provider-management-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
-    
-    // Add active class to selected tab
-    document.querySelector(`[onclick="switchProviderTab('${tabName}')"]`).classList.add('active');
-    
-    // Show/hide filters
-    const approvedFilters = document.getElementById('approvedFilters');
-    if (tabName === 'approved') {
-        approvedFilters.style.display = 'block';
-        loadApprovedProviders();
-    } else {
-        approvedFilters.style.display = 'none';
-        showDashboardOverview();
-    }
+// Show dashboard overview (pending providers)
+function showPendingProviders() {
+    console.log('🔄 Showing pending providers overview');
+    showDashboardOverview();
 }
 
 // Load approved providers for the main dashboard
