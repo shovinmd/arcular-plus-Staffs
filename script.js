@@ -6143,6 +6143,13 @@ function initializeSettings() {
     const saveBtn = document.getElementById('saveSettingsBtn');
     const cancelBtn = document.getElementById('cancelSettingsBtn');
     
+    console.log('🔧 Modal elements found:', {
+        settingsModal: !!settingsModal,
+        closeBtn: !!closeBtn,
+        saveBtn: !!saveBtn,
+        cancelBtn: !!cancelBtn
+    });
+    
     // Open settings modal
     settingsBtn.addEventListener('click', () => {
         loadStaffProfile();
@@ -6154,8 +6161,23 @@ function initializeSettings() {
         settingsModal.style.display = 'none';
     });
     
+    // Also add event listener for the close button in the modal header
+    const settingsCloseBtn = settingsModal.querySelector('.close');
+    if (settingsCloseBtn) {
+        settingsCloseBtn.addEventListener('click', () => {
+            settingsModal.style.display = 'none';
+        });
+    }
+    
     // Save settings
-    saveBtn.addEventListener('click', saveStaffSettings);
+    if (saveBtn) {
+        saveBtn.addEventListener('click', function() {
+            console.log('🔘 Save button clicked');
+            saveStaffSettings();
+        });
+    } else {
+        console.error('❌ Save button not found!');
+    }
     
     // Cancel settings
     cancelBtn.addEventListener('click', () => {
@@ -6239,10 +6261,14 @@ function loadStaffDataIntoForm() {
 // Save staff settings
 async function saveStaffSettings() {
     try {
+        console.log('💾 Save staff settings called');
+        
         // Validate required fields
         const fullName = document.getElementById('staffName').value.trim();
         const mobileNumber = document.getElementById('staffPhone').value.trim();
         const department = document.getElementById('staffDepartment').value.trim();
+        
+        console.log('📝 Form data:', { fullName, mobileNumber, department });
         
         if (!fullName || !mobileNumber || !department) {
             showErrorMessage('Please fill in all required fields (Full Name, Phone Number, Department)');
@@ -6258,8 +6284,10 @@ async function saveStaffSettings() {
         };
         
         console.log('📝 Submitting profile changes:', formData);
+        console.log('🌐 API URL:', `${API_BASE_URL}/arc-staff/profile-changes`);
         
         const token = await getAuthToken();
+        console.log('🔑 Token obtained:', token ? 'Yes' : 'No');
         
         // Submit profile changes for admin approval instead of direct update
         const response = await fetch(`${API_BASE_URL}/arc-staff/profile-changes`, {
