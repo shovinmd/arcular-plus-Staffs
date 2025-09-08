@@ -693,6 +693,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         userNameElement.textContent = staffProfile.data.fullName || user.email;
                     }
                     
+                    // Update welcome bar with staff name
+                    const staffNameDisplay = document.getElementById('staffNameDisplay');
+                    if (staffNameDisplay) {
+                        staffNameDisplay.textContent = staffProfile.data.fullName || user.email;
+                    }
+                    
                     // Update staff status in settings
                     updateStaffStatus(staffProfile.data);
                     
@@ -3884,7 +3890,7 @@ function updateCurrentDateTime() {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
-  }) + ' ' + now.toLocaleTimeString('en-US', {
+  }) + ' at ' + now.toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit'
   });
@@ -3892,6 +3898,12 @@ function updateCurrentDateTime() {
   const dateTimeElement = document.getElementById('currentDateTime');
   if (dateTimeElement) {
     dateTimeElement.textContent = dateTimeString;
+  }
+  
+  // Update welcome bar date/time
+  const welcomeDateTime = document.getElementById('welcomeDateTime');
+  if (welcomeDateTime) {
+    welcomeDateTime.textContent = dateTimeString;
   }
   
   // Update every minute
@@ -6156,6 +6168,15 @@ function initializeSettings() {
             settingsModal.style.display = 'none';
         }
     });
+}
+
+// Open settings modal
+function openSettingsModal() {
+    loadStaffProfile();
+    const settingsModal = document.getElementById('settingsModal');
+    if (settingsModal) {
+        settingsModal.style.display = 'block';
+    }
 }
 
 // Load staff profile
