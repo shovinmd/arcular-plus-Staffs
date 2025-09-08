@@ -2233,7 +2233,7 @@ function loadPharmacies() {
                             <span class="stat-label">Total</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">${pharmacies.filter(p => !p.isApproved || p.approvalStatus !== 'approved').length}</span>
+                            <span class="stat-number">${pharmacies.filter(p => p.isApproved === false || p.approvalStatus === 'pending').length}</span>
                             <span class="stat-label">Pending</span>
                         </div>
                         <div class="stat-item">
@@ -7351,7 +7351,7 @@ function showDashboardOverview() {
                         <p>Manage doctor registrations</p>
                         <div class="card-stats">
                             <span class="stat">Total: ${allUsers.doctors?.length || 0}</span>
-                            <span class="stat">Pending: ${allUsers.doctors?.filter(d => !d.isApproved || d.approvalStatus !== 'approved').length || 0}</span>
+                            <span class="stat">Pending: ${allUsers.doctors?.filter(d => d.isApproved === false || d.approvalStatus === 'pending').length || 0}</span>
                         </div>
                     </div>
                     <div class="overview-card" onclick="loadNurses()">
@@ -7362,7 +7362,7 @@ function showDashboardOverview() {
                         <p>Manage nurse registrations</p>
                         <div class="card-stats">
                             <span class="stat">Total: ${allUsers.nurses?.length || 0}</span>
-                            <span class="stat">Pending: ${allUsers.nurses?.filter(n => !n.isApproved || n.approvalStatus !== 'approved').length || 0}</span>
+                            <span class="stat">Pending: ${allUsers.nurses?.filter(n => n.isApproved === false || n.approvalStatus === 'pending').length || 0}</span>
                         </div>
                     </div>
                     <div class="overview-card" onclick="loadLabs()">
@@ -7373,7 +7373,7 @@ function showDashboardOverview() {
                         <p>Manage lab registrations</p>
                         <div class="card-stats">
                             <span class="stat">Total: ${allUsers.labs?.length || 0}</span>
-                            <span class="stat">Pending: ${allUsers.labs?.filter(l => !l.isApproved || l.approvalStatus !== 'approved').length || 0}</span>
+                            <span class="stat">Pending: ${allUsers.labs?.filter(l => l.isApproved === false || l.approvalStatus === 'pending').length || 0}</span>
                         </div>
                     </div>
                     <div class="overview-card" onclick="loadPharmacies()">
@@ -7384,7 +7384,7 @@ function showDashboardOverview() {
                         <p>Manage pharmacy registrations</p>
                         <div class="card-stats">
                             <span class="stat">Total: ${allUsers.pharmacies?.length || 0}</span>
-                            <span class="stat">Pending: ${allUsers.pharmacies?.filter(p => !p.isApproved || p.approvalStatus !== 'approved').length || 0}</span>
+                            <span class="stat">Pending: ${allUsers.pharmacies?.filter(p => p.isApproved === false || p.approvalStatus === 'pending').length || 0}</span>
                         </div>
                     </div>
                 </div>
@@ -7688,9 +7688,12 @@ async function loadApprovedProviders() {
         
         if (response.ok) {
             const result = await response.json();
+            console.log('✅ Approved providers loaded:', result);
             renderApprovedProviders(result.data);
         } else {
-            throw new Error('Failed to load approved providers');
+            const errorText = await response.text();
+            console.error('❌ API Error:', response.status, errorText);
+            throw new Error(`Failed to load approved providers: ${response.status} ${errorText}`);
         }
     } catch (error) {
         console.error('Error loading approved providers:', error);
