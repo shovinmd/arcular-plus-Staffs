@@ -1726,7 +1726,7 @@ function loadHospitals() {
     
     const allHospitals = allUsers.hospitals || [];
     // Filter to show only pending hospitals (not approved)
-    const hospitals = allHospitals.filter(h => !h.isApproved || h.approvalStatus !== 'approved');
+    const hospitals = allHospitals.filter(h => h.isApproved === false || h.approvalStatus === 'pending');
     console.log('🏥 All hospitals:', allHospitals.length, 'Pending hospitals:', hospitals.length);
     
     // Create a full-screen hospital management view
@@ -1847,7 +1847,7 @@ function loadDoctors() {
     
     const allDoctors = allUsers.doctors || [];
     // Filter to show only pending doctors (not approved)
-    const doctors = allDoctors.filter(d => !d.isApproved || d.approvalStatus !== 'approved');
+    const doctors = allDoctors.filter(d => d.isApproved === false || d.approvalStatus === 'pending');
     console.log('👨‍⚕️ All doctors:', allDoctors.length, 'Pending doctors:', doctors.length);
     
     // Create a full-screen doctor management view
@@ -1968,7 +1968,7 @@ function loadNurses() {
 
     const allNurses = allUsers.nurses || [];
     // Filter to show only pending nurses (not approved)
-    const nurses = allNurses.filter(n => !n.isApproved || n.approvalStatus !== 'approved');
+    const nurses = allNurses.filter(n => n.isApproved === false || n.approvalStatus === 'pending');
     console.log('👩‍⚕️ All nurses:', allNurses.length, 'Pending nurses:', nurses.length);
 
     // Create a full-screen nurse management view
@@ -2089,7 +2089,7 @@ function loadLabs() {
 
     const allLabs = allUsers.labs || [];
     // Filter to show only pending labs (not approved)
-    const labs = allLabs.filter(l => !l.isApproved || l.approvalStatus !== 'approved');
+    const labs = allLabs.filter(l => l.isApproved === false || l.approvalStatus === 'pending');
     console.log('🧪 All labs:', allLabs.length, 'Pending labs:', labs.length);
 
     // Create a full-screen lab management view
@@ -2210,7 +2210,7 @@ function loadPharmacies() {
 
     const allPharmacies = allUsers.pharmacies || [];
     // Filter to show only pending pharmacies (not approved)
-    const pharmacies = allPharmacies.filter(p => !p.isApproved || p.approvalStatus !== 'approved');
+    const pharmacies = allPharmacies.filter(p => p.isApproved === false || p.approvalStatus === 'pending');
     console.log('💊 All pharmacies:', allPharmacies.length, 'Pending pharmacies:', pharmacies.length);
 
     // Create a full-screen pharmacy management view
@@ -2233,7 +2233,7 @@ function loadPharmacies() {
                             <span class="stat-label">Total</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">${pharmacies.filter(p => !p.isApproved || p.approvalStatus === 'pending').length}</span>
+                            <span class="stat-number">${pharmacies.filter(p => !p.isApproved || p.approvalStatus !== 'approved').length}</span>
                             <span class="stat-label">Pending</span>
                         </div>
                         <div class="stat-item">
@@ -7340,7 +7340,7 @@ function showDashboardOverview() {
                         <p>Manage hospital registrations</p>
                         <div class="card-stats">
                             <span class="stat">Total: ${allUsers.hospitals?.length || 0}</span>
-                            <span class="stat">Pending: ${allUsers.hospitals?.filter(h => !h.isApproved || h.approvalStatus === 'pending').length || 0}</span>
+                            <span class="stat">Pending: ${allUsers.hospitals?.filter(h => h.isApproved === false || h.approvalStatus === 'pending').length || 0}</span>
                         </div>
                     </div>
                     <div class="overview-card" onclick="loadDoctors()">
@@ -7351,7 +7351,7 @@ function showDashboardOverview() {
                         <p>Manage doctor registrations</p>
                         <div class="card-stats">
                             <span class="stat">Total: ${allUsers.doctors?.length || 0}</span>
-                            <span class="stat">Pending: ${allUsers.doctors?.filter(d => !d.isApproved || d.approvalStatus === 'pending').length || 0}</span>
+                            <span class="stat">Pending: ${allUsers.doctors?.filter(d => !d.isApproved || d.approvalStatus !== 'approved').length || 0}</span>
                         </div>
                     </div>
                     <div class="overview-card" onclick="loadNurses()">
@@ -7362,7 +7362,7 @@ function showDashboardOverview() {
                         <p>Manage nurse registrations</p>
                         <div class="card-stats">
                             <span class="stat">Total: ${allUsers.nurses?.length || 0}</span>
-                            <span class="stat">Pending: ${allUsers.nurses?.filter(n => !n.isApproved || n.approvalStatus === 'pending').length || 0}</span>
+                            <span class="stat">Pending: ${allUsers.nurses?.filter(n => !n.isApproved || n.approvalStatus !== 'approved').length || 0}</span>
                         </div>
                     </div>
                     <div class="overview-card" onclick="loadLabs()">
@@ -7373,7 +7373,7 @@ function showDashboardOverview() {
                         <p>Manage lab registrations</p>
                         <div class="card-stats">
                             <span class="stat">Total: ${allUsers.labs?.length || 0}</span>
-                            <span class="stat">Pending: ${allUsers.labs?.filter(l => !l.isApproved || l.approvalStatus === 'pending').length || 0}</span>
+                            <span class="stat">Pending: ${allUsers.labs?.filter(l => !l.isApproved || l.approvalStatus !== 'approved').length || 0}</span>
                         </div>
                     </div>
                     <div class="overview-card" onclick="loadPharmacies()">
@@ -7384,7 +7384,7 @@ function showDashboardOverview() {
                         <p>Manage pharmacy registrations</p>
                         <div class="card-stats">
                             <span class="stat">Total: ${allUsers.pharmacies?.length || 0}</span>
-                            <span class="stat">Pending: ${allUsers.pharmacies?.filter(p => !p.isApproved || p.approvalStatus === 'pending').length || 0}</span>
+                            <span class="stat">Pending: ${allUsers.pharmacies?.filter(p => !p.isApproved || p.approvalStatus !== 'approved').length || 0}</span>
                         </div>
                     </div>
                 </div>
@@ -8384,6 +8384,9 @@ async function logout() {
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 DOM loaded, initializing improved dashboard...');
+
+    // Initialize date/time immediately
+    updateCurrentDateTime();
 
     // Initialize the improved dashboard functionality
     initializeNewDashboard();

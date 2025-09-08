@@ -122,7 +122,7 @@ body {
 }
 
 .document-summary p {
-    margin: 0;
+  margin: 0;
     font-size: 0.9rem;
     color: #495057;
 }
@@ -899,7 +899,7 @@ body {
 .modal-content {
     background-color: white;
     margin: 5% auto;
-    padding: 0;
+  padding: 0;
     border-radius: 12px;
     width: 85%;
     max-width: 500px;
@@ -1582,7 +1582,7 @@ body {
 .stat-card {
     background: white;
     padding: 30px;
-    border-radius: 16px;
+  border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     border: 1px solid #e2e8f0;
     transition: all 0.3s ease;
@@ -1627,7 +1627,7 @@ body {
 
 .stat-content h3 {
     font-size: 36px;
-    font-weight: 700;
+  font-weight: 700;
     color: #1e293b;
     margin-bottom: 8px;
 }
@@ -1806,7 +1806,7 @@ body {
 }
 
 .tab-pane.active {
-    display: block;
+  display: block;
 }
 
 .table-header {
@@ -2346,7 +2346,7 @@ body {
     font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 8px;
+  margin-bottom: 8px;
 }
 
 .stat-value {
@@ -2496,16 +2496,16 @@ body {
     display: block;
     margin-bottom: 6px;
     font-weight: 600;
-    color: #333;
+  color: #333;
     font-size: 13px;
 }
 
 #settingsModal .form-group input,
 #settingsModal .form-group textarea {
-    width: 100%;
+  width: 100%;
     padding: 10px 14px;
     border: 2px solid #e1e5e9;
-    border-radius: 8px;
+  border-radius: 8px;
     font-size: 14px;
     transition: all 0.3s ease;
     background-color: #fff;
@@ -2528,7 +2528,7 @@ body {
 
 #settingsModal .form-group input:focus,
 #settingsModal .form-group textarea:focus {
-    outline: none;
+  outline: none;
     border-color: #667eea;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     background-color: #fafbff;
@@ -2765,7 +2765,7 @@ body {
 
 .btn {
     padding: 8px 16px;
-    border: none;
+  border: none;
     border-radius: 6px;
     font-size: 14px;
     font-weight: 500;
@@ -2914,7 +2914,7 @@ body {
     justify-content: space-between;
     padding: 15px;
     background: #f8fafc;
-    border-radius: 8px;
+  border-radius: 8px;
     border: 1px solid #e2e8f0;
 }
 
@@ -2927,7 +2927,7 @@ body {
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 16px;
+  font-size: 16px;
 }
 
 .document-info {
@@ -2937,7 +2937,7 @@ body {
 
 .document-info h5 {
     font-size: 14px;
-    font-weight: 600;
+  font-weight: 600;
     color: #1e293b;
     margin: 0;
 }
@@ -3088,7 +3088,7 @@ body {
     background: white;
     border: 2px solid #e9ecef;
     border-radius: 12px;
-    cursor: pointer;
+  cursor: pointer;
     transition: all 0.3s ease;
     text-decoration: none;
     color: #495057;
@@ -3139,7 +3139,7 @@ body {
 /* Admin Comments */
 .admin-comments {
     background: #f8f9fa;
-    padding: 10px;
+  padding: 10px;
     border-radius: 6px;
     border-left: 4px solid #007bff;
     margin-top: 5px;
@@ -3401,7 +3401,7 @@ body {
 }
 
 .overview-header .header-left {
-    text-align: left;
+  text-align: left;
 }
 
 .overview-header .header-right {
