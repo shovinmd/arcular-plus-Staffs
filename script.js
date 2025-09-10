@@ -547,15 +547,35 @@ async function approveServiceProvider(id, type, notes = '') {
     try {
         const token = await getAuthToken();
         
-        // Use the arc-staff approval endpoint
-        const response = await fetch(`${API_BASE_URL}/arc-staff/approve/${id}`, {
+        // Use specific approval endpoints for each user type
+        let endpoint = '';
+        switch (type) {
+            case 'hospital':
+                endpoint = `${API_BASE_URL}/hospitals/approve-by-staff/${id}`;
+                break;
+            case 'doctor':
+                endpoint = `${API_BASE_URL}/doctors/approve-by-staff/${id}`;
+                break;
+            case 'nurse':
+                endpoint = `${API_BASE_URL}/nurses/approve-by-staff/${id}`;
+                break;
+            case 'lab':
+                endpoint = `${API_BASE_URL}/labs/approve-by-staff/${id}`;
+                break;
+            case 'pharmacy':
+                endpoint = `${API_BASE_URL}/pharmacies/approve-by-staff/${id}`;
+                break;
+            default:
+                throw new Error(`Unknown user type: ${type}`);
+        }
+        
+        const response = await fetch(endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
-                userType: type,
                 notes: notes
             })
         });
@@ -566,7 +586,7 @@ async function approveServiceProvider(id, type, notes = '') {
         
         const data = await response.json();
         if (data.success) {
-            showSuccessMessage(`✅ ${type.charAt(0).toUpperCase() + type.slice(1)} approved successfully! Email notification sent. You can now login to the platform.`);
+            showSuccessMessage(`✅ ${type.charAt(0).toUpperCase() + type.slice(1)} approved successfully! Status set to active, approval confirmed, and email notification sent. You can now login to the platform.`);
 
             // Update local cache so UI moves item from pending -> approved immediately
             const listKeyMap = { hospital: 'hospitals', doctor: 'doctors', nurse: 'nurses', lab: 'labs', pharmacy: 'pharmacies' };
@@ -7349,14 +7369,36 @@ async function approveServiceProviderImproved(id, type, notes = '') {
     console.log(`✅ Approving ${type} with ID: ${id}`);
     
     const idToken = localStorage.getItem('staff_idToken');
-    const response = await fetch(`https://arcular-plus-backend.onrender.com/api/arc-staff/approve/${id}`, {
+    
+    // Use specific approval endpoints for each user type
+    let endpoint = '';
+    switch (type) {
+        case 'hospital':
+            endpoint = `https://arcular-plus-backend.onrender.com/api/hospitals/approve-by-staff/${id}`;
+            break;
+        case 'doctor':
+            endpoint = `https://arcular-plus-backend.onrender.com/api/doctors/approve-by-staff/${id}`;
+            break;
+        case 'nurse':
+            endpoint = `https://arcular-plus-backend.onrender.com/api/nurses/approve-by-staff/${id}`;
+            break;
+        case 'lab':
+            endpoint = `https://arcular-plus-backend.onrender.com/api/labs/approve-by-staff/${id}`;
+            break;
+        case 'pharmacy':
+            endpoint = `https://arcular-plus-backend.onrender.com/api/pharmacies/approve-by-staff/${id}`;
+            break;
+        default:
+            throw new Error(`Unknown user type: ${type}`);
+    }
+    
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${idToken}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        userType: type,
         notes: notes
       })
     });
@@ -7365,7 +7407,7 @@ async function approveServiceProviderImproved(id, type, notes = '') {
       const result = await response.json();
       console.log('✅ Approval successful:', result.message);
       
-      showSuccessMessage(`${type.charAt(0).toUpperCase() + type.slice(1)} approved successfully!`);
+      showSuccessMessage(`${type.charAt(0).toUpperCase() + type.slice(1)} approved successfully! Status set to active and approval confirmed.`);
       
       // Close modal and refresh data
       closeModal();
@@ -7725,15 +7767,38 @@ async function approveServiceProviderImproved(id, type, notes = '') {
   try {
     console.log(`✅ Approving ${type} with ID: ${id}`);
     const idToken = localStorage.getItem('staff_idToken');
-    const response = await fetch(`https://arcular-plus-backend.onrender.com/api/arc-staff/approve/${id}`, {
+    
+    // Use specific approval endpoints for each user type
+    let endpoint = '';
+    switch (type) {
+        case 'hospital':
+            endpoint = `https://arcular-plus-backend.onrender.com/api/hospitals/approve-by-staff/${id}`;
+            break;
+        case 'doctor':
+            endpoint = `https://arcular-plus-backend.onrender.com/api/doctors/approve-by-staff/${id}`;
+            break;
+        case 'nurse':
+            endpoint = `https://arcular-plus-backend.onrender.com/api/nurses/approve-by-staff/${id}`;
+            break;
+        case 'lab':
+            endpoint = `https://arcular-plus-backend.onrender.com/api/labs/approve-by-staff/${id}`;
+            break;
+        case 'pharmacy':
+            endpoint = `https://arcular-plus-backend.onrender.com/api/pharmacies/approve-by-staff/${id}`;
+            break;
+        default:
+            throw new Error(`Unknown user type: ${type}`);
+    }
+    
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${idToken}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userType: type, notes })
+      body: JSON.stringify({ notes })
     });
     if (response.ok) {
       const result = await response.json();
       console.log('✅ Approval successful:', result.message);
-      showSuccessMessage(`${type.charAt(0).toUpperCase() + type.slice(1)} approved successfully!`);
+      showSuccessMessage(`${type.charAt(0).toUpperCase() + type.slice(1)} approved successfully! Status set to active and approval confirmed.`);
       // Local update only (prevents 500 stats endpoints from blocking UI)
       const map = { hospital:'hospitals', doctor:'doctors', nurse:'nurses', lab:'labs', pharmacy:'pharmacies' };
       const key = map[type];
