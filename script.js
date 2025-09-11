@@ -551,19 +551,19 @@ async function approveServiceProvider(id, type, notes = '') {
         let endpoint = '';
         switch (type) {
             case 'hospital':
-                endpoint = `${API_BASE_URL}/hospitals/approve-by-staff/${id}`;
+                endpoint = `${API_BASE_URL}/hospitals/${id}/approve`;
                 break;
             case 'doctor':
-                endpoint = `${API_BASE_URL}/doctors/approve-by-staff/${id}`;
+                endpoint = `${API_BASE_URL}/doctors/${id}/approve`;
                 break;
             case 'nurse':
-                endpoint = `${API_BASE_URL}/nurses/approve-by-staff/${id}`;
+                endpoint = `${API_BASE_URL}/nurses/${id}/approve`;
                 break;
             case 'lab':
-                endpoint = `${API_BASE_URL}/labs/approve-by-staff/${id}`;
+                endpoint = `${API_BASE_URL}/labs/${id}/approve`;
                 break;
             case 'pharmacy':
-                endpoint = `${API_BASE_URL}/pharmacies/approve-by-staff/${id}`;
+                endpoint = `${API_BASE_URL}/pharmacies/${id}/approve`;
                 break;
             default:
                 throw new Error(`Unknown user type: ${type}`);
@@ -723,7 +723,6 @@ async function restoreServiceProvider(type, id) {
         return false;
     }
 }
-
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
     // Reset redirect flag on page load
@@ -1493,7 +1492,6 @@ function updateDateTime() {
     });
     document.getElementById('currentDateTime').textContent = dateTimeString;
 }
-
 function loadRecentActivity() {
     const activityList = document.getElementById('recentActivity');
     const activities = [
@@ -2268,7 +2266,6 @@ function loadNurses() {
 
     console.log('👩‍⚕️ Nurses screen loaded successfully');
 }
-
 function loadLabs() {
     console.log('🧪 Loading labs...');
     const contentArea = document.getElementById('serviceProviderContent');
@@ -3040,7 +3037,6 @@ function openStaffModal(edit = false, staff = null) {
 function closeStaffModal() {
   document.getElementById('staff-modal').style.display = 'none';
 }
-
 async function handleStaffFormSubmit(e) {
   e.preventDefault();
   const idToken = localStorage.getItem('superadmin_idToken');
@@ -3833,7 +3829,6 @@ async function handleDocumentRequest(stakeholderId) {
     showErrorMessage('Failed to send document request: ' + error.message);
   }
 }
-
 // Enhanced search functionality
 function setupSearchFunctionality() {
   // Pending approvals search
@@ -4634,7 +4629,6 @@ function getRecentActivityData() {
     }
   ];
 }
-
 // HTML creation functions for reports
 function createMonthlySummaryHTML(data) {
   return `
@@ -5392,7 +5386,6 @@ function showModalLoading() {
     `;
   }
 }
-
 // Create HTML for hospital details
 function createHospitalDetailsHTML(hospital) {
   return `
@@ -6148,7 +6141,6 @@ async function viewProviderDetails(providerId, providerType) {
         showErrorMessage('Failed to load provider details');
     }
 }
-
 // Populate provider details modal
 function populateProviderDetailsModal(provider, providerType) {
     const modalTitle = document.getElementById('providerModalTitle');
@@ -6914,7 +6906,6 @@ function createProviderCardImproved(provider, status) {
     </div>
   `;
 }
-
 // View Provider Details with improved functionality
 async function viewProviderDetailsImproved(uid, type, status) {
   try {
@@ -7374,19 +7365,19 @@ async function approveServiceProviderImproved(id, type, notes = '') {
     let endpoint = '';
     switch (type) {
         case 'hospital':
-            endpoint = `https://arcular-plus-backend.onrender.com/api/hospitals/approve-by-staff/${id}`;
+            endpoint = `https://arcular-plus-backend.onrender.com/api/hospitals/${id}/approve`;
             break;
         case 'doctor':
-            endpoint = `https://arcular-plus-backend.onrender.com/api/doctors/approve-by-staff/${id}`;
+            endpoint = `https://arcular-plus-backend.onrender.com/api/doctors/${id}/approve`;
             break;
         case 'nurse':
-            endpoint = `https://arcular-plus-backend.onrender.com/api/nurses/approve-by-staff/${id}`;
+            endpoint = `https://arcular-plus-backend.onrender.com/api/nurses/${id}/approve`;
             break;
         case 'lab':
-            endpoint = `https://arcular-plus-backend.onrender.com/api/labs/approve-by-staff/${id}`;
+            endpoint = `https://arcular-plus-backend.onrender.com/api/labs/${id}/approve`;
             break;
         case 'pharmacy':
-            endpoint = `https://arcular-plus-backend.onrender.com/api/pharmacies/approve-by-staff/${id}`;
+            endpoint = `https://arcular-plus-backend.onrender.com/api/pharmacies/${id}/approve`;
             break;
         default:
             throw new Error(`Unknown user type: ${type}`);
@@ -7700,7 +7691,6 @@ function qaExportProvidersXlsx() {
         showErrorMessage('Failed to export XLSX');
     }
 }
-
 function qaGenerateSummaryReport() {
     const counts = {
         hospitals: {
@@ -7772,19 +7762,19 @@ async function approveServiceProviderImproved(id, type, notes = '') {
     let endpoint = '';
     switch (type) {
         case 'hospital':
-            endpoint = `https://arcular-plus-backend.onrender.com/api/hospitals/approve-by-staff/${id}`;
+            endpoint = `https://arcular-plus-backend.onrender.com/api/hospitals/${id}/approve`;
             break;
         case 'doctor':
-            endpoint = `https://arcular-plus-backend.onrender.com/api/doctors/approve-by-staff/${id}`;
+            endpoint = `https://arcular-plus-backend.onrender.com/api/doctors/${id}/approve`;
             break;
         case 'nurse':
-            endpoint = `https://arcular-plus-backend.onrender.com/api/nurses/approve-by-staff/${id}`;
+            endpoint = `https://arcular-plus-backend.onrender.com/api/nurses/${id}/approve`;
             break;
         case 'lab':
-            endpoint = `https://arcular-plus-backend.onrender.com/api/labs/approve-by-staff/${id}`;
+            endpoint = `https://arcular-plus-backend.onrender.com/api/labs/${id}/approve`;
             break;
         case 'pharmacy':
-            endpoint = `https://arcular-plus-backend.onrender.com/api/pharmacies/approve-by-staff/${id}`;
+            endpoint = `https://arcular-plus-backend.onrender.com/api/pharmacies/${id}/approve`;
             break;
         default:
             throw new Error(`Unknown user type: ${type}`);
@@ -8501,7 +8491,6 @@ function bulkApproveProviders() {
         showSuccessMessage('Bulk approval interface opened!');
     }, 1000);
 }
-
 function sendBulkNotifications() {
     console.log('🔧 Sending bulk notifications...');
     showNotification('Opening notification composer...', 'info');
