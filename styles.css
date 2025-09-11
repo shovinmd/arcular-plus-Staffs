@@ -488,25 +488,59 @@ body {
 
 .approval-details {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
     margin-bottom: 20px;
 }
 
 .detail-item {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 6px;
+    background: #ffffff;
+    border: 1px solid #e6ecf1;
+    border-radius: 12px;
+    padding: 14px 16px;
+    box-shadow: 0 2px 8px rgba(44, 62, 80, 0.06);
 }
 
 .detail-item label {
     font-weight: 600;
-    color: #666;
+    color: #6b7c93;
     font-size: 0.8rem;
+    letter-spacing: .2px;
 }
 
 .detail-item span {
     color: #2c3e50;
+    font-weight: 500;
+    line-height: 1.35;
+    word-break: break-word;
+    overflow-wrap: anywhere; /* handles very long strings like URLs/base64 */
+}
+
+/* Details page/cards */
+.provider-details .detail-item,
+.approval-details-view .detail-item {
+  background: #ffffff;
+  border: 1px solid #e6ecf1;
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 0 2px 8px rgba(44,62,80,.06);
+}
+
+/* Make sections use the same grid for consistency */
+.details-content .details-section .approval-details,
+.approval-details-view .approval-details {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+/* Better spacing for long code-like values (e.g., QR data URIs) */
+.detail-item .mono,
+.detail-item .code,
+.detail-item .url {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: .85rem;
 }
 
 .approval-actions {
