@@ -626,6 +626,78 @@
             margin-bottom: 20px;
         }
         
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 20px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+        }
+        
+        .close {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        
+        .close:hover {
+            color: #e74c3c;
+        }
+        
+        .modal-body {
+            padding: 25px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #667eea;
+            color: #667eea;
+        }
+        
+        .btn-outline:hover {
+            background: #667eea;
+            color: white;
+        }
+        
         /* Responsive Design for Mobile */
         @media (max-width: 768px) {
             .details-container {
@@ -892,6 +964,39 @@
             `;
         }
 
+        function showSuccessMessage(message) {
+            // Create a temporary success message element
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-message';
+            successDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #10b981;
+                color: white;
+                padding: 15px 20px;
+                border-radius: 8px;
+                z-index: 10000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                font-weight: 500;
+                max-width: 300px;
+                word-wrap: break-word;
+            `;
+            successDiv.innerHTML = `
+                <i class="fas fa-check-circle"></i>
+                ${message}
+            `;
+            
+            document.body.appendChild(successDiv);
+            
+            // Remove after 4 seconds
+            setTimeout(() => {
+                if (successDiv.parentNode) {
+                    successDiv.parentNode.removeChild(successDiv);
+                }
+            }, 4000);
+        }
+
         function showErrorMessage(message) {
             // Create a temporary error message element
             const errorDiv = document.createElement('div');
@@ -1150,12 +1255,22 @@
                     // Check if URL is valid
                     const urlObj = new URL(url);
                     
+                    // For Firebase Storage URLs, add token parameter if needed
+                    let viewUrl = url;
+                    if (url.includes('firebasestorage.googleapis.com')) {
+                        // Check if URL already has token parameter
+                        if (!url.includes('token=')) {
+                            // Add alt=media parameter for direct file access
+                            viewUrl = url.includes('?') ? `${url}&alt=media` : `${url}?alt=media`;
+                        }
+                    }
+                    
                     // Try to open in new tab
-                    const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
+                    const newWindow = window.open(viewUrl, '_blank', 'noopener,noreferrer');
                     
                     if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
                         // Popup blocked, show message and provide alternative
-                        showErrorMessage('Popup blocked! Please allow popups for this site or copy the URL manually.');
+                        showErrorMessage('Popup blocked! Please allow popups for this site or use the download option.');
                         
                         // Show URL in a modal for manual copying
                         const urlModal = document.createElement('div');
@@ -1170,22 +1285,29 @@
                                 <div class="modal-body">
                                     <p>Copy this URL and paste it in a new tab:</p>
                                     <div style="background: #f5f5f5; padding: 10px; border-radius: 4px; word-break: break-all; font-family: monospace;">
-                                        ${url}
+                                        ${viewUrl}
                                     </div>
-                                    <button class="btn btn-primary" onclick="navigator.clipboard.writeText('${url}').then(() => alert('URL copied to clipboard!'))" style="margin-top: 10px;">
-                                        <i class="fas fa-copy"></i> Copy URL
-                                    </button>
+                                    <div style="margin-top: 15px; display: flex; gap: 10px;">
+                                        <button class="btn btn-primary" onclick="navigator.clipboard.writeText('${viewUrl}').then(() => alert('URL copied to clipboard!'))">
+                                            <i class="fas fa-copy"></i> Copy URL
+                                        </button>
+                                        <button class="btn btn-secondary" onclick="downloadDocument('${url}', 'document')">
+                                            <i class="fas fa-download"></i> Download Instead
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         `;
                         document.body.appendChild(urlModal);
                         
-                        // Auto-remove modal after 10 seconds
+                        // Auto-remove modal after 15 seconds
                         setTimeout(() => {
                             if (urlModal.parentElement) {
                                 urlModal.remove();
                             }
-                        }, 10000);
+                        }, 15000);
+                    } else {
+                        showSuccessMessage('Document opened in new tab');
                     }
                 } catch (error) {
                     console.error('Error opening document:', error);
@@ -1197,21 +1319,20 @@
         }
         
         // Download document
-        function downloadDocument(url, filename) {
+        async function downloadDocument(url, filename) {
             if (url && url.trim() !== '') {
                 try {
-                    // Create a temporary anchor element for download
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = filename || 'document';
-                    link.target = '_blank';
+                    // Show loading message
+                    showSuccessMessage(`Preparing download for ${filename || 'document'}...`);
                     
-                    // Add to DOM, click, and remove
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    
-                    showSuccessMessage(`Downloading ${filename || 'document'}...`);
+                    // Check if URL is a Firebase Storage URL or external URL
+                    if (url.includes('firebasestorage.googleapis.com') || url.includes('http')) {
+                        // For external URLs, try multiple download methods
+                        await downloadExternalFile(url, filename);
+                    } else {
+                        // For local URLs, use simple download
+                        downloadLocalFile(url, filename);
+                    }
                     
                 } catch (error) {
                     console.error('Error downloading document:', error);
@@ -1220,6 +1341,135 @@
             } else {
                 showErrorMessage('Document URL is not available');
             }
+        }
+        
+        // Download external file (Firebase Storage, etc.)
+        async function downloadExternalFile(url, filename) {
+            try {
+                // Method 1: Try fetch + blob download
+                const response = await fetch(url, {
+                    method: 'GET',
+                    mode: 'cors',
+                    credentials: 'omit'
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const downloadUrl = window.URL.createObjectURL(blob);
+                    
+                    const link = document.createElement('a');
+                    link.href = downloadUrl;
+                    link.download = filename || 'document';
+                    link.style.display = 'none';
+                    
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    // Clean up the blob URL
+                    window.URL.revokeObjectURL(downloadUrl);
+                    
+                    showSuccessMessage(`Downloaded ${filename || 'document'} successfully!`);
+                    return;
+                }
+            } catch (fetchError) {
+                console.log('Fetch method failed, trying alternative methods:', fetchError);
+            }
+            
+            // Method 2: Try direct link download
+            try {
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename || 'document';
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.style.display = 'none';
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showSuccessMessage(`Download initiated for ${filename || 'document'}. Check your downloads folder.`);
+                return;
+            } catch (linkError) {
+                console.log('Direct link method failed:', linkError);
+            }
+            
+            // Method 3: Open in new tab as fallback
+            try {
+                const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
+                if (newWindow) {
+                    showSuccessMessage(`Opened ${filename || 'document'} in new tab. You can save it manually.`);
+                } else {
+                    throw new Error('Popup blocked');
+                }
+            } catch (popupError) {
+                console.log('Popup method failed:', popupError);
+                // Final fallback - show URL modal
+                showDownloadFallback(url, filename);
+            }
+        }
+        
+        // Download local file
+        function downloadLocalFile(url, filename) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename || 'document';
+            link.style.display = 'none';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showSuccessMessage(`Downloaded ${filename || 'document'} successfully!`);
+        }
+        
+        // Show download fallback modal
+        function showDownloadFallback(url, filename) {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'block';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 600px;">
+                    <div class="modal-header">
+                        <h3>Download ${filename || 'Document'}</h3>
+                        <span class="close" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong>Download failed automatically.</strong> Please use one of these methods:</p>
+                        <div style="margin: 20px 0;">
+                            <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                                <strong>Method 1:</strong> Right-click the link below and select "Save link as..."
+                            </div>
+                            <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                                <strong>Method 2:</strong> Copy the URL and paste it in a new tab
+                            </div>
+                        </div>
+                        <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 4px solid #2196f3;">
+                            <strong>Document URL:</strong><br>
+                            <div style="background: white; padding: 10px; border-radius: 4px; word-break: break-all; font-family: monospace; margin-top: 8px;">
+                                ${url}
+                            </div>
+                        </div>
+                        <div style="margin-top: 20px; display: flex; gap: 10px;">
+                            <button class="btn btn-primary" onclick="copyToClipboard('${url}'); this.parentElement.parentElement.parentElement.parentElement.remove();">
+                                <i class="fas fa-copy"></i> Copy URL
+                            </button>
+                            <button class="btn btn-secondary" onclick="window.open('${url}', '_blank'); this.parentElement.parentElement.parentElement.parentElement.remove();">
+                                <i class="fas fa-external-link-alt"></i> Open in New Tab
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // Auto-remove modal after 30 seconds
+            setTimeout(() => {
+                if (modal.parentElement) {
+                    modal.remove();
+                }
+            }, 30000);
         }
         
         // Copy URL to clipboard
